@@ -1,7 +1,7 @@
 // ============ CONFIG ============
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
-  : '/api';
+  : 'https://fantasfotto.vercel.app/api';
 
 // ============ STATO ============
 let stato = {
