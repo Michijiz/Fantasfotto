@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Gazzetta dello Sfottò</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#241b1e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SCHERMATA LOGIN / REGISTRAZIONE -->
+<div id="authScreen" class="auth-screen" style="display:none">
+  <div class="masthead">
+    <div class="kicker">Organo ufficiale (non richiesto) della Lega</div>
+    <h1>La Gazzetta dello Sfottò</h1>
+  </div>
+
+  <div class="auth-toggle">
+    <div class="tab active" data-auth="login">Accedi</div>
+    <div class="tab" data-auth="registrati">Iscriviti alla Lega</div>
+  </div>
+
+  <div id="loginForm" class="card">
+    <label>Username</label>
+    <input type="text" id="loginUsername" placeholder="il tuo username">
+    <label>PIN</label>
+    <input type="password" id="loginPin" inputmode="numeric" placeholder="4-6 cifre">
+    <button class="primary" onclick="login()">Entra in redazione</button>
+    <div id="loginErrore" class="errore-msg"></div>
+  </div>
+
+  <div id="registratiForm" class="card" style="display:none">
+    <label>Username</label>
+    <input type="text" id="regUsername" placeholder="scegline uno">
+    <label>Nome da mostrare</label>
+    <input type="text" id="regNome" placeholder="es. Michelangelo">
+    <label>PIN (4-6 cifre)</label>
+    <input type="password" id="regPin" inputmode="numeric" placeholder="il tuo PIN segreto">
+    <label>Codice invito della Lega</label>
+    <input type="text" id="regCodice" placeholder="chiedilo al direttore">
+    <button class="primary" onclick="registrati()">Iscriviti</button>
+    <div id="regErrore" class="errore-msg"></div>
+  </div>
+</div>
+
+<!-- APP PRINCIPALE -->
+<div id="appScreen" class="wrap" style="display:none">
+
+  <div class="top-bar">
+    <span id="ciaoUtente"></span>
+    <button class="link" onclick="logout()">Esci</button>
+  </div>
+
+  <div class="masthead">
+    <div class="kicker">Organo ufficiale (non richiesto) della Lega</div>
+    <h1>La Gazzetta dello Sfottò</h1>
+    <div class="sub">
+      <span id="edizioneCorrente">Nessuna edizione ancora</span>
+      <span>Prezzo: la vostra dignità</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="ultima">Ultima</div>
+    <div class="tab" data-tab="nuova">Nuova</div>
+    <div class="tab" data-tab="verdetti">Verdetti</div>
+    <div class="tab" data-tab="albo">Albo</div>
+    <div class="tab" data-tab="archivio">Archivio</div>
+    <div class="tab" data-tab="profilo">Profilo</div>
+  </div>
+
+  <!-- ULTIMA EDIZIONE -->
+  <div id="tab-ultima" class="tab-content">
+    <div class="card" id="ultimaContainer">
+      <div class="empty">Caricamento in corso...</div>
+    </div>
+  </div>
+
+  <!-- NUOVA EDIZIONE (solo admin) -->
+  <div id="tab-nuova" class="tab-content" style="display:none">
+    <div id="nuovaNonAutorizzato" class="card" style="display:none">
+      <div class="empty">Solo il direttore di turno può pubblicare una nuova edizione.</div>
+    </div>
+    <div id="nuovaFormWrap">
+      <div class="card">
+        <h2 class="section-title">Scrivi l'Edizione</h2>
+        <label>Direttore di turno</label>
+        <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
+
+        <div class="row2">
+          <div>
+            <label>Vincitore giornata</label>
+            <input type="text" id="vincitore" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti vincitore</label>
+            <input type="number" id="puntiVincitore" placeholder="es. 78">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Ultimo classificato</label>
+            <input type="text" id="ultimo" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti ultimo</label>
+            <input type="number" id="puntiUltimo" placeholder="es. 41">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Fenomeno di giornata</label>
+            <input type="text" id="fenomeno" placeholder="Chi ha stupito">
+          </div>
+          <div>
+            <label>Bidone di giornata</label>
+            <input type="text" id="bidone" placeholder="Chi ha deluso">
+          </div>
+        </div>
+
+        <button class="primary" onclick="pubblicaEdizione()">Manda in stampa</button>
+        <div id="nuovaErrore" class="errore-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDETTI / MINI-GIOCHI -->
+  <div id="tab-verdetti" class="tab-content" style="display:none">
+    <div class="card" id="verdettiContainer">
+      <div class="empty">Nessuna edizione da votare ancora.</div>
+    </div>
+  </div>
+
+  <!-- ALBO D'ORO -->
+  <div id="tab-albo" class="tab-content" style="display:none">
+    <div class="card">
+      <h2 class="section-title">Albo dei Trofei (stagione)</h2>
+      <div class="albo-grid" id="alboContainer"></div>
+    </div>
+  </div>
+
+  <!-- ARCHIVIO -->
+  <div id="tab-archivio" class="tab-content" style="display:none">
+    <div class="card" id="archivioContainer">
+      <div class="empty">L'archivio è ancora vuoto. Pubblicate la prima edizione!</div>
+    </div>
+  </div>
+
+  <!-- PROFILO -->
+  <div id="tab-profilo" class="tab-content" style="display:none">
+    <div class="card">
+      <h2 class="section-title">Il tuo profilo</h2>
+      <div id="profiloContainer"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Giocatori della Lega</h2>
+      <div class="players" id="playersList"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
