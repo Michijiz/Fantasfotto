@@ -1,6 +1,8 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Voto = require('../models/Voto');
 const Edizione = require('../models/Edizione');
+const Squadra = require('../models/Squadra');
 const { richiediAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -24,14 +26,15 @@ router.get('/edizione/:edizioneId', richiediAuth, async (req, res) => {
   const conteggi = {};
   CATEGORIE.forEach(c => { conteggi[c.key] = {}; });
   voti.forEach(v => {
+    const idSquadra = String(v.votato);
     if (!conteggi[v.categoria]) conteggi[v.categoria] = {};
-    conteggi[v.categoria][v.votato] = (conteggi[v.categoria][v.votato] || 0) + 1;
+    conteggi[v.categoria][idSquadra] = (conteggi[v.categoria][idSquadra] || 0) + 1;
   });
 
   // il voto che l'utente corrente ha già dato per categoria (per evidenziarlo lato UI)
   const mieiVoti = {};
   voti.filter(v => String(v.votante) === String(req.utente.id)).forEach(v => {
-    mieiVoti[v.categoria] = v.votato;
+    mieiVoti[v.categoria] = String(v.votato);
   });
 
   res.json({ conteggi, mieiVoti });
@@ -52,6 +55,12 @@ router.post('/', richiediAuth, async (req, res) => {
     if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
     if (edizione.votazioniChiuse) return res.status(403).json({ errore: 'Votazioni chiuse per questa giornata' });
 
+    if (!mongoose.isValidObjectId(votato)) {
+      return res.status(400).json({ errore: 'Squadra non valida' });
+    }
+    const squadra = await Squadra.findOne({ _id: votato, attiva: true });
+    if (!squadra) return res.status(400).json({ errore: 'Squadra non valida' });
+
     await Voto.findOneAndUpdate(
       { edizione: edizioneId, categoria, votante: req.utente.id },
       { votato },
@@ -70,14 +79,24 @@ router.get('/albo', richiediAuth, async (req, res) => {
   const totali = {};
   CATEGORIE.forEach(c => { totali[c.key] = {}; });
   voti.forEach(v => {
+    const idSquadra = String(v.votato);
     if (!totali[v.categoria]) totali[v.categoria] = {};
-    totali[v.categoria][v.votato] = (totali[v.categoria][v.votato] || 0) + 1;
+    totali[v.categoria][idSquadra] = (totali[v.categoria][idSquadra] || 0) + 1;
   });
+
+  const squadre = await Squadra.find().select('nome stemma');
+  const mappaSquadre = new Map(squadre.map(s => [String(s._id), s]));
 
   const albo = CATEGORIE.map(c => ({
     key: c.key,
     label: c.label,
-    top: Object.entries(totali[c.key] || {}).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    top: Object.entries(totali[c.key] || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([idSquadra, n]) => ({
+        squadra: mappaSquadre.get(idSquadra) || null,
+        voti: n
+      }))
   }));
 
   res.json(albo);

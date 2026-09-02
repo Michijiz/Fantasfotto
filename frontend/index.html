@@ -92,36 +92,18 @@
         <label>Direttore di turno</label>
         <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
 
-        <div class="row2">
-          <div>
-            <label>Vincitore giornata</label>
-            <input type="text" id="vincitore" placeholder="Nome">
-          </div>
-          <div>
-            <label>Punti vincitore</label>
-            <input type="number" id="puntiVincitore" placeholder="es. 78">
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>Ultimo classificato</label>
-            <input type="text" id="ultimo" placeholder="Nome">
-          </div>
-          <div>
-            <label>Punti ultimo</label>
-            <input type="number" id="puntiUltimo" placeholder="es. 41">
-          </div>
-        </div>
+        <label>Giornata da pubblicare</label>
+        <select id="nuovaGiornata"></select>
+        <div id="nuovaGiornataInfo" class="empty" style="padding:10px 0;text-align:left"></div>
 
         <div class="row2">
           <div>
             <label>Fenomeno di giornata</label>
-            <input type="text" id="fenomeno" placeholder="Chi ha stupito">
+            <select id="nuovaFenomeno"></select>
           </div>
           <div>
             <label>Bidone di giornata</label>
-            <input type="text" id="bidone" placeholder="Chi ha deluso">
+            <select id="nuovaBidone"></select>
           </div>
         </div>
 

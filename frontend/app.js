@@ -133,7 +133,7 @@ async function caricaUltimaEdizione() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? '?'}`;
     container.innerHTML = renderArticolo(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -141,28 +141,84 @@ async function caricaUltimaEdizione() {
 }
 
 function renderArticolo(e) {
+  const nomeSquadra = (s) => s?.stemma ? `${s.stemma} ${s.nome}` : (s?.nome || '—');
   return `
     <div class="article">
       <div class="occhiello">${e.occhiello}</div>
       <h3>${e.titolo}</h3>
-      <div class="byline">Giornata ${e.giornata} — a cura di ${e.direttore}</div>
+      <div class="byline">Giornata ${e.giornata?.numero ?? '?'} — a cura di ${e.direttore}</div>
       ${e.corpo.map(p => `<p>${p}</p>`).join('')}
       <div class="stat-strip">
-        <div class="stat">Vincitore<b>${e.stats.vincitore}</b></div>
-        <div class="stat">Ultimo<b>${e.stats.ultimo}</b></div>
-        <div class="stat">Fenomeno<b>${e.stats.fenomeno}</b></div>
-        <div class="stat">Bidone<b>${e.stats.bidone}</b></div>
+        <div class="stat">Vincitore<b>${nomeSquadra(e.stats.vincitore)}</b></div>
+        <div class="stat">Ultimo<b>${nomeSquadra(e.stats.ultimo)}</b></div>
+        <div class="stat">Fenomeno<b>${nomeSquadra(e.stats.fenomeno)}</b></div>
+        <div class="stat">Bidone<b>${nomeSquadra(e.stats.bidone)}</b></div>
       </div>
     </div>
   `;
 }
 
 // ============ NUOVA EDIZIONE ============
-function preparaTabNuova() {
+async function preparaTabNuova() {
   const autorizzato = stato.utente?.ruolo === 'admin';
   document.getElementById('nuovaNonAutorizzato').style.display = autorizzato ? 'none' : 'block';
   document.getElementById('nuovaFormWrap').style.display = autorizzato ? 'block' : 'none';
-  if (autorizzato) document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
+  if (!autorizzato) return;
+
+  document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
+
+  const selectGiornata = document.getElementById('nuovaGiornata');
+  const infoGiornata = document.getElementById('nuovaGiornataInfo');
+  selectGiornata.innerHTML = '<option value="">Caricamento...</option>';
+
+  try {
+    const [giornate, edizioni] = await Promise.all([api('/giornate'), api('/edizioni')]);
+    const giornatePubblicate = new Set(edizioni.map(e => e.giornata?._id));
+    const disponibili = giornate.filter(g => g.conclusa && !giornatePubblicate.has(g._id));
+
+    stato.giornateDisponibili = disponibili;
+
+    if (!disponibili.length) {
+      selectGiornata.innerHTML = '<option value="">Nessuna giornata pronta da pubblicare</option>';
+      infoGiornata.textContent = 'Serve una giornata conclusa (punteggi inseriti) senza edizione già pubblicata.';
+      document.getElementById('nuovaFenomeno').innerHTML = '';
+      document.getElementById('nuovaBidone').innerHTML = '';
+      return;
+    }
+
+    selectGiornata.innerHTML = disponibili.map(g => `<option value="${g._id}">Giornata ${g.numero}</option>`).join('');
+    selectGiornata.onchange = () => aggiornaSelezioneGiornata(selectGiornata.value);
+    aggiornaSelezioneGiornata(selectGiornata.value);
+  } catch (err) {
+    selectGiornata.innerHTML = '<option value="">Errore nel caricamento</option>';
+    infoGiornata.textContent = err.message;
+  }
+}
+
+function aggiornaSelezioneGiornata(giornataId) {
+  const giornata = (stato.giornateDisponibili || []).find(g => g._id === giornataId);
+  const infoGiornata = document.getElementById('nuovaGiornataInfo');
+  const selectFenomeno = document.getElementById('nuovaFenomeno');
+  const selectBidone = document.getElementById('nuovaBidone');
+  if (!giornata) {
+    infoGiornata.textContent = '';
+    selectFenomeno.innerHTML = '';
+    selectBidone.innerHTML = '';
+    return;
+  }
+
+  const squadreInGiornata = [];
+  giornata.accoppiamenti.forEach(a => {
+    squadreInGiornata.push({ id: a.squadraCasa._id, nome: a.squadraCasa.nome, punti: a.punteggioCasa });
+    squadreInGiornata.push({ id: a.squadraTrasferta._id, nome: a.squadraTrasferta.nome, punti: a.punteggioTrasferta });
+  });
+  squadreInGiornata.sort((x, y) => (y.punti ?? -Infinity) - (x.punti ?? -Infinity));
+
+  infoGiornata.innerHTML = squadreInGiornata.map(s => `${s.nome}: <b>${s.punti ?? '—'}</b>`).join(' · ');
+
+  const opzioni = squadreInGiornata.map(s => `<option value="${s.id}">${s.nome} (${s.punti ?? '—'} pt)</option>`).join('');
+  selectFenomeno.innerHTML = opzioni;
+  selectBidone.innerHTML = opzioni;
 }
 
 async function pubblicaEdizione() {
@@ -170,24 +226,20 @@ async function pubblicaEdizione() {
   erroreEl.textContent = '';
 
   const corpo = {
+    giornataId: document.getElementById('nuovaGiornata').value,
     direttore: document.getElementById('direttore').value.trim(),
-    vincitore: document.getElementById('vincitore').value.trim(),
-    puntiVincitore: document.getElementById('puntiVincitore').value.trim(),
-    ultimo: document.getElementById('ultimo').value.trim(),
-    puntiUltimo: document.getElementById('puntiUltimo').value.trim(),
-    fenomeno: document.getElementById('fenomeno').value.trim(),
-    bidone: document.getElementById('bidone').value.trim()
+    fenomeno: document.getElementById('nuovaFenomeno').value,
+    bidone: document.getElementById('nuovaBidone').value
   };
 
-  if (!corpo.vincitore || !corpo.ultimo) {
-    erroreEl.textContent = 'Servono almeno vincitore e ultimo classificato';
+  if (!corpo.giornataId) {
+    erroreEl.textContent = 'Seleziona una giornata da pubblicare';
     return;
   }
 
   try {
     await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
     mostraToast('Edizione mandata in stampa!');
-    ['vincitore', 'puntiVincitore', 'ultimo', 'puntiUltimo', 'fenomeno', 'bidone'].forEach(id => document.getElementById(id).value = '');
     cambiaTab('ultima');
   } catch (err) {
     erroreEl.textContent = err.message;
@@ -205,21 +257,21 @@ async function caricaVerdetti() {
     }
     if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
 
-    const [giocatori, votiInfo] = await Promise.all([
-      api('/auth/giocatori'),
+    const [squadre, votiInfo] = await Promise.all([
+      api('/squadre'),
       api(`/voti/edizione/${stato.ultimaEdizione._id}`)
     ]);
 
     container.innerHTML = `
-      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata}</h2>
-      ${stato.categorie.map(cat => renderCategoriaVoto(cat, giocatori, votiInfo)).join('')}
+      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata?.numero ?? '?'}</h2>
+      ${stato.categorie.map(cat => renderCategoriaVoto(cat, squadre, votiInfo)).join('')}
     `;
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-function renderCategoriaVoto(cat, giocatori, votiInfo) {
+function renderCategoriaVoto(cat, squadre, votiInfo) {
   const conteggi = votiInfo.conteggi[cat.key] || {};
   const mioVoto = votiInfo.mieiVoti[cat.key];
 
@@ -227,11 +279,11 @@ function renderCategoriaVoto(cat, giocatori, votiInfo) {
     <div class="verdetto">
       <h4>${cat.label}</h4>
       <div class="voti-list">
-        ${giocatori.map(g => {
-          const n = conteggi[g.nomeVisualizzato] || 0;
-          const attivo = mioVoto === g.nomeVisualizzato;
-          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${g.nomeVisualizzato.replace(/'/g, "\\'")}')">
-            ${g.nomeVisualizzato} <span class="count">${n}</span>
+        ${squadre.map(s => {
+          const n = conteggi[s._id] || 0;
+          const attivo = mioVoto === s._id;
+          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${s._id}')">
+            ${s.stemma || ''} ${s.nome} <span class="count">${n}</span>
           </button>`;
         }).join('')}
       </div>
@@ -261,7 +313,7 @@ async function caricaAlbo() {
       <div class="albo-cat">
         <h5>${cat.label}</h5>
         ${cat.top.length
-          ? cat.top.map(([nome, n], i) => `<div>${i + 1}. ${nome} — ${n} voti</div>`).join('')
+          ? cat.top.map((v, i) => `<div>${i + 1}. ${v.squadra ? `${v.squadra.stemma || ''} ${v.squadra.nome}` : 'Squadra rimossa'} — ${v.voti} voti</div>`).join('')
           : '<div>Ancora nessun voto</div>'}
       </div>
     `).join('');
@@ -352,7 +404,7 @@ async function caricaArchivio() {
     }
     container.innerHTML = edizioni.map(e => `
       <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
-        <div class="g">Giornata ${e.giornata}</div>
+        <div class="g">Giornata ${e.giornata?.numero ?? '?'}</div>
         <h4>${e.titolo}</h4>
       </div>
     `).join('');
