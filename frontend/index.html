@@ -69,6 +69,7 @@
     <div class="tab" data-tab="nuova">Nuova</div>
     <div class="tab" data-tab="verdetti">Verdetti</div>
     <div class="tab" data-tab="albo">Albo</div>
+    <div class="tab" data-tab="squadre">Squadre</div>
     <div class="tab" data-tab="archivio">Archivio</div>
     <div class="tab" data-tab="profilo">Profilo</div>
   </div>
@@ -142,6 +143,28 @@
     <div class="card">
       <h2 class="section-title">Albo dei Trofei (stagione)</h2>
       <div class="albo-grid" id="alboContainer"></div>
+    </div>
+  </div>
+
+  <!-- SQUADRE -->
+  <div id="tab-squadre" class="tab-content" style="display:none">
+    <div class="card">
+      <h2 class="section-title">Le Squadre della Lega</h2>
+      <div id="squadreContainer"><div class="empty">Caricamento in corso...</div></div>
+    </div>
+
+    <div class="card" id="nuovaSquadraWrap" style="display:none">
+      <h2 class="section-title">Registra una nuova squadra</h2>
+      <label>Nome squadra</label>
+      <input type="text" id="squadraNome" placeholder="es. I Falchi di Fuorigrotta">
+      <label>Stemma (emoji)</label>
+      <input type="text" id="squadraStemma" placeholder="es. 🦅">
+      <label>Colore kit</label>
+      <input type="text" id="squadraColore" placeholder="es. #c8102e">
+      <label>Proprietario</label>
+      <select id="squadraProprietario"></select>
+      <button class="primary" onclick="creaSquadra()">Registra squadra</button>
+      <div id="squadraErrore" class="errore-msg"></div>
     </div>
   </div>
 

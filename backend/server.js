@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const edizioniRoutes = require('./routes/edizioni');
 const votiRoutes = require('./routes/voti');
+const squadreRoutes = require('./routes/squadre');
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/edizioni', edizioniRoutes);
 app.use('/api/voti', votiRoutes);
+app.use('/api/squadre', squadreRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

@@ -117,6 +117,7 @@ function cambiaTab(nome) {
   if (nome === 'nuova') preparaTabNuova();
   if (nome === 'verdetti') caricaVerdetti();
   if (nome === 'albo') caricaAlbo();
+  if (nome === 'squadre') caricaSquadre();
   if (nome === 'archivio') caricaArchivio();
   if (nome === 'profilo') caricaProfilo();
 }
@@ -266,6 +267,77 @@ async function caricaAlbo() {
     `).join('');
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+// ============ SQUADRE ============
+async function caricaSquadre() {
+  const container = document.getElementById('squadreContainer');
+  const wrapNuova = document.getElementById('nuovaSquadraWrap');
+  const isAdmin = stato.utente?.ruolo === 'admin';
+  wrapNuova.style.display = isAdmin ? 'block' : 'none';
+
+  try {
+    const squadre = await api('/squadre');
+
+    if (!squadre.length) {
+      container.innerHTML = '<div class="empty">Nessuna squadra registrata ancora.</div>';
+    } else {
+      container.innerHTML = squadre.map(renderSquadraCard).join('');
+    }
+
+    if (isAdmin) await popolaSelectProprietario();
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+function renderSquadraCard(s) {
+  const membri = (s.membri || []).map(m => m.nomeVisualizzato).join(', ');
+  return `
+    <div class="squadra-card">
+      <div class="stemma">${s.stemma || '🛡️'}</div>
+      <div class="info">
+        <h4>${s.coloreKit ? `<span class="kit-dot" style="background:${s.coloreKit}"></span>` : ''}${s.nome}</h4>
+        <div class="proprietario">Proprietario: ${s.proprietario?.nomeVisualizzato || '—'}${membri ? ` · Con: ${membri}` : ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function popolaSelectProprietario() {
+  const select = document.getElementById('squadraProprietario');
+  try {
+    const giocatori = await api('/auth/giocatori');
+    select.innerHTML = giocatori.map(g => `<option value="${g._id}">${g.nomeVisualizzato}</option>`).join('');
+  } catch (err) {
+    select.innerHTML = '';
+  }
+}
+
+async function creaSquadra() {
+  const erroreEl = document.getElementById('squadraErrore');
+  erroreEl.textContent = '';
+
+  const corpo = {
+    nome: document.getElementById('squadraNome').value.trim(),
+    stemma: document.getElementById('squadraStemma').value.trim(),
+    coloreKit: document.getElementById('squadraColore').value.trim(),
+    proprietario: document.getElementById('squadraProprietario').value
+  };
+
+  if (!corpo.nome || !corpo.proprietario) {
+    erroreEl.textContent = 'Nome e proprietario sono obbligatori';
+    return;
+  }
+
+  try {
+    await api('/squadre', { method: 'POST', body: JSON.stringify(corpo) });
+    mostraToast('Squadra registrata!');
+    ['squadraNome', 'squadraStemma', 'squadraColore'].forEach(id => document.getElementById(id).value = '');
+    caricaSquadre();
+  } catch (err) {
+    erroreEl.textContent = err.message;
   }
 }
 
