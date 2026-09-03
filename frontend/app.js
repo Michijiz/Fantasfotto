@@ -310,7 +310,7 @@ async function caricaSquadre() {
     container.innerHTML = `
       <h2 class="section-title">Le Squadre della Lega</h2>
       <div class="players">
-        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${renderStemma(s.stemma)} ${s.nome}</span>`).join('')}
+        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${renderStemma(s.stemma, 22)} ${s.nome}</span>`).join('')}
       </div>
     `;
   } catch (err) {
@@ -328,8 +328,13 @@ async function apriSquadra(id) {
     container.innerHTML = `
       <button class="ghost" onclick="caricaSquadre()">← Torna alle squadre</button>
       <div class="article" style="margin-top:14px">
-        <div class="occhiello">${renderStemma(squadra.stemma, 16)} Scheda squadra</div>
-        <h3>${squadra.nome}</h3>
+        <div class="squadra-header">
+          ${squadra.stemma ? `<img src="${squadra.stemma}" alt="" class="stemma-grande">` : ''}
+          <div>
+            <div class="occhiello">Scheda squadra</div>
+            <h3>${squadra.nome}</h3>
+          </div>
+        </div>
         <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
         ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
         ${squadra.maglia ? `<img src="${squadra.maglia}" alt="maglia" style="max-width:160px;display:block;margin:10px 0">` : ''}

@@ -57,6 +57,9 @@ select{
 .upload-row{display:flex;align-items:center;gap:10px;}
 .img-preview{width:48px;height:48px;object-fit:cover;border:1px solid var(--ink-soft);background:#fff8fa;}
 .upload-row input[type=file]{flex:1;font-family:'Oswald',sans-serif;font-size:11px;}
+.squadra-header{display:flex;align-items:center;gap:16px;margin-bottom:6px;}
+.stemma-grande{width:72px;height:72px;object-fit:cover;border:1px solid var(--ink-soft);border-radius:4px;flex-shrink:0;}
+.squadra-header h3{margin:2px 0 0;}
 button.primary{
   margin-top:16px;width:100%;padding:12px;font-family:'Oswald',sans-serif;font-weight:600;
   letter-spacing:.06em;text-transform:uppercase;background:var(--stamp-red);color:#fff;border:none;cursor:pointer;
