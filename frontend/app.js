@@ -337,6 +337,7 @@ async function apriSquadra(id) {
         </div>
         <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
         ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
+        ${squadra.foto ? `<img src="${squadra.foto}" alt="Foto squadra" class="foto-squadra">` : ''}
         ${squadra.maglia ? `<img src="${squadra.maglia}" alt="maglia" style="max-width:160px;display:block;margin:10px 0">` : ''}
         ${squadra.rosa && squadra.rosa.length ? `
           <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Rosa</h4>
