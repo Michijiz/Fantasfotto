@@ -2,12 +2,13 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Squadra = require('../models/Squadra');
 
 const router = express.Router();
 
 function firmaToken(user) {
   return jwt.sign(
-    { id: user._id, username: user.username, ruolo: user.ruolo, nomeVisualizzato: user.nomeVisualizzato },
+    { id: user._id, username: user.username, ruolo: user.ruolo, nomeVisualizzato: user.nomeVisualizzato, squadra: user.squadra },
     process.env.JWT_SECRET,
     { expiresIn: '90d' }
   );
@@ -16,7 +17,7 @@ function firmaToken(user) {
 // Registrazione: serve un codice invito della lega per evitare iscrizioni random
 router.post('/registrati', async (req, res) => {
   try {
-    const { username, nomeVisualizzato, pin, codiceInvito, avatar } = req.body;
+    const { username, nomeVisualizzato, pin, codiceInvito, avatar, squadraId } = req.body;
 
     if (!username || !nomeVisualizzato || !pin) {
       return res.status(400).json({ errore: 'Username, nome e PIN sono obbligatori' });
@@ -27,6 +28,12 @@ router.post('/registrati', async (req, res) => {
     if (codiceInvito !== process.env.LEGA_INVITE_CODE) {
       return res.status(403).json({ errore: 'Codice invito della lega non valido' });
     }
+    if (!squadraId) {
+      return res.status(400).json({ errore: 'Devi selezionare una squadra' });
+    }
+
+    const squadra = await Squadra.findById(squadraId);
+    if (!squadra) return res.status(400).json({ errore: 'Squadra non valida' });
 
     const esistente = await User.findOne({ username: username.toLowerCase().trim() });
     if (esistente) return res.status(409).json({ errore: 'Username già in uso' });
@@ -39,13 +46,14 @@ router.post('/registrati', async (req, res) => {
       nomeVisualizzato: nomeVisualizzato.trim(),
       pinHash,
       avatar: avatar || '',
+      squadra: squadraId,
       ruolo: isFirstUser ? 'admin' : 'giocatore' // il primo iscritto diventa direttore/admin
     });
 
     const token = firmaToken(user);
     res.status(201).json({
       token,
-      utente: { id: user._id, username: user.username, nomeVisualizzato: user.nomeVisualizzato, ruolo: user.ruolo, avatar: user.avatar }
+      utente: { id: user._id, username: user.username, nomeVisualizzato: user.nomeVisualizzato, ruolo: user.ruolo, avatar: user.avatar, squadra: user.squadra }
     });
   } catch (e) {
     res.status(500).json({ errore: 'Errore durante la registrazione' });
@@ -67,7 +75,7 @@ router.post('/login', async (req, res) => {
     const token = firmaToken(user);
     res.json({
       token,
-      utente: { id: user._id, username: user.username, nomeVisualizzato: user.nomeVisualizzato, ruolo: user.ruolo, avatar: user.avatar }
+      utente: { id: user._id, username: user.username, nomeVisualizzato: user.nomeVisualizzato, ruolo: user.ruolo, avatar: user.avatar, squadra: user.squadra }
     });
   } catch (e) {
     res.status(500).json({ errore: 'Errore durante il login' });
@@ -76,7 +84,7 @@ router.post('/login', async (req, res) => {
 
 // Lista giocatori della lega (per popolare i bottoni di voto)
 router.get('/giocatori', async (req, res) => {
-  const utenti = await User.find({ attivo: true }).select('nomeVisualizzato avatar ruolo username');
+  const utenti = await User.find({ attivo: true }).select('nomeVisualizzato avatar ruolo username squadra');
   res.json(utenti);
 });
 

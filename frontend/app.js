@@ -44,8 +44,23 @@ document.querySelectorAll('[data-auth]').forEach(el => {
     const modo = el.dataset.auth;
     document.getElementById('loginForm').style.display = modo === 'login' ? 'block' : 'none';
     document.getElementById('registratiForm').style.display = modo === 'registrati' ? 'block' : 'none';
+    if (modo === 'registrati') caricaSquadreDisponibili();
   });
 });
+
+async function caricaSquadreDisponibili() {
+  const sel = document.getElementById('regSquadra');
+  try {
+    const squadre = await api('/squadre');
+    if (!squadre.length) {
+      sel.innerHTML = '<option value="">Nessuna squadra disponibile, contatta il direttore</option>';
+      return;
+    }
+    sel.innerHTML = squadre.map(s => `<option value="${s._id}">${s.stemma || ''} ${s.nome}</option>`).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Errore nel caricamento squadre</option>';
+  }
+}
 
 async function login() {
   const username = document.getElementById('loginUsername').value.trim();
@@ -68,6 +83,7 @@ async function registrati() {
   const username = document.getElementById('regUsername').value.trim();
   const nomeVisualizzato = document.getElementById('regNome').value.trim();
   const pin = document.getElementById('regPin').value.trim();
+  const squadraId = document.getElementById('regSquadra').value;
   const codiceInvito = document.getElementById('regCodice').value.trim();
   const erroreEl = document.getElementById('regErrore');
   erroreEl.textContent = '';
@@ -76,9 +92,13 @@ async function registrati() {
     erroreEl.textContent = 'Compila tutti i campi';
     return;
   }
+  if (!squadraId) {
+    erroreEl.textContent = 'Seleziona una squadra';
+    return;
+  }
 
   try {
-    const dati = await api('/auth/registrati', { method: 'POST', body: JSON.stringify({ username, nomeVisualizzato, pin, codiceInvito }) });
+    const dati = await api('/auth/registrati', { method: 'POST', body: JSON.stringify({ username, nomeVisualizzato, pin, codiceInvito, squadraId }) });
     salvaSessione(dati);
     avviaApp();
   } catch (e) {
@@ -118,7 +138,6 @@ function cambiaTab(nome) {
   if (nome === 'verdetti') caricaVerdetti();
   if (nome === 'albo') caricaAlbo();
   if (nome === 'squadre') caricaSquadre();
-  if (nome === 'giornate') caricaGiornateTab();
   if (nome === 'archivio') caricaArchivio();
   if (nome === 'profilo') caricaProfilo();
 }
@@ -134,7 +153,7 @@ async function caricaUltimaEdizione() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? '?'}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata}`;
     container.innerHTML = renderArticolo(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -142,84 +161,28 @@ async function caricaUltimaEdizione() {
 }
 
 function renderArticolo(e) {
-  const nomeSquadra = (s) => s?.stemma ? `${s.stemma} ${s.nome}` : (s?.nome || '—');
   return `
     <div class="article">
       <div class="occhiello">${e.occhiello}</div>
       <h3>${e.titolo}</h3>
-      <div class="byline">Giornata ${e.giornata?.numero ?? '?'} — a cura di ${e.direttore}</div>
+      <div class="byline">Giornata ${e.giornata} — a cura di ${e.direttore}</div>
       ${e.corpo.map(p => `<p>${p}</p>`).join('')}
       <div class="stat-strip">
-        <div class="stat">Vincitore<b>${nomeSquadra(e.stats.vincitore)}</b></div>
-        <div class="stat">Ultimo<b>${nomeSquadra(e.stats.ultimo)}</b></div>
-        <div class="stat">Fenomeno<b>${nomeSquadra(e.stats.fenomeno)}</b></div>
-        <div class="stat">Bidone<b>${nomeSquadra(e.stats.bidone)}</b></div>
+        <div class="stat">Vincitore<b>${e.stats.vincitore}</b></div>
+        <div class="stat">Ultimo<b>${e.stats.ultimo}</b></div>
+        <div class="stat">Fenomeno<b>${e.stats.fenomeno}</b></div>
+        <div class="stat">Bidone<b>${e.stats.bidone}</b></div>
       </div>
     </div>
   `;
 }
 
 // ============ NUOVA EDIZIONE ============
-async function preparaTabNuova() {
+function preparaTabNuova() {
   const autorizzato = stato.utente?.ruolo === 'admin';
   document.getElementById('nuovaNonAutorizzato').style.display = autorizzato ? 'none' : 'block';
   document.getElementById('nuovaFormWrap').style.display = autorizzato ? 'block' : 'none';
-  if (!autorizzato) return;
-
-  document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
-
-  const selectGiornata = document.getElementById('nuovaGiornata');
-  const infoGiornata = document.getElementById('nuovaGiornataInfo');
-  selectGiornata.innerHTML = '<option value="">Caricamento...</option>';
-
-  try {
-    const [giornate, edizioni] = await Promise.all([api('/giornate'), api('/edizioni')]);
-    const giornatePubblicate = new Set(edizioni.map(e => e.giornata?._id));
-    const disponibili = giornate.filter(g => g.conclusa && !giornatePubblicate.has(g._id));
-
-    stato.giornateDisponibili = disponibili;
-
-    if (!disponibili.length) {
-      selectGiornata.innerHTML = '<option value="">Nessuna giornata pronta da pubblicare</option>';
-      infoGiornata.textContent = 'Serve una giornata conclusa (punteggi inseriti) senza edizione già pubblicata.';
-      document.getElementById('nuovaFenomeno').innerHTML = '';
-      document.getElementById('nuovaBidone').innerHTML = '';
-      return;
-    }
-
-    selectGiornata.innerHTML = disponibili.map(g => `<option value="${g._id}">Giornata ${g.numero}</option>`).join('');
-    selectGiornata.onchange = () => aggiornaSelezioneGiornata(selectGiornata.value);
-    aggiornaSelezioneGiornata(selectGiornata.value);
-  } catch (err) {
-    selectGiornata.innerHTML = '<option value="">Errore nel caricamento</option>';
-    infoGiornata.textContent = err.message;
-  }
-}
-
-function aggiornaSelezioneGiornata(giornataId) {
-  const giornata = (stato.giornateDisponibili || []).find(g => g._id === giornataId);
-  const infoGiornata = document.getElementById('nuovaGiornataInfo');
-  const selectFenomeno = document.getElementById('nuovaFenomeno');
-  const selectBidone = document.getElementById('nuovaBidone');
-  if (!giornata) {
-    infoGiornata.textContent = '';
-    selectFenomeno.innerHTML = '';
-    selectBidone.innerHTML = '';
-    return;
-  }
-
-  const squadreInGiornata = [];
-  giornata.accoppiamenti.forEach(a => {
-    squadreInGiornata.push({ id: a.squadraCasa._id, nome: a.squadraCasa.nome, punti: a.punteggioCasa });
-    squadreInGiornata.push({ id: a.squadraTrasferta._id, nome: a.squadraTrasferta.nome, punti: a.punteggioTrasferta });
-  });
-  squadreInGiornata.sort((x, y) => (y.punti ?? -Infinity) - (x.punti ?? -Infinity));
-
-  infoGiornata.innerHTML = squadreInGiornata.map(s => `${s.nome}: <b>${s.punti ?? '—'}</b>`).join(' · ');
-
-  const opzioni = squadreInGiornata.map(s => `<option value="${s.id}">${s.nome} (${s.punti ?? '—'} pt)</option>`).join('');
-  selectFenomeno.innerHTML = opzioni;
-  selectBidone.innerHTML = opzioni;
+  if (autorizzato) document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
 }
 
 async function pubblicaEdizione() {
@@ -227,20 +190,24 @@ async function pubblicaEdizione() {
   erroreEl.textContent = '';
 
   const corpo = {
-    giornataId: document.getElementById('nuovaGiornata').value,
     direttore: document.getElementById('direttore').value.trim(),
-    fenomeno: document.getElementById('nuovaFenomeno').value,
-    bidone: document.getElementById('nuovaBidone').value
+    vincitore: document.getElementById('vincitore').value.trim(),
+    puntiVincitore: document.getElementById('puntiVincitore').value.trim(),
+    ultimo: document.getElementById('ultimo').value.trim(),
+    puntiUltimo: document.getElementById('puntiUltimo').value.trim(),
+    fenomeno: document.getElementById('fenomeno').value.trim(),
+    bidone: document.getElementById('bidone').value.trim()
   };
 
-  if (!corpo.giornataId) {
-    erroreEl.textContent = 'Seleziona una giornata da pubblicare';
+  if (!corpo.vincitore || !corpo.ultimo) {
+    erroreEl.textContent = 'Servono almeno vincitore e ultimo classificato';
     return;
   }
 
   try {
     await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
     mostraToast('Edizione mandata in stampa!');
+    ['vincitore', 'puntiVincitore', 'ultimo', 'puntiUltimo', 'fenomeno', 'bidone'].forEach(id => document.getElementById(id).value = '');
     cambiaTab('ultima');
   } catch (err) {
     erroreEl.textContent = err.message;
@@ -258,21 +225,21 @@ async function caricaVerdetti() {
     }
     if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
 
-    const [squadre, votiInfo] = await Promise.all([
-      api('/squadre'),
+    const [giocatori, votiInfo] = await Promise.all([
+      api('/auth/giocatori'),
       api(`/voti/edizione/${stato.ultimaEdizione._id}`)
     ]);
 
     container.innerHTML = `
-      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata?.numero ?? '?'}</h2>
-      ${stato.categorie.map(cat => renderCategoriaVoto(cat, squadre, votiInfo)).join('')}
+      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata}</h2>
+      ${stato.categorie.map(cat => renderCategoriaVoto(cat, giocatori, votiInfo)).join('')}
     `;
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-function renderCategoriaVoto(cat, squadre, votiInfo) {
+function renderCategoriaVoto(cat, giocatori, votiInfo) {
   const conteggi = votiInfo.conteggi[cat.key] || {};
   const mioVoto = votiInfo.mieiVoti[cat.key];
 
@@ -280,11 +247,11 @@ function renderCategoriaVoto(cat, squadre, votiInfo) {
     <div class="verdetto">
       <h4>${cat.label}</h4>
       <div class="voti-list">
-        ${squadre.map(s => {
-          const n = conteggi[s._id] || 0;
-          const attivo = mioVoto === s._id;
-          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${s._id}')">
-            ${s.stemma || ''} ${s.nome} <span class="count">${n}</span>
+        ${giocatori.map(g => {
+          const n = conteggi[g.nomeVisualizzato] || 0;
+          const attivo = mioVoto === g.nomeVisualizzato;
+          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${g.nomeVisualizzato.replace(/'/g, "\\'")}')">
+            ${g.nomeVisualizzato} <span class="count">${n}</span>
           </button>`;
         }).join('')}
       </div>
@@ -314,7 +281,7 @@ async function caricaAlbo() {
       <div class="albo-cat">
         <h5>${cat.label}</h5>
         ${cat.top.length
-          ? cat.top.map((v, i) => `<div>${i + 1}. ${v.squadra ? `${v.squadra.stemma || ''} ${v.squadra.nome}` : 'Squadra rimossa'} — ${v.voti} voti</div>`).join('')
+          ? cat.top.map(([nome, n], i) => `<div>${i + 1}. ${nome} — ${n} voti</div>`).join('')
           : '<div>Ancora nessun voto</div>'}
       </div>
     `).join('');
@@ -326,193 +293,94 @@ async function caricaAlbo() {
 // ============ SQUADRE ============
 async function caricaSquadre() {
   const container = document.getElementById('squadreContainer');
-  const wrapNuova = document.getElementById('nuovaSquadraWrap');
-  const isAdmin = stato.utente?.ruolo === 'admin';
-  wrapNuova.style.display = isAdmin ? 'block' : 'none';
-
   try {
     const squadre = await api('/squadre');
-
     if (!squadre.length) {
       container.innerHTML = '<div class="empty">Nessuna squadra registrata ancora.</div>';
-    } else {
-      container.innerHTML = squadre.map(renderSquadraCard).join('');
-    }
-
-    if (isAdmin) await popolaSelectProprietario();
-  } catch (err) {
-    container.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-function renderSquadraCard(s) {
-  const membri = (s.membri || []).map(m => m.nomeVisualizzato).join(', ');
-  return `
-    <div class="squadra-card">
-      <div class="stemma">${s.stemma || '🛡️'}</div>
-      <div class="info">
-        <h4>${s.coloreKit ? `<span class="kit-dot" style="background:${s.coloreKit}"></span>` : ''}${s.nome}</h4>
-        <div class="proprietario">Proprietario: ${s.proprietario?.nomeVisualizzato || '—'}${membri ? ` · Con: ${membri}` : ''}</div>
-      </div>
-    </div>
-  `;
-}
-
-async function popolaSelectProprietario() {
-  const select = document.getElementById('squadraProprietario');
-  try {
-    const giocatori = await api('/auth/giocatori');
-    select.innerHTML = giocatori.map(g => `<option value="${g._id}">${g.nomeVisualizzato}</option>`).join('');
-  } catch (err) {
-    select.innerHTML = '';
-  }
-}
-
-async function creaSquadra() {
-  const erroreEl = document.getElementById('squadraErrore');
-  erroreEl.textContent = '';
-
-  const corpo = {
-    nome: document.getElementById('squadraNome').value.trim(),
-    stemma: document.getElementById('squadraStemma').value.trim(),
-    coloreKit: document.getElementById('squadraColore').value.trim(),
-    proprietario: document.getElementById('squadraProprietario').value
-  };
-
-  if (!corpo.nome || !corpo.proprietario) {
-    erroreEl.textContent = 'Nome e proprietario sono obbligatori';
-    return;
-  }
-
-  try {
-    await api('/squadre', { method: 'POST', body: JSON.stringify(corpo) });
-    mostraToast('Squadra registrata!');
-    ['squadraNome', 'squadraStemma', 'squadraColore'].forEach(id => document.getElementById(id).value = '');
-    caricaSquadre();
-  } catch (err) {
-    erroreEl.textContent = err.message;
-  }
-}
-
-// ============ GIORNATE ============
-async function caricaGiornateTab() {
-  const isAdmin = stato.utente?.ruolo === 'admin';
-  document.getElementById('importaCalendarioWrap').style.display = isAdmin ? 'block' : 'none';
-  await caricaGiornate();
-}
-
-async function importaCalendario() {
-  const testo = document.getElementById('calendarioTesto').value;
-  const erroreEl = document.getElementById('importaCalendarioErrore');
-  const esitoEl = document.getElementById('importaCalendarioEsito');
-  erroreEl.textContent = '';
-  esitoEl.textContent = '';
-
-  if (!testo.trim()) {
-    erroreEl.textContent = 'Incolla il testo del calendario prima di importare';
-    return;
-  }
-
-  try {
-    const risultato = await api('/giornate/importa-calendario', { method: 'POST', body: JSON.stringify({ testo }) });
-    esitoEl.textContent = `Create ${risultato.create} giornate.` +
-      (risultato.saltate ? ` Saltate ${risultato.saltate} già esistenti (giornata ${risultato.numeriSaltati.join(', ')}).` : '');
-    document.getElementById('calendarioTesto').value = '';
-    caricaGiornate();
-  } catch (err) {
-    erroreEl.textContent = err.message;
-  }
-}
-
-async function caricaGiornate() {
-  const container = document.getElementById('giornateContainer');
-  const isAdmin = stato.utente?.ruolo === 'admin';
-  try {
-    const giornate = await api('/giornate');
-    if (!giornate.length) {
-      container.innerHTML = '<div class="empty">Nessuna giornata caricata. Importa il calendario per iniziare.</div>';
       return;
     }
-    const ordinate = [...giornate].reverse(); // dal backend arrivano più recenti prima, qui vogliamo Giornata 1 in cima
-    container.innerHTML = ordinate.map(g => renderGiornataCard(g, isAdmin)).join('');
+    container.innerHTML = `
+      <h2 class="section-title">Le Squadre della Lega</h2>
+      <div class="players">
+        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${s.stemma || '⚽'} ${s.nome}</span>`).join('')}
+      </div>
+    `;
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-function renderGiornataCard(g, isAdmin) {
-  const statoGiornata = g.conclusa ? 'conclusa' : 'aperta';
-  const etichettaStato = g.conclusa ? 'Conclusa' : 'Da giocare';
+async function apriSquadra(id) {
+  const container = document.getElementById('squadreContainer');
+  try {
+    const { squadra, allenatori, premi } = await api(`/squadre/${id}`);
+    if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
+    const labelCategoria = key => (stato.categorie.find(c => c.key === key) || {}).label || key;
 
-  const righe = g.accoppiamenti.map(a => {
-    const modificabile = isAdmin && !g.conclusa;
-    const inputCasa = modificabile
-      ? `<input type="number" data-giornata="${g._id}" data-acc="${a._id}" data-lato="casa" value="${a.punteggioCasa ?? ''}">`
-      : `<b>${a.punteggioCasa ?? '—'}</b>`;
-    const inputTrasferta = modificabile
-      ? `<input type="number" data-giornata="${g._id}" data-acc="${a._id}" data-lato="trasferta" value="${a.punteggioTrasferta ?? ''}">`
-      : `<b>${a.punteggioTrasferta ?? '—'}</b>`;
-
-    return `
-      <div class="accoppiamento-row">
-        <span class="nome">${a.squadraCasa?.nome || '?'}</span>
-        ${inputCasa}
-        <span>–</span>
-        ${inputTrasferta}
-        <span class="nome destra">${a.squadraTrasferta?.nome || '?'}</span>
+    container.innerHTML = `
+      <button class="ghost" onclick="caricaSquadre()">← Torna alle squadre</button>
+      <div class="article" style="margin-top:14px">
+        <div class="occhiello">${squadra.stemma || '⚽'} Scheda squadra</div>
+        <h3>${squadra.nome}</h3>
+        <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
+        ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
+        ${squadra.maglia ? `<img src="${squadra.maglia}" alt="maglia" style="max-width:160px;display:block;margin:10px 0">` : ''}
+        ${squadra.rosa && squadra.rosa.length ? `
+          <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Rosa</h4>
+          <div class="players">${squadra.rosa.map(n => `<span class="chip">${n}</span>`).join('')}</div>
+        ` : ''}
+        <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Premi vinti</h4>
+        ${premi.length ? `
+          <div class="players">${premi.map(p => `<span class="chip admin">${labelCategoria(p.categoria)} — G${p.giornata}</span>`).join('')}</div>
+        ` : '<div class="empty">Ancora nessun premio vinto.</div>'}
       </div>
     `;
-  }).join('');
-
-  const azioni = !isAdmin ? '' : g.conclusa
-    ? `<div class="azioni"><button class="ghost" onclick="riapriGiornata('${g._id}')">Riapri per correggere</button></div>`
-    : `<div class="azioni">
-         <button class="ghost" onclick="salvaPunteggiGiornata('${g._id}', false)">Salva punteggi</button>
-         <button class="primary" onclick="salvaPunteggiGiornata('${g._id}', true)">Salva e concludi</button>
-       </div>`;
-
-  return `
-    <div class="giornata-card">
-      <div class="testata">
-        <h4>Giornata ${g.numero}${g.serieANumero ? ` <span style="font-weight:normal;font-size:11px;color:var(--ink-soft)">(Serie A ${g.serieANumero})</span>` : ''}</h4>
-        <span class="badge-stato ${statoGiornata}">${etichettaStato}</span>
-      </div>
-      ${righe}
-      ${azioni}
-    </div>
-  `;
-}
-
-async function salvaPunteggiGiornata(giornataId, concludi) {
-  const inputs = document.querySelectorAll(`input[data-giornata="${giornataId}"]`);
-  const perAccoppiamento = {};
-  inputs.forEach(inp => {
-    const accId = inp.dataset.acc;
-    if (!perAccoppiamento[accId]) perAccoppiamento[accId] = { _id: accId };
-    const valore = inp.value === '' ? null : Number(inp.value);
-    if (inp.dataset.lato === 'casa') perAccoppiamento[accId].punteggioCasa = valore;
-    else perAccoppiamento[accId].punteggioTrasferta = valore;
-  });
-
-  const corpo = { accoppiamenti: Object.values(perAccoppiamento) };
-  if (concludi) corpo.conclusa = true;
-
-  try {
-    await api(`/giornate/${giornataId}`, { method: 'PUT', body: JSON.stringify(corpo) });
-    mostraToast(concludi ? 'Giornata conclusa!' : 'Punteggi salvati');
-    caricaGiornate();
   } catch (err) {
-    mostraToast(err.message);
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-async function riapriGiornata(giornataId) {
+// ============ LA MIA SQUADRA (dal profilo) ============
+async function caricaMiaSquadra() {
+  const view = document.getElementById('miaSquadraView');
+  const form = document.getElementById('miaSquadraForm');
+  if (!stato.utente.squadra) {
+    view.innerHTML = '<div class="empty">Nessuna squadra assegnata.</div>';
+    form.style.display = 'none';
+    return;
+  }
   try {
-    await api(`/giornate/${giornataId}`, { method: 'PUT', body: JSON.stringify({ conclusa: false }) });
-    mostraToast('Giornata riaperta');
-    caricaGiornate();
+    const { squadra } = await api(`/squadre/${stato.utente.squadra}`);
+    view.innerHTML = `<div>Squadra: <b>${squadra.stemma || ''} ${squadra.nome}</b></div>`;
+    document.getElementById('squadraStemma').value = squadra.stemma || '';
+    document.getElementById('squadraFoto').value = squadra.foto || '';
+    document.getElementById('squadraMaglia').value = squadra.maglia || '';
+    document.getElementById('squadraBio').value = squadra.bio || '';
+    document.getElementById('squadraRosa').value = (squadra.rosa || []).join(', ');
+    form.style.display = 'block';
   } catch (err) {
-    mostraToast(err.message);
+    view.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+async function salvaMiaSquadra() {
+  const erroreEl = document.getElementById('squadraErrore');
+  erroreEl.textContent = '';
+  try {
+    await api(`/squadre/${stato.utente.squadra}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        stemma: document.getElementById('squadraStemma').value.trim(),
+        foto: document.getElementById('squadraFoto').value.trim(),
+        maglia: document.getElementById('squadraMaglia').value.trim(),
+        bio: document.getElementById('squadraBio').value.trim(),
+        rosa: document.getElementById('squadraRosa').value.split(',').map(s => s.trim()).filter(Boolean)
+      })
+    });
+    mostraToast('Squadra aggiornata!');
+    caricaMiaSquadra();
+  } catch (err) {
+    erroreEl.textContent = err.message;
   }
 }
 
@@ -527,7 +395,7 @@ async function caricaArchivio() {
     }
     container.innerHTML = edizioni.map(e => `
       <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
-        <div class="g">Giornata ${e.giornata?.numero ?? '?'}</div>
+        <div class="g">Giornata ${e.giornata}</div>
         <h4>${e.titolo}</h4>
       </div>
     `).join('');
@@ -563,6 +431,8 @@ async function caricaProfilo() {
   } catch (err) {
     mostraToast(err.message);
   }
+
+  caricaMiaSquadra();
 }
 
 // ============ AVVIO APP ============

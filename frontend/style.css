@@ -45,6 +45,14 @@ input[type=text],input[type=number],input[type=password]{
   width:100%;padding:8px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
   border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);
 }
+textarea{
+  width:100%;padding:8px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
+  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);resize:vertical;
+}
+select{
+  width:100%;padding:8px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
+  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);
+}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 button.primary{
   margin-top:16px;width:100%;padding:12px;font-family:'Oswald',sans-serif;font-weight:600;
@@ -94,31 +102,6 @@ button.link{background:none;border:none;color:var(--stamp-red);font-family:'Oswa
   position:absolute;transform:rotate(-8deg);border:3px solid var(--stamp-red);color:var(--stamp-red);
   font-family:'Anton',sans-serif;font-size:13px;padding:2px 10px;letter-spacing:.1em;opacity:.85;
 }
-.squadra-card{border:1px solid var(--ink-soft);padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
-.squadra-card .stemma{font-size:28px;line-height:1;}
-.squadra-card .info h4{font-family:'Anton',sans-serif;font-size:16px;margin:0 0 2px;}
-.squadra-card .info .proprietario{font-family:'Oswald',sans-serif;font-size:11px;color:var(--ink-soft);}
-.squadra-card .kit-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;border:1px solid var(--ink-soft);}
-select{
-  width:100%;padding:8px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
-  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);
-}
-textarea{
-  width:100%;padding:8px 10px;font-family:'Libre Baskerville',serif;font-size:13px;
-  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);resize:vertical;
-}
-.giornata-card{border:1px solid var(--ink-soft);padding:12px;margin-bottom:10px;}
-.giornata-card .testata{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.giornata-card .testata h4{font-family:'Anton',sans-serif;font-size:16px;margin:0;}
-.badge-stato{font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;padding:3px 8px;letter-spacing:.05em;white-space:nowrap;}
-.badge-stato.aperta{background:var(--gold);color:#fff;}
-.badge-stato.conclusa{background:var(--ink);color:var(--paper);}
-.accoppiamento-row{display:flex;align-items:center;gap:8px;font-family:'Oswald',sans-serif;font-size:12px;margin-bottom:6px;}
-.accoppiamento-row .nome{flex:1;}
-.accoppiamento-row .nome.destra{text-align:right}
-.accoppiamento-row input[type=number]{width:50px;padding:4px 6px;text-align:center;font-family:'Oswald',sans-serif;font-size:12px;}
-.giornata-card .azioni{display:flex;gap:8px;margin-top:12px;}
-.giornata-card .azioni button{flex:1;margin-top:0;}
 .albo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .albo-cat{border:1px solid var(--ink-soft);padding:10px;}
 .albo-cat h5{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--stamp-red);margin:0 0 6px;}

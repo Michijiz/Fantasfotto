@@ -1,87 +1,85 @@
 const express = require('express');
 const Squadra = require('../models/Squadra');
-const { richiediAuth, richiediAdmin } = require('../middleware/auth');
+const User = require('../models/User');
+const Voto = require('../models/Voto');
+const Edizione = require('../models/Edizione');
+const { richiediAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Elenco squadre attive
-router.get('/', richiediAuth, async (req, res) => {
-  const squadre = await Squadra.find({ attiva: true })
-    .populate('proprietario', 'nomeVisualizzato avatar username')
-    .populate('membri', 'nomeVisualizzato avatar username')
-    .sort({ nome: 1 });
+// Elenco squadre (no auth: serve anche nel form di registrazione)
+router.get('/', async (req, res) => {
+  const squadre = await Squadra.find().sort({ nome: 1 });
   res.json(squadre);
 });
 
-router.get('/:id', richiediAuth, async (req, res) => {
-  const squadra = await Squadra.findById(req.params.id)
-    .populate('proprietario', 'nomeVisualizzato avatar username')
-    .populate('membri', 'nomeVisualizzato avatar username');
-  if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
-  res.json(squadra);
-});
+// Calcola i premi vinti dai giocatori di una squadra, giornata per giornata
+async function calcolaPremiSquadra(nomiAllenatori) {
+  const edizioni = await Edizione.find().select('_id giornata');
+  const premi = [];
 
-// Crea squadra - solo il direttore/admin la registra ufficialmente in lega
-router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
-  try {
-    const { nome, stemma, coloreKit, proprietario, membri } = req.body;
-
-    if (!nome || !proprietario) {
-      return res.status(400).json({ errore: 'Nome e proprietario sono obbligatori' });
-    }
-
-    const esistente = await Squadra.findOne({ nome: nome.trim() });
-    if (esistente) return res.status(409).json({ errore: 'Esiste già una squadra con questo nome' });
-
-    const squadra = await Squadra.create({
-      nome: nome.trim(),
-      stemma: stemma || '',
-      coloreKit: coloreKit || '',
-      proprietario,
-      membri: membri || []
+  for (const ed of edizioni) {
+    const voti = await Voto.find({ edizione: ed._id });
+    const perCategoria = {};
+    voti.forEach(v => {
+      perCategoria[v.categoria] = perCategoria[v.categoria] || {};
+      perCategoria[v.categoria][v.votato] = (perCategoria[v.categoria][v.votato] || 0) + 1;
     });
 
-    res.status(201).json(squadra);
-  } catch (e) {
-    res.status(500).json({ errore: 'Errore nella creazione della squadra' });
+    Object.entries(perCategoria).forEach(([categoria, conteggi]) => {
+      const ordinati = Object.entries(conteggi).sort((a, b) => b[1] - a[1]);
+      if (!ordinati.length) return;
+      const max = ordinati[0][1];
+      const vincitori = ordinati.filter(([, n]) => n === max).map(([nome]) => nome);
+      if (vincitori.some(nome => nomiAllenatori.includes(nome))) {
+        premi.push({ giornata: ed.giornata, categoria, voti: max });
+      }
+    });
   }
-});
+  return premi.sort((a, b) => b.giornata - a.giornata);
+}
 
-// Modifica squadra - il proprietario può curare l'aspetto (stemma, colore), l'admin può cambiare tutto
-router.put('/:id', richiediAuth, async (req, res) => {
+// Dettaglio squadra: allenatori, storia, stemma, rosa, premi vinti
+router.get('/:id', richiediAuth, async (req, res) => {
   try {
     const squadra = await Squadra.findById(req.params.id);
     if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
 
-    const isAdmin = req.utente.ruolo === 'admin';
-    const isProprietario = String(squadra.proprietario) === String(req.utente.id);
-    if (!isAdmin && !isProprietario) {
-      return res.status(403).json({ errore: 'Solo il proprietario o il direttore possono modificare questa squadra' });
+    const allenatori = await User.find({ squadra: squadra._id, attivo: true })
+      .select('nomeVisualizzato avatar username');
+
+    const premi = await calcolaPremiSquadra(allenatori.map(a => a.nomeVisualizzato));
+
+    res.json({ squadra, allenatori, premi });
+  } catch (e) {
+    res.status(500).json({ errore: 'Errore nel caricamento della squadra' });
+  }
+});
+
+// Modifica squadra: solo un allenatore della squadra (o admin)
+router.patch('/:id', richiediAuth, async (req, res) => {
+  try {
+    const squadra = await Squadra.findById(req.params.id);
+    if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
+
+    const puoModificare = req.utente.ruolo === 'admin' ||
+      String(req.utente.squadra) === String(squadra._id);
+    if (!puoModificare) {
+      return res.status(403).json({ errore: 'Puoi modificare solo la tua squadra' });
     }
 
-    const { nome, stemma, coloreKit, proprietario, membri } = req.body;
-
-    // Cambiare nome o proprietario è una modifica "amministrativa": solo l'admin
-    if (isAdmin) {
-      if (nome) squadra.nome = nome.trim();
-      if (proprietario) squadra.proprietario = proprietario;
-      if (membri) squadra.membri = membri;
-    }
+    const { foto, maglia, bio, rosa, stemma } = req.body;
     if (stemma !== undefined) squadra.stemma = stemma;
-    if (coloreKit !== undefined) squadra.coloreKit = coloreKit;
+    if (foto !== undefined) squadra.foto = foto;
+    if (maglia !== undefined) squadra.maglia = maglia;
+    if (bio !== undefined) squadra.bio = bio;
+    if (Array.isArray(rosa)) squadra.rosa = rosa;
 
     await squadra.save();
     res.json(squadra);
   } catch (e) {
-    res.status(500).json({ errore: 'Errore nella modifica della squadra' });
+    res.status(500).json({ errore: 'Errore nel salvataggio della squadra' });
   }
-});
-
-// Disattiva squadra (soft delete, coerente con User.attivo) - solo admin
-router.delete('/:id', richiediAuth, richiediAdmin, async (req, res) => {
-  const squadra = await Squadra.findByIdAndUpdate(req.params.id, { attiva: false }, { new: true });
-  if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
-  res.json({ ok: true });
 });
 
 module.exports = router;

@@ -40,6 +40,10 @@
     <input type="text" id="regNome" placeholder="es. Michelangelo">
     <label>PIN (4-6 cifre)</label>
     <input type="password" id="regPin" inputmode="numeric" placeholder="il tuo PIN segreto">
+    <label>Squadra</label>
+    <select id="regSquadra">
+      <option value="">Caricamento squadre...</option>
+    </select>
     <label>Codice invito della Lega</label>
     <input type="text" id="regCodice" placeholder="chiedilo al direttore">
     <button class="primary" onclick="registrati()">Iscriviti</button>
@@ -70,7 +74,6 @@
     <div class="tab" data-tab="verdetti">Verdetti</div>
     <div class="tab" data-tab="albo">Albo</div>
     <div class="tab" data-tab="squadre">Squadre</div>
-    <div class="tab" data-tab="giornate">Giornate</div>
     <div class="tab" data-tab="archivio">Archivio</div>
     <div class="tab" data-tab="profilo">Profilo</div>
   </div>
@@ -93,18 +96,36 @@
         <label>Direttore di turno</label>
         <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
 
-        <label>Giornata da pubblicare</label>
-        <select id="nuovaGiornata"></select>
-        <div id="nuovaGiornataInfo" class="empty" style="padding:10px 0;text-align:left"></div>
+        <div class="row2">
+          <div>
+            <label>Vincitore giornata</label>
+            <input type="text" id="vincitore" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti vincitore</label>
+            <input type="number" id="puntiVincitore" placeholder="es. 78">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Ultimo classificato</label>
+            <input type="text" id="ultimo" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti ultimo</label>
+            <input type="number" id="puntiUltimo" placeholder="es. 41">
+          </div>
+        </div>
 
         <div class="row2">
           <div>
             <label>Fenomeno di giornata</label>
-            <select id="nuovaFenomeno"></select>
+            <input type="text" id="fenomeno" placeholder="Chi ha stupito">
           </div>
           <div>
             <label>Bidone di giornata</label>
-            <select id="nuovaBidone"></select>
+            <input type="text" id="bidone" placeholder="Chi ha deluso">
           </div>
         </div>
 
@@ -131,40 +152,8 @@
 
   <!-- SQUADRE -->
   <div id="tab-squadre" class="tab-content" style="display:none">
-    <div class="card">
-      <h2 class="section-title">Le Squadre della Lega</h2>
-      <div id="squadreContainer"><div class="empty">Caricamento in corso...</div></div>
-    </div>
-
-    <div class="card" id="nuovaSquadraWrap" style="display:none">
-      <h2 class="section-title">Registra una nuova squadra</h2>
-      <label>Nome squadra</label>
-      <input type="text" id="squadraNome" placeholder="es. I Falchi di Fuorigrotta">
-      <label>Stemma (emoji)</label>
-      <input type="text" id="squadraStemma" placeholder="es. 🦅">
-      <label>Colore kit</label>
-      <input type="text" id="squadraColore" placeholder="es. #c8102e">
-      <label>Proprietario</label>
-      <select id="squadraProprietario"></select>
-      <button class="primary" onclick="creaSquadra()">Registra squadra</button>
-      <div id="squadraErrore" class="errore-msg"></div>
-    </div>
-  </div>
-
-  <!-- GIORNATE -->
-  <div id="tab-giornate" class="tab-content" style="display:none">
-    <div class="card" id="importaCalendarioWrap" style="display:none">
-      <h2 class="section-title">Importa Calendario</h2>
-      <div class="empty" style="padding:0 0 10px;text-align:left">Incolla qui il testo copiato dalla pagina "Calendario" di Leghe Fantacalcio. Crea solo le giornate non ancora presenti, i punteggi si inseriscono dopo.</div>
-      <textarea id="calendarioTesto" rows="8" placeholder="1° Giornata (3° giornata di Serie A)&#10;Squadra A&#10;0&#10;Squadra B&#10;0&#10;..."></textarea>
-      <button class="primary" onclick="importaCalendario()">Importa calendario</button>
-      <div id="importaCalendarioEsito" class="empty" style="padding:8px 0 0;text-align:left"></div>
-      <div id="importaCalendarioErrore" class="errore-msg"></div>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">Le Giornate</h2>
-      <div id="giornateContainer"><div class="empty">Caricamento in corso...</div></div>
+    <div class="card" id="squadreContainer">
+      <div class="empty">Caricamento squadre...</div>
     </div>
   </div>
 
@@ -181,6 +170,26 @@
       <h2 class="section-title">Il tuo profilo</h2>
       <div id="profiloContainer"></div>
     </div>
+
+    <div class="card">
+      <h2 class="section-title">La tua squadra</h2>
+      <div id="miaSquadraView"></div>
+      <div id="miaSquadraForm" style="display:none">
+        <label>Stemma (emoji o url immagine)</label>
+        <input type="text" id="squadraStemma" placeholder="🛡️ oppure un url">
+        <label>Foto squadra (url)</label>
+        <input type="text" id="squadraFoto" placeholder="url immagine">
+        <label>Maglia (url immagine)</label>
+        <input type="text" id="squadraMaglia" placeholder="url immagine">
+        <label>Bio / storia della squadra</label>
+        <textarea id="squadraBio" rows="4" placeholder="Racconta la storia della tua squadra..."></textarea>
+        <label>Rosa (nomi separati da virgola)</label>
+        <input type="text" id="squadraRosa" placeholder="Giocatore 1, Giocatore 2, ...">
+        <button class="primary" onclick="salvaMiaSquadra()">Salva squadra</button>
+        <div id="squadraErrore" class="errore-msg"></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2 class="section-title">Giocatori della Lega</h2>
       <div class="players" id="playersList"></div>
