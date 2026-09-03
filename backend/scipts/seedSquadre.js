@@ -2,12 +2,16 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Squadra = require('../models/Squadra');
 
-// Modifica questo elenco con i nomi reali delle squadre della tua lega
+// Squadre della lega
 const SQUADRE = [
-  'I Draghi di Fuffa',
-  'Real Divano FC',
-  "Panchina d'Oro",
-  // ...aggiungi tutte le squadre della lega
+  'Noi United',
+  'Bubbeo Fc',
+  'ASs Gotiche-Gotiche',
+  'Dunder Mifflin',
+  'US TICCHIU',
+  'Real Cumbia',
+  'mieccioEannintra',
+  'Chiavo Veronica FC',
 ];
 
 (async () => {
