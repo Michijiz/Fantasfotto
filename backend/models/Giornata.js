@@ -9,6 +9,7 @@ const accoppiamentoSchema = new mongoose.Schema({
 
 const giornataSchema = new mongoose.Schema({
   numero: { type: Number, required: true, unique: true },
+  serieANumero: { type: Number }, // giornata corrispondente del campionato reale, utile per l'articolo
   data: { type: Date },
   accoppiamenti: [accoppiamentoSchema],
 

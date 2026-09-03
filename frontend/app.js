@@ -118,6 +118,7 @@ function cambiaTab(nome) {
   if (nome === 'verdetti') caricaVerdetti();
   if (nome === 'albo') caricaAlbo();
   if (nome === 'squadre') caricaSquadre();
+  if (nome === 'giornate') caricaGiornateTab();
   if (nome === 'archivio') caricaArchivio();
   if (nome === 'profilo') caricaProfilo();
 }
@@ -390,6 +391,128 @@ async function creaSquadra() {
     caricaSquadre();
   } catch (err) {
     erroreEl.textContent = err.message;
+  }
+}
+
+// ============ GIORNATE ============
+async function caricaGiornateTab() {
+  const isAdmin = stato.utente?.ruolo === 'admin';
+  document.getElementById('importaCalendarioWrap').style.display = isAdmin ? 'block' : 'none';
+  await caricaGiornate();
+}
+
+async function importaCalendario() {
+  const testo = document.getElementById('calendarioTesto').value;
+  const erroreEl = document.getElementById('importaCalendarioErrore');
+  const esitoEl = document.getElementById('importaCalendarioEsito');
+  erroreEl.textContent = '';
+  esitoEl.textContent = '';
+
+  if (!testo.trim()) {
+    erroreEl.textContent = 'Incolla il testo del calendario prima di importare';
+    return;
+  }
+
+  try {
+    const risultato = await api('/giornate/importa-calendario', { method: 'POST', body: JSON.stringify({ testo }) });
+    esitoEl.textContent = `Create ${risultato.create} giornate.` +
+      (risultato.saltate ? ` Saltate ${risultato.saltate} già esistenti (giornata ${risultato.numeriSaltati.join(', ')}).` : '');
+    document.getElementById('calendarioTesto').value = '';
+    caricaGiornate();
+  } catch (err) {
+    erroreEl.textContent = err.message;
+  }
+}
+
+async function caricaGiornate() {
+  const container = document.getElementById('giornateContainer');
+  const isAdmin = stato.utente?.ruolo === 'admin';
+  try {
+    const giornate = await api('/giornate');
+    if (!giornate.length) {
+      container.innerHTML = '<div class="empty">Nessuna giornata caricata. Importa il calendario per iniziare.</div>';
+      return;
+    }
+    const ordinate = [...giornate].reverse(); // dal backend arrivano più recenti prima, qui vogliamo Giornata 1 in cima
+    container.innerHTML = ordinate.map(g => renderGiornataCard(g, isAdmin)).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+function renderGiornataCard(g, isAdmin) {
+  const statoGiornata = g.conclusa ? 'conclusa' : 'aperta';
+  const etichettaStato = g.conclusa ? 'Conclusa' : 'Da giocare';
+
+  const righe = g.accoppiamenti.map(a => {
+    const modificabile = isAdmin && !g.conclusa;
+    const inputCasa = modificabile
+      ? `<input type="number" data-giornata="${g._id}" data-acc="${a._id}" data-lato="casa" value="${a.punteggioCasa ?? ''}">`
+      : `<b>${a.punteggioCasa ?? '—'}</b>`;
+    const inputTrasferta = modificabile
+      ? `<input type="number" data-giornata="${g._id}" data-acc="${a._id}" data-lato="trasferta" value="${a.punteggioTrasferta ?? ''}">`
+      : `<b>${a.punteggioTrasferta ?? '—'}</b>`;
+
+    return `
+      <div class="accoppiamento-row">
+        <span class="nome">${a.squadraCasa?.nome || '?'}</span>
+        ${inputCasa}
+        <span>–</span>
+        ${inputTrasferta}
+        <span class="nome destra">${a.squadraTrasferta?.nome || '?'}</span>
+      </div>
+    `;
+  }).join('');
+
+  const azioni = !isAdmin ? '' : g.conclusa
+    ? `<div class="azioni"><button class="ghost" onclick="riapriGiornata('${g._id}')">Riapri per correggere</button></div>`
+    : `<div class="azioni">
+         <button class="ghost" onclick="salvaPunteggiGiornata('${g._id}', false)">Salva punteggi</button>
+         <button class="primary" onclick="salvaPunteggiGiornata('${g._id}', true)">Salva e concludi</button>
+       </div>`;
+
+  return `
+    <div class="giornata-card">
+      <div class="testata">
+        <h4>Giornata ${g.numero}${g.serieANumero ? ` <span style="font-weight:normal;font-size:11px;color:var(--ink-soft)">(Serie A ${g.serieANumero})</span>` : ''}</h4>
+        <span class="badge-stato ${statoGiornata}">${etichettaStato}</span>
+      </div>
+      ${righe}
+      ${azioni}
+    </div>
+  `;
+}
+
+async function salvaPunteggiGiornata(giornataId, concludi) {
+  const inputs = document.querySelectorAll(`input[data-giornata="${giornataId}"]`);
+  const perAccoppiamento = {};
+  inputs.forEach(inp => {
+    const accId = inp.dataset.acc;
+    if (!perAccoppiamento[accId]) perAccoppiamento[accId] = { _id: accId };
+    const valore = inp.value === '' ? null : Number(inp.value);
+    if (inp.dataset.lato === 'casa') perAccoppiamento[accId].punteggioCasa = valore;
+    else perAccoppiamento[accId].punteggioTrasferta = valore;
+  });
+
+  const corpo = { accoppiamenti: Object.values(perAccoppiamento) };
+  if (concludi) corpo.conclusa = true;
+
+  try {
+    await api(`/giornate/${giornataId}`, { method: 'PUT', body: JSON.stringify(corpo) });
+    mostraToast(concludi ? 'Giornata conclusa!' : 'Punteggi salvati');
+    caricaGiornate();
+  } catch (err) {
+    mostraToast(err.message);
+  }
+}
+
+async function riapriGiornata(giornataId) {
+  try {
+    await api(`/giornate/${giornataId}`, { method: 'PUT', body: JSON.stringify({ conclusa: false }) });
+    mostraToast('Giornata riaperta');
+    caricaGiornate();
+  } catch (err) {
+    mostraToast(err.message);
   }
 }
 

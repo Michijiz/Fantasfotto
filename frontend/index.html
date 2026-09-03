@@ -70,6 +70,7 @@
     <div class="tab" data-tab="verdetti">Verdetti</div>
     <div class="tab" data-tab="albo">Albo</div>
     <div class="tab" data-tab="squadre">Squadre</div>
+    <div class="tab" data-tab="giornate">Giornate</div>
     <div class="tab" data-tab="archivio">Archivio</div>
     <div class="tab" data-tab="profilo">Profilo</div>
   </div>
@@ -147,6 +148,23 @@
       <select id="squadraProprietario"></select>
       <button class="primary" onclick="creaSquadra()">Registra squadra</button>
       <div id="squadraErrore" class="errore-msg"></div>
+    </div>
+  </div>
+
+  <!-- GIORNATE -->
+  <div id="tab-giornate" class="tab-content" style="display:none">
+    <div class="card" id="importaCalendarioWrap" style="display:none">
+      <h2 class="section-title">Importa Calendario</h2>
+      <div class="empty" style="padding:0 0 10px;text-align:left">Incolla qui il testo copiato dalla pagina "Calendario" di Leghe Fantacalcio. Crea solo le giornate non ancora presenti, i punteggi si inseriscono dopo.</div>
+      <textarea id="calendarioTesto" rows="8" placeholder="1° Giornata (3° giornata di Serie A)&#10;Squadra A&#10;0&#10;Squadra B&#10;0&#10;..."></textarea>
+      <button class="primary" onclick="importaCalendario()">Importa calendario</button>
+      <div id="importaCalendarioEsito" class="empty" style="padding:8px 0 0;text-align:left"></div>
+      <div id="importaCalendarioErrore" class="errore-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Le Giornate</h2>
+      <div id="giornateContainer"><div class="empty">Caricamento in corso...</div></div>
     </div>
   </div>
 
