@@ -175,12 +175,26 @@
       <h2 class="section-title">La tua squadra</h2>
       <div id="miaSquadraView"></div>
       <div id="miaSquadraForm" style="display:none">
-        <label>Stemma (emoji o url immagine)</label>
-        <input type="text" id="squadraStemma" placeholder="🛡️ oppure un url">
-        <label>Foto squadra (url)</label>
-        <input type="text" id="squadraFoto" placeholder="url immagine">
-        <label>Maglia (url immagine)</label>
-        <input type="text" id="squadraMaglia" placeholder="url immagine">
+        <label>Stemma</label>
+        <div class="upload-row">
+          <img id="stemmaPreview" class="img-preview" style="display:none">
+          <input type="file" id="stemmaFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraStemma">
+
+        <label>Foto squadra</label>
+        <div class="upload-row">
+          <img id="fotoPreview" class="img-preview" style="display:none">
+          <input type="file" id="fotoFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraFoto">
+
+        <label>Maglia</label>
+        <div class="upload-row">
+          <img id="magliaPreview" class="img-preview" style="display:none">
+          <input type="file" id="magliaFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraMaglia">
         <label>Bio / storia della squadra</label>
         <textarea id="squadraBio" rows="4" placeholder="Racconta la storia della tua squadra..."></textarea>
         <label>Rosa (nomi separati da virgola)</label>

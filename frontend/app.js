@@ -291,6 +291,14 @@ async function caricaAlbo() {
 }
 
 // ============ SQUADRE ============
+function renderStemma(stemma, dimensione = 18) {
+  if (!stemma) return '⚽';
+  if (stemma.startsWith('http')) {
+    return `<img src="${stemma}" alt="" style="width:${dimensione}px;height:${dimensione}px;object-fit:cover;vertical-align:middle;border-radius:2px;">`;
+  }
+  return stemma; // emoji o testo libero
+}
+
 async function caricaSquadre() {
   const container = document.getElementById('squadreContainer');
   try {
@@ -302,7 +310,7 @@ async function caricaSquadre() {
     container.innerHTML = `
       <h2 class="section-title">Le Squadre della Lega</h2>
       <div class="players">
-        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${s.stemma || '⚽'} ${s.nome}</span>`).join('')}
+        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${renderStemma(s.stemma)} ${s.nome}</span>`).join('')}
       </div>
     `;
   } catch (err) {
@@ -320,7 +328,7 @@ async function apriSquadra(id) {
     container.innerHTML = `
       <button class="ghost" onclick="caricaSquadre()">← Torna alle squadre</button>
       <div class="article" style="margin-top:14px">
-        <div class="occhiello">${squadra.stemma || '⚽'} Scheda squadra</div>
+        <div class="occhiello">${renderStemma(squadra.stemma, 16)} Scheda squadra</div>
         <h3>${squadra.nome}</h3>
         <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
         ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
@@ -340,6 +348,51 @@ async function apriSquadra(id) {
   }
 }
 
+// ============ UPLOAD IMMAGINI (stemma / foto / maglia) ============
+function mostraPreview(previewId, url) {
+  const img = document.getElementById(previewId);
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+}
+
+async function caricaImmagine(fileInputId, hiddenInputId, previewId) {
+  const fileInput = document.getElementById(fileInputId);
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  // Anteprima istantanea locale, mentre l'upload è in corso
+  const anteprimaLocale = URL.createObjectURL(file);
+  mostraPreview(previewId, anteprimaLocale);
+
+  const formData = new FormData();
+  formData.append('immagine', file);
+
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${stato.token}` },
+      body: formData
+    });
+    const dati = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(dati.errore || 'Errore nel caricamento');
+
+    document.getElementById(hiddenInputId).value = dati.url;
+    mostraPreview(previewId, dati.url);
+    mostraToast('Immagine caricata');
+  } catch (err) {
+    mostraToast(err.message);
+    fileInput.value = '';
+  }
+}
+
+document.getElementById('stemmaFile').addEventListener('change', () => caricaImmagine('stemmaFile', 'squadraStemma', 'stemmaPreview'));
+document.getElementById('fotoFile').addEventListener('change', () => caricaImmagine('fotoFile', 'squadraFoto', 'fotoPreview'));
+document.getElementById('magliaFile').addEventListener('change', () => caricaImmagine('magliaFile', 'squadraMaglia', 'magliaPreview'));
+
 // ============ LA MIA SQUADRA (dal profilo) ============
 async function caricaMiaSquadra() {
   const view = document.getElementById('miaSquadraView');
@@ -351,12 +404,15 @@ async function caricaMiaSquadra() {
   }
   try {
     const { squadra } = await api(`/squadre/${stato.utente.squadra}`);
-    view.innerHTML = `<div>Squadra: <b>${squadra.stemma || ''} ${squadra.nome}</b></div>`;
+    view.innerHTML = `<div>Squadra: <b>${squadra.nome}</b></div>`;
     document.getElementById('squadraStemma').value = squadra.stemma || '';
     document.getElementById('squadraFoto').value = squadra.foto || '';
     document.getElementById('squadraMaglia').value = squadra.maglia || '';
     document.getElementById('squadraBio').value = squadra.bio || '';
     document.getElementById('squadraRosa').value = (squadra.rosa || []).join(', ');
+    mostraPreview('stemmaPreview', squadra.stemma);
+    mostraPreview('fotoPreview', squadra.foto);
+    mostraPreview('magliaPreview', squadra.maglia);
     form.style.display = 'block';
   } catch (err) {
     view.innerHTML = `<div class="empty">${err.message}</div>`;
