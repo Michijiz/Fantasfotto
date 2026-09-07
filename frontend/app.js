@@ -213,7 +213,7 @@ async function caricaHomeTeaser() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? ''}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornataNumero ?? ''}`;
     container.innerHTML = renderTeaser(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -223,7 +223,7 @@ async function caricaHomeTeaser() {
 function renderTeaser(e) {
   const primoParagrafo = (e.corpo && e.corpo[0]) || '';
   return `
-    <div class="stamp">N. ${e.giornata?.numero ?? ''}</div>
+    <div class="stamp">N. ${e.giornataNumero ?? ''}</div>
     <div class="occhiello">${e.occhiello}</div>
     <h3>${e.titolo}</h3>
     ${e.immagineUrl ? `<div class="article-img"><img src="${e.immagineUrl}" alt=""></div>` : ''}
@@ -340,7 +340,7 @@ async function caricaUltimaEdizione() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? ''}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornataNumero ?? ''}`;
     container.innerHTML = renderArticolo(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -350,10 +350,10 @@ async function caricaUltimaEdizione() {
 function renderArticolo(e) {
   return `
     <div class="article">
-      <div class="stamp">N. ${e.giornata?.numero ?? ''}</div>
+      <div class="stamp">N. ${e.giornataNumero ?? ''}</div>
       <div class="occhiello">${e.occhiello}</div>
       <h3>${e.titolo}</h3>
-      <div class="byline">Giornata ${e.giornata?.numero ?? ''} — a cura di ${e.direttore}</div>
+      <div class="byline">Giornata ${e.giornataNumero ?? ''} — a cura di ${e.direttore}</div>
       ${e.immagineUrl ? `<div class="article-img"><img src="${e.immagineUrl}" alt="${e.titolo}"><div class="didascalia">${e.occhiello}</div></div>` : ''}
       ${e.corpo.map(p => `<p>${p}</p>`).join('')}
       <div class="stat-strip">
@@ -379,7 +379,7 @@ async function mostraArchivio() {
     container.innerHTML = `<button class="ghost" style="margin-bottom:14px;" onclick="caricaUltimaEdizione()">← Torna all'ultima</button>` +
       edizioni.map(e => `
         <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
-          <div class="g">Giornata ${e.giornata?.numero ?? ''}</div>
+          <div class="g">Giornata ${e.giornataNumero ?? ''}</div>
           <h4>${e.titolo}</h4>
         </div>
       `).join('');
@@ -416,7 +416,7 @@ async function caricaVerdetti() {
     ]);
 
     container.innerHTML = `
-      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata?.numero ?? ''}</h2>
+      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornataNumero ?? ''}</h2>
       ${stato.categorie.map(cat => renderCategoriaVoto(cat, squadre, votiInfo)).join('')}
     `;
   } catch (err) {
@@ -558,9 +558,12 @@ async function salvaMiaSquadra() {
 }
 
 // ============ NUOVA EDIZIONE (FAB, solo admin) ============
+// Semplificato: l'edizione non dipende più da una Giornata nel DB. È solo un articolo
+// mandato in stampa - numero giornata scritto a mano, vincitore/ultimo obbligatori,
+// fenomeno/bidone opzionali (di default coincidono con vincitore/ultimo).
 function apriSheetNuova() {
   document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
-  caricaGiornateDisponibili();
+  popolaSelettoriSquadre();
   document.getElementById('sheetNuovaOverlay').classList.add('aperto');
   document.getElementById('sheetNuova').classList.add('aperto');
 }
@@ -569,33 +572,11 @@ function chiudiSheetNuova() {
   document.getElementById('sheetNuova').classList.remove('aperto');
 }
 
-async function caricaGiornateDisponibili() {
-  const sel = document.getElementById('selGiornata');
-  sel.innerHTML = '<option value="">Caricamento...</option>';
-  try {
-    const giornate = await api('/giornate');
-    const concluse = giornate.filter(g => g.conclusa);
-    if (!concluse.length) {
-      sel.innerHTML = '<option value="">Nessuna giornata conclusa da pubblicare</option>';
-      document.getElementById('fenomeno').innerHTML = '<option value="">— automatico (il vincitore) —</option>';
-      document.getElementById('bidone').innerHTML = '<option value="">— automatico (l\'ultimo) —</option>';
-      return;
-    }
-    sel.innerHTML = concluse.map(g => `<option value="${g._id}">Giornata ${g.numero}${g.data ? ' — ' + new Date(g.data).toLocaleDateString('it-IT') : ''}</option>`).join('');
-    popolaFenomenoBidone(concluse[0]);
-    sel.onchange = () => popolaFenomenoBidone(concluse.find(x => x._id === sel.value));
-  } catch (err) {
-    sel.innerHTML = '<option value="">Errore nel caricamento</option>';
-  }
-}
-
-function popolaFenomenoBidone(giornata) {
-  const squadreGiornata = [];
-  (giornata?.accoppiamenti || []).forEach(a => {
-    if (a.squadraCasa) squadreGiornata.push(a.squadraCasa);
-    if (a.squadraTrasferta) squadreGiornata.push(a.squadraTrasferta);
-  });
-  const opzioni = squadreGiornata.map(s => `<option value="${s._id}">${s.nome}</option>`).join('');
+async function popolaSelettoriSquadre() {
+  const squadre = await caricaSquadreCache();
+  const opzioni = squadre.map(s => `<option value="${s._id}">${s.nome}</option>`).join('');
+  document.getElementById('vincitore').innerHTML = '<option value="">Seleziona...</option>' + opzioni;
+  document.getElementById('ultimo').innerHTML = '<option value="">Seleziona...</option>' + opzioni;
   document.getElementById('fenomeno').innerHTML = '<option value="">— automatico (il vincitore) —</option>' + opzioni;
   document.getElementById('bidone').innerHTML = '<option value="">— automatico (l\'ultimo) —</option>' + opzioni;
 }
@@ -604,12 +585,22 @@ async function pubblicaEdizione() {
   const erroreEl = document.getElementById('nuovaErrore');
   erroreEl.textContent = '';
 
-  const giornataId = document.getElementById('selGiornata').value;
-  if (!giornataId) { erroreEl.textContent = 'Seleziona una giornata conclusa'; return; }
+  const giornataNumero = document.getElementById('giornataNumero').value.trim();
+  const vincitore = document.getElementById('vincitore').value;
+  const ultimo = document.getElementById('ultimo').value;
+
+  if (!giornataNumero || !vincitore || !ultimo) {
+    erroreEl.textContent = 'Numero giornata, vincitore e ultimo classificato sono obbligatori';
+    return;
+  }
 
   const corpo = {
-    giornataId,
+    giornataNumero: Number(giornataNumero),
     direttore: document.getElementById('direttore').value.trim(),
+    vincitore,
+    puntiVincitore: document.getElementById('puntiVincitore').value || undefined,
+    ultimo,
+    puntiUltimo: document.getElementById('puntiUltimo').value || undefined,
     fenomeno: document.getElementById('fenomeno').value || undefined,
     bidone: document.getElementById('bidone').value || undefined,
     immagineUrl: document.getElementById('nuovaImmagineUrl').value || undefined
@@ -619,6 +610,7 @@ async function pubblicaEdizione() {
     await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
     mostraToast('Edizione mandata in stampa!');
     chiudiSheetNuova();
+    ['giornataNumero', 'puntiVincitore', 'puntiUltimo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('nuovaImgPreview').style.display = 'none';
     document.getElementById('nuovaImmagineUrl').value = '';
     stato.ultimaEdizione = null;

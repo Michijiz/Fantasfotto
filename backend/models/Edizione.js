@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 
+// L'edizione NON è più legata a un documento Giornata nel DB: è semplicemente un articolo
+// mandato in stampa. giornataNumero è solo un'etichetta (per il timbro/byline), non un
+// riferimento — l'admin la scrive a mano insieme a vincitore/ultimo/punti.
 const edizioneSchema = new mongoose.Schema({
-  giornata: { type: mongoose.Schema.Types.ObjectId, ref: 'Giornata', required: true, unique: true },
+  giornataNumero: { type: Number, required: true },
   direttore: { type: String, required: true },
   occhiello: { type: String, required: true },
   titolo: { type: String, required: true },

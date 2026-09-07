@@ -205,13 +205,33 @@
     </div>
     <div class="sheet-body">
       <form onsubmit="event.preventDefault(); pubblicaEdizione();">
-        <label>Giornata da pubblicare</label>
-        <select id="selGiornata">
-          <option value="">Caricamento giornate concluse...</option>
-        </select>
+        <label>Numero giornata</label>
+        <input type="number" id="giornataNumero" placeholder="es. 8">
 
         <label>Direttore di turno</label>
         <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
+
+        <div class="row2">
+          <div>
+            <label>Vincitore giornata</label>
+            <select id="vincitore"><option value="">Seleziona...</option></select>
+          </div>
+          <div>
+            <label>Punti vincitore</label>
+            <input type="number" id="puntiVincitore" placeholder="es. 78">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Ultimo classificato</label>
+            <select id="ultimo"><option value="">Seleziona...</option></select>
+          </div>
+          <div>
+            <label>Punti ultimo</label>
+            <input type="number" id="puntiUltimo" placeholder="es. 41">
+          </div>
+        </div>
 
         <div class="row2">
           <div>

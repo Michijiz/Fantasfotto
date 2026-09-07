@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Edizione = require('../models/Edizione');
-const Giornata = require('../models/Giornata');
+const Squadra = require('../models/Squadra');
 const { richiediAuth, richiediAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -40,15 +40,13 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function popolaEdizione(query) {
   return query
-    .populate('giornata', 'numero data')
     .populate('stats.vincitore', 'nome stemma')
     .populate('stats.ultimo', 'nome stemma')
     .populate('stats.fenomeno', 'nome stemma')
     .populate('stats.bidone', 'nome stemma');
 }
 
-// Elenco edizioni (per archivio). NB: ordinate per data di pubblicazione, non per numero
-// giornata (non è più un campo diretto, ma un riferimento) - va bene finché si pubblica in ordine.
+// Elenco edizioni (per archivio), più recenti prima
 router.get('/', richiediAuth, async (req, res) => {
   const edizioni = await popolaEdizione(Edizione.find().sort({ createdAt: -1 }));
   res.json(edizioni);
@@ -66,72 +64,65 @@ router.get('/:id', richiediAuth, async (req, res) => {
   res.json(e);
 });
 
-// Calcola la classifica (squadra -> punti) di una giornata dai suoi accoppiamenti
-function classificaGiornata(giornata) {
-  const righe = [];
-  giornata.accoppiamenti.forEach(a => {
-    if (a.punteggioCasa != null) righe.push({ squadra: a.squadraCasa, punti: a.punteggioCasa });
-    if (a.punteggioTrasferta != null) righe.push({ squadra: a.squadraTrasferta, punti: a.punteggioTrasferta });
-  });
-  return righe.sort((x, y) => y.punti - x.punti);
-}
-
-// Pubblica nuova edizione - solo direttore/admin di turno (qualsiasi admin)
-// Vincitore/ultimo si calcolano dai punteggi reali della Giornata; fenomeno/bidone sono
-// una scelta editoriale (di default coincidono con vincitore/ultimo se non specificati).
-// immagineUrl è opzionale: url Cloudinary caricata via /api/upload prima di pubblicare.
+// Pubblica nuova edizione - solo direttore/admin di turno (qualsiasi admin).
+// Semplificato: NON dipende più da un documento Giornata nel DB. È semplicemente un
+// articolo mandato in stampa - l'admin scrive a mano numero giornata, vincitore/ultimo
+// (obbligatori, con i relativi punti) e fenomeno/bidone (opzionali, di default coincidono
+// con vincitore/ultimo). immagineUrl è opzionale: url Cloudinary caricata via /api/upload.
 router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
   try {
-    const { giornataId, direttore, fenomeno, bidone, immagineUrl } = req.body;
-    if (!giornataId || !mongoose.isValidObjectId(giornataId)) {
-      return res.status(400).json({ errore: 'Giornata non valida' });
+    const { giornataNumero, direttore, vincitore, puntiVincitore, ultimo, puntiUltimo, fenomeno, bidone, immagineUrl } = req.body;
+
+    if (giornataNumero === undefined || giornataNumero === null || giornataNumero === '') {
+      return res.status(400).json({ errore: 'Numero giornata obbligatorio' });
+    }
+    if (!vincitore || !ultimo) {
+      return res.status(400).json({ errore: 'Vincitore e ultimo classificato sono obbligatori' });
+    }
+    if (!mongoose.isValidObjectId(vincitore) || !mongoose.isValidObjectId(ultimo)) {
+      return res.status(400).json({ errore: 'Squadra vincitore/ultimo non valida' });
     }
 
-    const giornata = await Giornata.findById(giornataId).populate('accoppiamenti.squadraCasa accoppiamenti.squadraTrasferta', 'nome');
-    if (!giornata) return res.status(404).json({ errore: 'Giornata non trovata' });
-    if (!giornata.conclusa) {
-      return res.status(400).json({ errore: 'La giornata non è ancora conclusa: mancano dei punteggi' });
+    const idFenomeno = fenomeno || vincitore;
+    const idBidone = bidone || ultimo;
+    if (!mongoose.isValidObjectId(idFenomeno) || !mongoose.isValidObjectId(idBidone)) {
+      return res.status(400).json({ errore: 'Squadra fenomeno/bidone non valida' });
     }
 
-    const giaPubblicata = await Edizione.findOne({ giornata: giornataId });
-    if (giaPubblicata) return res.status(409).json({ errore: 'Esiste già un\'edizione per questa giornata' });
+    const idsDaCaricare = [...new Set([vincitore, ultimo, idFenomeno, idBidone])];
+    const squadreCoinvolte = await Squadra.find({ _id: { $in: idsDaCaricare } });
+    const mappaSquadre = new Map(squadreCoinvolte.map(s => [String(s._id), s]));
 
-    const classifica = classificaGiornata(giornata);
-    if (!classifica.length) {
-      return res.status(400).json({ errore: 'Nessun punteggio disponibile per questa giornata' });
+    const squadraVincitore = mappaSquadre.get(String(vincitore));
+    const squadraUltimo = mappaSquadre.get(String(ultimo));
+    if (!squadraVincitore || !squadraUltimo) {
+      return res.status(400).json({ errore: 'Squadra vincitore/ultimo non trovata' });
     }
-
-    const testaClassifica = classifica[0];
-    const codaClassifica = classifica[classifica.length - 1];
-
-    const idFenomeno = fenomeno || String(testaClassifica.squadra._id);
-    const idBidone = bidone || String(codaClassifica.squadra._id);
-
-    const squadraFenomeno = classifica.find(r => String(r.squadra._id) === String(idFenomeno))?.squadra || testaClassifica.squadra;
-    const squadraBidone = classifica.find(r => String(r.squadra._id) === String(idBidone))?.squadra || codaClassifica.squadra;
+    const squadraFenomeno = mappaSquadre.get(String(idFenomeno)) || squadraVincitore;
+    const squadraBidone = mappaSquadre.get(String(idBidone)) || squadraUltimo;
 
     const t = {
-      vincitore: testaClassifica.squadra.nome,
-      puntiVincitore: testaClassifica.punti,
-      ultimo: codaClassifica.squadra.nome,
-      puntiUltimo: codaClassifica.punti,
+      vincitore: squadraVincitore.nome,
+      puntiVincitore: puntiVincitore ?? '??',
+      ultimo: squadraUltimo.nome,
+      puntiUltimo: puntiUltimo ?? '??',
       fenomeno: squadraFenomeno.nome,
       bidone: squadraBidone.nome,
-      giornataNumero: giornata.numero
+      giornataNumero
     };
 
     const edizione = await Edizione.create({
-      giornata: giornataId,
+      giornataNumero,
       direttore: direttore || req.utente.nomeVisualizzato,
       occhiello: pick(OCCHIELLI)(t),
       titolo: pick(TITOLI)(t),
       corpo: [pick(P_FENOMENO)(t), pick(P_BIDONE)(t), pick(P_CHIUSURA)(t)],
       immagineUrl: immagineUrl || '',
       stats: {
-        vincitore: testaClassifica.squadra._id,
-        puntiVincitore: testaClassifica.punti,
-        ultimo: codaClassifica.squadra._id,
-        puntiUltimo: codaClassifica.punti,
+        vincitore: squadraVincitore._id,
+        puntiVincitore: puntiVincitore !== undefined && puntiVincitore !== '' ? Number(puntiVincitore) : undefined,
+        ultimo: squadraUltimo._id,
+        puntiUltimo: puntiUltimo !== undefined && puntiUltimo !== '' ? Number(puntiUltimo) : undefined,
         fenomeno: squadraFenomeno._id,
         bidone: squadraBidone._id
       },
@@ -141,9 +132,6 @@ router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
     const edizionePopolata = await popolaEdizione(Edizione.findById(edizione._id));
     res.status(201).json(edizionePopolata);
   } catch (e) {
-    if (e.code === 11000) {
-      return res.status(409).json({ errore: 'Esiste già un\'edizione per questa giornata' });
-    }
     res.status(500).json({ errore: 'Errore nella pubblicazione' });
   }
 });
