@@ -12,6 +12,18 @@ let stato = {
   categorie: []
 };
 
+// ============ HELPER SKELETON ============
+function skeletonBlocco() {
+  return `
+    <div class="skeleton-wrap">
+      <div class="skeleton-line w-40"></div>
+      <div class="skeleton-line w-80"></div>
+      <div class="skeleton-line w-60"></div>
+      <div class="skeleton-line w-80"></div>
+    </div>
+  `;
+}
+
 // ============ HELPER API ============
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -111,13 +123,18 @@ function cambiaTab(nome) {
   stato.tabAttiva = nome;
   document.querySelectorAll('.tabs [data-tab]').forEach(t => t.classList.toggle('active', t.dataset.tab === nome));
   document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-  document.getElementById(`tab-${nome}`).style.display = 'block';
+
+  const contenitore = document.getElementById(`tab-${nome}`);
+  // ritocca l'animazione di ingresso ad ogni cambio tab, non solo al primo render
+  contenitore.style.animation = 'none';
+  contenitore.offsetHeight; // forza reflow
+  contenitore.style.animation = '';
+  contenitore.style.display = 'block';
 
   if (nome === 'ultima') caricaUltimaEdizione();
   if (nome === 'nuova') preparaTabNuova();
   if (nome === 'verdetti') caricaVerdetti();
   if (nome === 'albo') caricaAlbo();
-  if (nome === 'squadre') caricaSquadre();
   if (nome === 'archivio') caricaArchivio();
   if (nome === 'profilo') caricaProfilo();
 }
@@ -125,6 +142,7 @@ function cambiaTab(nome) {
 // ============ ULTIMA EDIZIONE ============
 async function caricaUltimaEdizione() {
   const container = document.getElementById('ultimaContainer');
+  container.innerHTML = skeletonBlocco();
   try {
     const e = await api('/edizioni/ultima');
     stato.ultimaEdizione = e;
@@ -133,7 +151,7 @@ async function caricaUltimaEdizione() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? '?'}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata}`;
     container.innerHTML = renderArticolo(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -141,84 +159,29 @@ async function caricaUltimaEdizione() {
 }
 
 function renderArticolo(e) {
-  const nomeSquadra = (s) => s?.stemma ? `${s.stemma} ${s.nome}` : (s?.nome || '—');
   return `
     <div class="article">
+      <div class="stamp">N. ${e.giornata}</div>
       <div class="occhiello">${e.occhiello}</div>
       <h3>${e.titolo}</h3>
-      <div class="byline">Giornata ${e.giornata?.numero ?? '?'} — a cura di ${e.direttore}</div>
+      <div class="byline">Giornata ${e.giornata} — a cura di ${e.direttore}</div>
       ${e.corpo.map(p => `<p>${p}</p>`).join('')}
       <div class="stat-strip">
-        <div class="stat">Vincitore<b>${nomeSquadra(e.stats.vincitore)}</b></div>
-        <div class="stat">Ultimo<b>${nomeSquadra(e.stats.ultimo)}</b></div>
-        <div class="stat">Fenomeno<b>${nomeSquadra(e.stats.fenomeno)}</b></div>
-        <div class="stat">Bidone<b>${nomeSquadra(e.stats.bidone)}</b></div>
+        <div class="stat">Vincitore<b>${e.stats.vincitore}</b></div>
+        <div class="stat">Ultimo<b>${e.stats.ultimo}</b></div>
+        <div class="stat">Fenomeno<b>${e.stats.fenomeno}</b></div>
+        <div class="stat">Bidone<b>${e.stats.bidone}</b></div>
       </div>
     </div>
   `;
 }
 
 // ============ NUOVA EDIZIONE ============
-async function preparaTabNuova() {
+function preparaTabNuova() {
   const autorizzato = stato.utente?.ruolo === 'admin';
   document.getElementById('nuovaNonAutorizzato').style.display = autorizzato ? 'none' : 'block';
   document.getElementById('nuovaFormWrap').style.display = autorizzato ? 'block' : 'none';
-  if (!autorizzato) return;
-
-  document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
-
-  const selectGiornata = document.getElementById('nuovaGiornata');
-  const infoGiornata = document.getElementById('nuovaGiornataInfo');
-  selectGiornata.innerHTML = '<option value="">Caricamento...</option>';
-
-  try {
-    const [giornate, edizioni] = await Promise.all([api('/giornate'), api('/edizioni')]);
-    const giornatePubblicate = new Set(edizioni.map(e => e.giornata?._id));
-    const disponibili = giornate.filter(g => g.conclusa && !giornatePubblicate.has(g._id));
-
-    stato.giornateDisponibili = disponibili;
-
-    if (!disponibili.length) {
-      selectGiornata.innerHTML = '<option value="">Nessuna giornata pronta da pubblicare</option>';
-      infoGiornata.textContent = 'Serve una giornata conclusa (punteggi inseriti) senza edizione già pubblicata.';
-      document.getElementById('nuovaFenomeno').innerHTML = '';
-      document.getElementById('nuovaBidone').innerHTML = '';
-      return;
-    }
-
-    selectGiornata.innerHTML = disponibili.map(g => `<option value="${g._id}">Giornata ${g.numero}</option>`).join('');
-    selectGiornata.onchange = () => aggiornaSelezioneGiornata(selectGiornata.value);
-    aggiornaSelezioneGiornata(selectGiornata.value);
-  } catch (err) {
-    selectGiornata.innerHTML = '<option value="">Errore nel caricamento</option>';
-    infoGiornata.textContent = err.message;
-  }
-}
-
-function aggiornaSelezioneGiornata(giornataId) {
-  const giornata = (stato.giornateDisponibili || []).find(g => g._id === giornataId);
-  const infoGiornata = document.getElementById('nuovaGiornataInfo');
-  const selectFenomeno = document.getElementById('nuovaFenomeno');
-  const selectBidone = document.getElementById('nuovaBidone');
-  if (!giornata) {
-    infoGiornata.textContent = '';
-    selectFenomeno.innerHTML = '';
-    selectBidone.innerHTML = '';
-    return;
-  }
-
-  const squadreInGiornata = [];
-  giornata.accoppiamenti.forEach(a => {
-    squadreInGiornata.push({ id: a.squadraCasa._id, nome: a.squadraCasa.nome, punti: a.punteggioCasa });
-    squadreInGiornata.push({ id: a.squadraTrasferta._id, nome: a.squadraTrasferta.nome, punti: a.punteggioTrasferta });
-  });
-  squadreInGiornata.sort((x, y) => (y.punti ?? -Infinity) - (x.punti ?? -Infinity));
-
-  infoGiornata.innerHTML = squadreInGiornata.map(s => `${s.nome}: <b>${s.punti ?? '—'}</b>`).join(' · ');
-
-  const opzioni = squadreInGiornata.map(s => `<option value="${s.id}">${s.nome} (${s.punti ?? '—'} pt)</option>`).join('');
-  selectFenomeno.innerHTML = opzioni;
-  selectBidone.innerHTML = opzioni;
+  if (autorizzato) document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
 }
 
 async function pubblicaEdizione() {
@@ -226,20 +189,24 @@ async function pubblicaEdizione() {
   erroreEl.textContent = '';
 
   const corpo = {
-    giornataId: document.getElementById('nuovaGiornata').value,
     direttore: document.getElementById('direttore').value.trim(),
-    fenomeno: document.getElementById('nuovaFenomeno').value,
-    bidone: document.getElementById('nuovaBidone').value
+    vincitore: document.getElementById('vincitore').value.trim(),
+    puntiVincitore: document.getElementById('puntiVincitore').value.trim(),
+    ultimo: document.getElementById('ultimo').value.trim(),
+    puntiUltimo: document.getElementById('puntiUltimo').value.trim(),
+    fenomeno: document.getElementById('fenomeno').value.trim(),
+    bidone: document.getElementById('bidone').value.trim()
   };
 
-  if (!corpo.giornataId) {
-    erroreEl.textContent = 'Seleziona una giornata da pubblicare';
+  if (!corpo.vincitore || !corpo.ultimo) {
+    erroreEl.textContent = 'Servono almeno vincitore e ultimo classificato';
     return;
   }
 
   try {
     await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
     mostraToast('Edizione mandata in stampa!');
+    ['vincitore', 'puntiVincitore', 'ultimo', 'puntiUltimo', 'fenomeno', 'bidone'].forEach(id => document.getElementById(id).value = '');
     cambiaTab('ultima');
   } catch (err) {
     erroreEl.textContent = err.message;
@@ -249,6 +216,7 @@ async function pubblicaEdizione() {
 // ============ VERDETTI / MINI-GIOCHI DI VOTO ============
 async function caricaVerdetti() {
   const container = document.getElementById('verdettiContainer');
+  container.innerHTML = skeletonBlocco();
   try {
     if (!stato.ultimaEdizione) stato.ultimaEdizione = await api('/edizioni/ultima');
     if (!stato.ultimaEdizione) {
@@ -257,21 +225,21 @@ async function caricaVerdetti() {
     }
     if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
 
-    const [squadre, votiInfo] = await Promise.all([
-      api('/squadre'),
+    const [giocatori, votiInfo] = await Promise.all([
+      api('/auth/giocatori'),
       api(`/voti/edizione/${stato.ultimaEdizione._id}`)
     ]);
 
     container.innerHTML = `
-      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata?.numero ?? '?'}</h2>
-      ${stato.categorie.map(cat => renderCategoriaVoto(cat, squadre, votiInfo)).join('')}
+      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata}</h2>
+      ${stato.categorie.map(cat => renderCategoriaVoto(cat, giocatori, votiInfo)).join('')}
     `;
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-function renderCategoriaVoto(cat, squadre, votiInfo) {
+function renderCategoriaVoto(cat, giocatori, votiInfo) {
   const conteggi = votiInfo.conteggi[cat.key] || {};
   const mioVoto = votiInfo.mieiVoti[cat.key];
 
@@ -279,11 +247,11 @@ function renderCategoriaVoto(cat, squadre, votiInfo) {
     <div class="verdetto">
       <h4>${cat.label}</h4>
       <div class="voti-list">
-        ${squadre.map(s => {
-          const n = conteggi[s._id] || 0;
-          const attivo = mioVoto === s._id;
-          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${s._id}')">
-            ${s.stemma || ''} ${s.nome} <span class="count">${n}</span>
+        ${giocatori.map(g => {
+          const n = conteggi[g.nomeVisualizzato] || 0;
+          const attivo = mioVoto === g.nomeVisualizzato;
+          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${g.nomeVisualizzato.replace(/'/g, "\\'")}')">
+            ${g.nomeVisualizzato} <span class="count">${n}</span>
           </button>`;
         }).join('')}
       </div>
@@ -307,13 +275,14 @@ async function vota(categoria, votato) {
 // ============ ALBO D'ORO ============
 async function caricaAlbo() {
   const container = document.getElementById('alboContainer');
+  container.innerHTML = skeletonBlocco();
   try {
     const albo = await api('/voti/albo');
     container.innerHTML = albo.map(cat => `
       <div class="albo-cat">
         <h5>${cat.label}</h5>
         ${cat.top.length
-          ? cat.top.map((v, i) => `<div>${i + 1}. ${v.squadra ? `${v.squadra.stemma || ''} ${v.squadra.nome}` : 'Squadra rimossa'} — ${v.voti} voti</div>`).join('')
+          ? cat.top.map(([nome, n], i) => `<div>${i + 1}. ${nome} — ${n} voti</div>`).join('')
           : '<div>Ancora nessun voto</div>'}
       </div>
     `).join('');
@@ -322,80 +291,10 @@ async function caricaAlbo() {
   }
 }
 
-// ============ SQUADRE ============
-async function caricaSquadre() {
-  const container = document.getElementById('squadreContainer');
-  const wrapNuova = document.getElementById('nuovaSquadraWrap');
-  const isAdmin = stato.utente?.ruolo === 'admin';
-  wrapNuova.style.display = isAdmin ? 'block' : 'none';
-
-  try {
-    const squadre = await api('/squadre');
-
-    if (!squadre.length) {
-      container.innerHTML = '<div class="empty">Nessuna squadra registrata ancora.</div>';
-    } else {
-      container.innerHTML = squadre.map(renderSquadraCard).join('');
-    }
-
-    if (isAdmin) await popolaSelectProprietario();
-  } catch (err) {
-    container.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-function renderSquadraCard(s) {
-  const membri = (s.membri || []).map(m => m.nomeVisualizzato).join(', ');
-  return `
-    <div class="squadra-card">
-      <div class="stemma">${s.stemma || '🛡️'}</div>
-      <div class="info">
-        <h4>${s.coloreKit ? `<span class="kit-dot" style="background:${s.coloreKit}"></span>` : ''}${s.nome}</h4>
-        <div class="proprietario">Proprietario: ${s.proprietario?.nomeVisualizzato || '—'}${membri ? ` · Con: ${membri}` : ''}</div>
-      </div>
-    </div>
-  `;
-}
-
-async function popolaSelectProprietario() {
-  const select = document.getElementById('squadraProprietario');
-  try {
-    const giocatori = await api('/auth/giocatori');
-    select.innerHTML = giocatori.map(g => `<option value="${g._id}">${g.nomeVisualizzato}</option>`).join('');
-  } catch (err) {
-    select.innerHTML = '';
-  }
-}
-
-async function creaSquadra() {
-  const erroreEl = document.getElementById('squadraErrore');
-  erroreEl.textContent = '';
-
-  const corpo = {
-    nome: document.getElementById('squadraNome').value.trim(),
-    stemma: document.getElementById('squadraStemma').value.trim(),
-    coloreKit: document.getElementById('squadraColore').value.trim(),
-    proprietario: document.getElementById('squadraProprietario').value
-  };
-
-  if (!corpo.nome || !corpo.proprietario) {
-    erroreEl.textContent = 'Nome e proprietario sono obbligatori';
-    return;
-  }
-
-  try {
-    await api('/squadre', { method: 'POST', body: JSON.stringify(corpo) });
-    mostraToast('Squadra registrata!');
-    ['squadraNome', 'squadraStemma', 'squadraColore'].forEach(id => document.getElementById(id).value = '');
-    caricaSquadre();
-  } catch (err) {
-    erroreEl.textContent = err.message;
-  }
-}
-
 // ============ ARCHIVIO ============
 async function caricaArchivio() {
   const container = document.getElementById('archivioContainer');
+  container.innerHTML = skeletonBlocco();
   try {
     const edizioni = await api('/edizioni');
     if (!edizioni.length) {
@@ -404,7 +303,7 @@ async function caricaArchivio() {
     }
     container.innerHTML = edizioni.map(e => `
       <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
-        <div class="g">Giornata ${e.giornata?.numero ?? '?'}</div>
+        <div class="g">Giornata ${e.giornata}</div>
         <h4>${e.titolo}</h4>
       </div>
     `).join('');
