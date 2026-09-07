@@ -8,9 +8,9 @@
   --gold: #b8892f;
 
   /* nuovi token, derivati dalla palette esistente, per profondità e ritmo */
-  --shadow-hard: 3px 3px 0 rgba(36,27,30,0.18);
-  --shadow-hard-sm: 2px 2px 0 rgba(36,27,30,0.18);
-  --paper-highlight: rgba(255,255,255,0.55);
+  --shadow-hard: 6px 6px 0 rgba(36,27,30,0.9);
+  --shadow-hard-sm: 4px 4px 0 rgba(36,27,30,0.9);
+  --paper-highlight: rgba(255,255,255,0.65);
   --radius: 0; /* la carta stampata non ha angoli arrotondati: coerenza con lo stile broadsheet */
   --ease-tap: cubic-bezier(.2,.8,.2,1);
 }
@@ -26,8 +26,8 @@ body{
   background: var(--paper);
   /* grana carta sottilissima + righe di stampa, invariata nello spirito ma più materica */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0px, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 2px);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0px, rgba(0,0,0,0.035) 1px, transparent 1px, transparent 2px);
   color:var(--ink);
   font-family:'Libre Baskerville', serif;
   min-height:100vh;
@@ -47,16 +47,16 @@ body{
 .masthead{
   position:relative;
   text-align:center;
-  border-bottom:3px solid var(--rule);
-  padding-bottom:10px;
-  margin-bottom:16px;
+  border-bottom:5px solid var(--rule);
+  padding-bottom:12px;
+  margin-bottom:20px;
 }
 .masthead::after{
   content:"";
   display:block;
-  height:1px;
+  height:2px;
   background:var(--rule);
-  margin-top:5px;
+  margin-top:6px;
 }
 .masthead .kicker{
   font-family:'Oswald',sans-serif;
@@ -94,7 +94,7 @@ body{
   transition: background .15s var(--ease-tap), color .15s var(--ease-tap);
 }
 .tab:hover{ background: #eec2d3; }
-.tab.active{background:var(--ink);color:var(--paper);font-weight:600;}
+.tab.active{background:var(--ink);color:var(--paper);font-weight:600;box-shadow: inset 0 -3px 0 var(--stamp-red);}
 
 .tab-content{ animation: entra .28s var(--ease-tap); }
 @keyframes entra{
@@ -106,9 +106,9 @@ body{
 .card{
   position:relative;
   background: var(--paper-highlight);
-  border: 1px solid var(--rule);
-  padding:18px;
-  margin-bottom:16px;
+  border: 2px solid var(--rule);
+  padding:20px;
+  margin-bottom:24px;
   box-shadow: var(--shadow-hard);
 }
 h2.section-title{
@@ -177,11 +177,12 @@ button.link:hover{ color: var(--ink); }
 /* capolettera solo sul primo paragrafo, effetto editoriale */
 .article p:first-of-type::first-letter{
   font-family:'Anton', sans-serif;
-  font-size: 3.1em;
+  font-size: 4.4em;
   float:left;
-  line-height:.78;
-  margin:4px 8px 0 0;
+  line-height:.75;
+  margin:2px 10px 0 0;
   color: var(--stamp-red);
+  text-shadow: 2px 2px 0 rgba(36,27,30,0.9);
 }
 
 .stat-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
@@ -202,22 +203,24 @@ button.link:hover{ color: var(--ink); }
 /* timbro giornata, dettaglio da "stampa" */
 .stamp{
   position:absolute;
-  top:-6px;
-  right:-6px;
-  transform:rotate(-8deg);
-  border:3px solid var(--stamp-red);
+  top:-14px;
+  right:-10px;
+  transform:rotate(-10deg);
+  border:4px solid var(--stamp-red);
   color:var(--stamp-red);
   font-family:'Anton',sans-serif;
-  font-size:13px;
-  padding:3px 11px;
-  letter-spacing:.1em;
-  opacity:.9;
-  background: rgba(255,255,255,0.5);
-  animation: timbra .35s var(--ease-tap);
+  font-size:16px;
+  padding:5px 14px;
+  letter-spacing:.12em;
+  opacity:.95;
+  background: var(--paper);
+  box-shadow: 3px 3px 0 rgba(36,27,30,0.9);
+  animation: timbra .4s var(--ease-tap);
+  z-index:2;
 }
 @keyframes timbra{
-  from{ opacity:0; transform: rotate(-8deg) scale(1.6); }
-  to{ opacity:.9; transform: rotate(-8deg) scale(1); }
+  from{ opacity:0; transform: rotate(-10deg) scale(1.8); }
+  to{ opacity:.95; transform: rotate(-10deg) scale(1); }
 }
 
 /* ============ VERDETTI ============ */

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gazzetta-shell-v1';
+const CACHE_NAME = 'gazzetta-shell-v2';
 const ASSET_DA_CACHARE = [
   '/',
   '/index.html',
@@ -18,9 +18,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((nomi) =>
       Promise.all(nomi.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // Cache-first per la shell statica, network-first per le chiamate /api
@@ -39,7 +38,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // network-first per la shell: evita che una vecchia cache "vinca" sempre
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
