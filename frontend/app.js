@@ -56,8 +56,23 @@ document.querySelectorAll('[data-auth]').forEach(el => {
     const modo = el.dataset.auth;
     document.getElementById('loginForm').style.display = modo === 'login' ? 'block' : 'none';
     document.getElementById('registratiForm').style.display = modo === 'registrati' ? 'block' : 'none';
+    if (modo === 'registrati') caricaSquadreDisponibili();
   });
 });
+
+async function caricaSquadreDisponibili() {
+  const sel = document.getElementById('regSquadra');
+  try {
+    const squadre = await api('/squadre');
+    if (!squadre.length) {
+      sel.innerHTML = '<option value="">Nessuna squadra disponibile, contatta il direttore</option>';
+      return;
+    }
+    sel.innerHTML = squadre.map(s => `<option value="${s._id}">${s.stemma || ''} ${s.nome}</option>`).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Errore nel caricamento squadre</option>';
+  }
+}
 
 async function login() {
   const username = document.getElementById('loginUsername').value.trim();
@@ -80,6 +95,7 @@ async function registrati() {
   const username = document.getElementById('regUsername').value.trim();
   const nomeVisualizzato = document.getElementById('regNome').value.trim();
   const pin = document.getElementById('regPin').value.trim();
+  const squadraId = document.getElementById('regSquadra').value;
   const codiceInvito = document.getElementById('regCodice').value.trim();
   const erroreEl = document.getElementById('regErrore');
   erroreEl.textContent = '';
@@ -88,9 +104,13 @@ async function registrati() {
     erroreEl.textContent = 'Compila tutti i campi';
     return;
   }
+  if (!squadraId) {
+    erroreEl.textContent = 'Seleziona una squadra';
+    return;
+  }
 
   try {
-    const dati = await api('/auth/registrati', { method: 'POST', body: JSON.stringify({ username, nomeVisualizzato, pin, codiceInvito }) });
+    const dati = await api('/auth/registrati', { method: 'POST', body: JSON.stringify({ username, nomeVisualizzato, pin, codiceInvito, squadraId }) });
     salvaSessione(dati);
     avviaApp();
   } catch (e) {
@@ -125,9 +145,8 @@ function cambiaTab(nome) {
   document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
   const contenitore = document.getElementById(`tab-${nome}`);
-  // ritocca l'animazione di ingresso ad ogni cambio tab, non solo al primo render
   contenitore.style.animation = 'none';
-  contenitore.offsetHeight; // forza reflow
+  contenitore.offsetHeight; // forza reflow, per far ripartire l'animazione ad ogni cambio tab
   contenitore.style.animation = '';
   contenitore.style.display = 'block';
 
@@ -135,6 +154,7 @@ function cambiaTab(nome) {
   if (nome === 'nuova') preparaTabNuova();
   if (nome === 'verdetti') caricaVerdetti();
   if (nome === 'albo') caricaAlbo();
+  if (nome === 'squadre') caricaSquadre();
   if (nome === 'archivio') caricaArchivio();
   if (nome === 'profilo') caricaProfilo();
 }
@@ -291,6 +311,172 @@ async function caricaAlbo() {
   }
 }
 
+// ============ SQUADRE ============
+function renderStemma(stemma, dimensione = 18) {
+  if (!stemma) return '⚽';
+  if (stemma.startsWith('http')) {
+    return `<img src="${stemma}" alt="" style="width:${dimensione}px;height:${dimensione}px;object-fit:cover;vertical-align:middle;border-radius:2px;">`;
+  }
+  return stemma; // emoji o testo libero
+}
+
+async function caricaSquadre() {
+  const container = document.getElementById('squadreContainer');
+  container.innerHTML = skeletonBlocco();
+  try {
+    const squadre = await api('/squadre');
+    if (!squadre.length) {
+      container.innerHTML = '<div class="empty">Nessuna squadra registrata ancora.</div>';
+      return;
+    }
+    container.innerHTML = `
+      <h2 class="section-title">Le Squadre della Lega</h2>
+      <div class="players">
+        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${renderStemma(s.stemma, 22)} ${s.nome}</span>`).join('')}
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+async function apriSquadra(id) {
+  const container = document.getElementById('squadreContainer');
+  try {
+    const { squadra, allenatori, premi } = await api(`/squadre/${id}`);
+    if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
+    const labelCategoria = key => (stato.categorie.find(c => c.key === key) || {}).label || key;
+
+    container.innerHTML = `
+      <button class="ghost" onclick="caricaSquadre()">← Torna alle squadre</button>
+      <div class="article" style="margin-top:14px">
+        <div class="squadra-header">
+          ${squadra.stemma ? `<img src="${squadra.stemma}" alt="" class="stemma-grande">` : ''}
+          <div>
+            <div class="occhiello">Scheda squadra</div>
+            <h3>${squadra.nome}</h3>
+          </div>
+        </div>
+        <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
+        ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
+        ${squadra.foto ? `<img src="${squadra.foto}" alt="Foto squadra" class="foto-squadra">` : ''}
+        ${(squadra.maglia || squadra.magliaAway) ? `
+          <div class="maglie-row">
+            ${squadra.maglia ? `<div><img src="${squadra.maglia}" alt="maglia home" class="maglia-img"><div class="maglia-label">Home</div></div>` : ''}
+            ${squadra.magliaAway ? `<div><img src="${squadra.magliaAway}" alt="maglia away" class="maglia-img"><div class="maglia-label">Away</div></div>` : ''}
+          </div>
+        ` : ''}
+        ${squadra.rosa && squadra.rosa.length ? `
+          <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Rosa</h4>
+          <div class="players">${squadra.rosa.map(n => `<span class="chip">${n}</span>`).join('')}</div>
+        ` : ''}
+        <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Premi vinti</h4>
+        ${premi.length ? `
+          <div class="players">${premi.map(p => `<span class="chip admin">${labelCategoria(p.categoria)} — G${p.giornata}</span>`).join('')}</div>
+        ` : '<div class="empty">Ancora nessun premio vinto.</div>'}
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+// ============ UPLOAD IMMAGINI (stemma / foto / maglia) ============
+function mostraPreview(previewId, url) {
+  const img = document.getElementById(previewId);
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+}
+
+async function caricaImmagine(fileInputId, hiddenInputId, previewId) {
+  const fileInput = document.getElementById(fileInputId);
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  // Anteprima istantanea locale, mentre l'upload è in corso
+  const anteprimaLocale = URL.createObjectURL(file);
+  mostraPreview(previewId, anteprimaLocale);
+
+  const formData = new FormData();
+  formData.append('immagine', file);
+
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${stato.token}` },
+      body: formData
+    });
+    const dati = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(dati.errore || 'Errore nel caricamento');
+
+    document.getElementById(hiddenInputId).value = dati.url;
+    mostraPreview(previewId, dati.url);
+    mostraToast('Immagine caricata');
+  } catch (err) {
+    mostraToast(err.message);
+    fileInput.value = '';
+  }
+}
+
+document.getElementById('stemmaFile').addEventListener('change', () => caricaImmagine('stemmaFile', 'squadraStemma', 'stemmaPreview'));
+document.getElementById('fotoFile').addEventListener('change', () => caricaImmagine('fotoFile', 'squadraFoto', 'fotoPreview'));
+document.getElementById('magliaFile').addEventListener('change', () => caricaImmagine('magliaFile', 'squadraMaglia', 'magliaPreview'));
+document.getElementById('magliaAwayFile').addEventListener('change', () => caricaImmagine('magliaAwayFile', 'squadraMagliaAway', 'magliaAwayPreview'));
+
+// ============ LA MIA SQUADRA (dal profilo) ============
+async function caricaMiaSquadra() {
+  const view = document.getElementById('miaSquadraView');
+  const form = document.getElementById('miaSquadraForm');
+  if (!stato.utente.squadra) {
+    view.innerHTML = '<div class="empty">Nessuna squadra assegnata.</div>';
+    form.style.display = 'none';
+    return;
+  }
+  try {
+    const { squadra } = await api(`/squadre/${stato.utente.squadra}`);
+    view.innerHTML = `<div>Squadra: <b>${squadra.nome}</b></div>`;
+    document.getElementById('squadraStemma').value = squadra.stemma || '';
+    document.getElementById('squadraFoto').value = squadra.foto || '';
+    document.getElementById('squadraMaglia').value = squadra.maglia || '';
+    document.getElementById('squadraMagliaAway').value = squadra.magliaAway || '';
+    document.getElementById('squadraBio').value = squadra.bio || '';
+    document.getElementById('squadraRosa').value = (squadra.rosa || []).join(', ');
+    mostraPreview('stemmaPreview', squadra.stemma);
+    mostraPreview('fotoPreview', squadra.foto);
+    mostraPreview('magliaPreview', squadra.maglia);
+    mostraPreview('magliaAwayPreview', squadra.magliaAway);
+    form.style.display = 'block';
+  } catch (err) {
+    view.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+async function salvaMiaSquadra() {
+  const erroreEl = document.getElementById('squadraErrore');
+  erroreEl.textContent = '';
+  try {
+    await api(`/squadre/${stato.utente.squadra}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        stemma: document.getElementById('squadraStemma').value.trim(),
+        foto: document.getElementById('squadraFoto').value.trim(),
+        maglia: document.getElementById('squadraMaglia').value.trim(),
+        magliaAway: document.getElementById('squadraMagliaAway').value.trim(),
+        bio: document.getElementById('squadraBio').value.trim(),
+        rosa: document.getElementById('squadraRosa').value.split(',').map(s => s.trim()).filter(Boolean)
+      })
+    });
+    mostraToast('Squadra aggiornata!');
+    caricaMiaSquadra();
+  } catch (err) {
+    erroreEl.textContent = err.message;
+  }
+}
+
 // ============ ARCHIVIO ============
 async function caricaArchivio() {
   const container = document.getElementById('archivioContainer');
@@ -339,6 +525,8 @@ async function caricaProfilo() {
   } catch (err) {
     mostraToast(err.message);
   }
+
+  caricaMiaSquadra();
 }
 
 // ============ AVVIO APP ============
