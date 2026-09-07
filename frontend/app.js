@@ -7,10 +7,14 @@ const API_BASE = window.location.hostname === 'localhost'
 let stato = {
   token: localStorage.getItem('gazzetta_token') || null,
   utente: JSON.parse(localStorage.getItem('gazzetta_utente') || 'null'),
-  tabAttiva: 'ultima',
+  tabAttiva: 'home',
   ultimaEdizione: null,
-  categorie: []
+  categorie: [],
+  squadre: null,
+  prossimaGiornata: null
 };
+
+let deferredInstallPrompt = null;
 
 // ============ HELPER SKELETON ============
 function skeletonBlocco() {
@@ -48,6 +52,51 @@ function mostraToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+// Lo stemma di una squadra può essere un'emoji o l'url di un'immagine caricata
+function renderStemma(squadra) {
+  if (!squadra) return '⚽';
+  if (squadra.stemma && /^https?:\/\//.test(squadra.stemma)) {
+    return `<img src="${squadra.stemma}" style="width:1em;height:1em;object-fit:cover;vertical-align:middle;border-radius:2px;">`;
+  }
+  return squadra.stemma || '⚽';
+}
+
+async function caricaSquadreCache() {
+  if (!stato.squadre) stato.squadre = await api('/squadre');
+  return stato.squadre;
+}
+
+// ============ CARICAMENTO IMMAGINI (Cloudinary via /api/upload) ============
+async function caricaImmagine(file) {
+  const formData = new FormData();
+  formData.append('immagine', file);
+  const headers = {};
+  if (stato.token) headers.Authorization = `Bearer ${stato.token}`;
+  const res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers, body: formData });
+  const dati = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(dati.errore || 'Errore nel caricamento immagine');
+  return dati.url;
+}
+
+function collegaUploadPreview(fileInputId, hiddenInputId, previewId) {
+  const fileInput = document.getElementById(fileInputId);
+  if (!fileInput) return;
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const preview = document.getElementById(previewId);
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    try {
+      const url = await caricaImmagine(file);
+      document.getElementById(hiddenInputId).value = url;
+      mostraToast('Immagine caricata');
+    } catch (err) {
+      mostraToast(err.message);
+    }
+  });
+}
+
 // ============ AUTH ============
 document.querySelectorAll('[data-auth]').forEach(el => {
   el.addEventListener('click', () => {
@@ -56,20 +105,16 @@ document.querySelectorAll('[data-auth]').forEach(el => {
     const modo = el.dataset.auth;
     document.getElementById('loginForm').style.display = modo === 'login' ? 'block' : 'none';
     document.getElementById('registratiForm').style.display = modo === 'registrati' ? 'block' : 'none';
-    if (modo === 'registrati') caricaSquadreDisponibili();
   });
 });
 
-async function caricaSquadreDisponibili() {
+async function caricaSquadreRegistrazione() {
   const sel = document.getElementById('regSquadra');
   try {
     const squadre = await api('/squadre');
-    if (!squadre.length) {
-      sel.innerHTML = '<option value="">Nessuna squadra disponibile, contatta il direttore</option>';
-      return;
-    }
-    sel.innerHTML = squadre.map(s => `<option value="${s._id}">${s.stemma || ''} ${s.nome}</option>`).join('');
-  } catch (e) {
+    if (!squadre.length) { sel.innerHTML = '<option value="">Nessuna squadra disponibile</option>'; return; }
+    sel.innerHTML = squadre.map(s => `<option value="${s._id}">${s.nome}</option>`).join('');
+  } catch (err) {
     sel.innerHTML = '<option value="">Errore nel caricamento squadre</option>';
   }
 }
@@ -100,12 +145,8 @@ async function registrati() {
   const erroreEl = document.getElementById('regErrore');
   erroreEl.textContent = '';
 
-  if (!username || !nomeVisualizzato || !pin || !codiceInvito) {
-    erroreEl.textContent = 'Compila tutti i campi';
-    return;
-  }
-  if (!squadraId) {
-    erroreEl.textContent = 'Seleziona una squadra';
+  if (!username || !nomeVisualizzato || !pin || !codiceInvito || !squadraId) {
+    erroreEl.textContent = 'Compila tutti i campi, inclusa la squadra';
     return;
   }
 
@@ -132,34 +173,162 @@ function logout() {
   localStorage.removeItem('gazzetta_utente');
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('authScreen').style.display = 'block';
+  caricaSquadreRegistrazione();
 }
 
-// ============ TABS ============
-document.querySelectorAll('.tabs [data-tab]').forEach(el => {
-  el.addEventListener('click', () => cambiaTab(el.dataset.tab));
-});
-
+// ============ TABS (bottom nav) ============
 function cambiaTab(nome) {
   stato.tabAttiva = nome;
-  document.querySelectorAll('.tabs [data-tab]').forEach(t => t.classList.toggle('active', t.dataset.tab === nome));
-  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.toggle('attivo', b.dataset.tab === nome));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('attiva'));
+  document.getElementById(`tab-${nome}`).classList.add('attiva');
 
-  const contenitore = document.getElementById(`tab-${nome}`);
-  contenitore.style.animation = 'none';
-  contenitore.offsetHeight; // forza reflow, per far ripartire l'animazione ad ogni cambio tab
-  contenitore.style.animation = '';
-  contenitore.style.display = 'block';
+  const scrollArea = document.getElementById('scrollArea');
+  scrollArea.scrollTop = 0;
+  document.getElementById('appHeader').classList.remove('compatto');
 
+  if (nome === 'home') caricaHome();
   if (nome === 'ultima') caricaUltimaEdizione();
-  if (nome === 'nuova') preparaTabNuova();
   if (nome === 'verdetti') caricaVerdetti();
-  if (nome === 'albo') caricaAlbo();
-  if (nome === 'squadre') caricaSquadre();
-  if (nome === 'archivio') caricaArchivio();
+  if (nome === 'squadre') caricaSquadreTab();
   if (nome === 'profilo') caricaProfilo();
 }
 
-// ============ ULTIMA EDIZIONE ============
+// ============ HOME / PRIMA PAGINA ============
+async function caricaHome() {
+  caricaHomeTeaser();
+  caricaHomeCalendario();
+  caricaHomeClassifica();
+  caricaHomeVerdetti();
+}
+
+async function caricaHomeTeaser() {
+  const container = document.getElementById('homeTeaserContainer');
+  container.innerHTML = skeletonBlocco();
+  try {
+    if (!stato.ultimaEdizione) stato.ultimaEdizione = await api('/edizioni/ultima');
+    const e = stato.ultimaEdizione;
+    if (!e) {
+      container.innerHTML = '<div class="empty">Nessuna edizione ancora. Il direttore deve darsi da fare.</div>';
+      document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
+      return;
+    }
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? ''}`;
+    container.innerHTML = renderTeaser(e);
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+}
+
+function renderTeaser(e) {
+  const primoParagrafo = (e.corpo && e.corpo[0]) || '';
+  return `
+    <div class="stamp">N. ${e.giornata?.numero ?? ''}</div>
+    <div class="occhiello">${e.occhiello}</div>
+    <h3>${e.titolo}</h3>
+    ${e.immagineUrl ? `<div class="article-img"><img src="${e.immagineUrl}" alt=""></div>` : ''}
+    <p>${primoParagrafo}</p>
+    <span class="continua" onclick="cambiaTab('ultima')">Continua a leggere →</span>
+  `;
+}
+
+async function caricaHomeCalendario() {
+  const card = document.getElementById('homeCalendarioCard');
+  try {
+    const g = await api('/giornate/prossima');
+    stato.prossimaGiornata = g;
+    if (!g || !g.accoppiamenti || !g.accoppiamenti.length) { card.style.display = 'none'; return; }
+
+    card.style.display = 'block';
+    const mioMatch = g.accoppiamenti.find(a =>
+      String(a.squadraCasa?._id) === String(stato.utente.squadra) ||
+      String(a.squadraTrasferta?._id) === String(stato.utente.squadra)
+    ) || g.accoppiamenti[0];
+
+    document.getElementById('homeDerby').innerHTML = `
+      <div class="squadra"><span class="stemma">${renderStemma(mioMatch.squadraCasa)}</span><div class="nome-squadra">${mioMatch.squadraCasa?.nome ?? '?'}</div></div>
+      <div class="vs">VS</div>
+      <div class="squadra"><span class="stemma">${renderStemma(mioMatch.squadraTrasferta)}</span><div class="nome-squadra">${mioMatch.squadraTrasferta?.nome ?? '?'}</div></div>
+    `;
+    const dataTxt = g.data ? new Date(g.data).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Data da definire';
+    document.getElementById('homeDerbyMeta').textContent = `Giornata ${g.numero} — ${dataTxt} · ${g.accoppiamenti.length} scontri in programma`;
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
+
+function apriSheetGiornata() {
+  const g = stato.prossimaGiornata;
+  if (!g) return;
+  document.getElementById('sheetGiornataTitolo').textContent = `Giornata ${g.numero}`;
+  document.getElementById('sheetGiornataSotto').textContent = g.data
+    ? new Date(g.data).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+    : 'Data da definire';
+  document.getElementById('sheetGiornataBody').innerHTML = g.accoppiamenti.map(a => `
+    <div class="match-row">
+      <div class="sq casa"><span>${a.squadraCasa?.nome ?? '?'}</span><span class="stemma-mini">${renderStemma(a.squadraCasa)}</span></div>
+      <span class="vs-mini">VS</span>
+      <div class="sq trasferta"><span class="stemma-mini">${renderStemma(a.squadraTrasferta)}</span><span>${a.squadraTrasferta?.nome ?? '?'}</span></div>
+    </div>
+  `).join('');
+  document.getElementById('sheetGiornataOverlay').classList.add('aperto');
+  document.getElementById('sheetGiornata').classList.add('aperto');
+}
+function chiudiSheetGiornata() {
+  document.getElementById('sheetGiornataOverlay').classList.remove('aperto');
+  document.getElementById('sheetGiornata').classList.remove('aperto');
+}
+
+async function caricaHomeClassifica() {
+  const card = document.getElementById('homeClassificaCard');
+  try {
+    const classifica = await api('/giornate/classifica');
+    if (!classifica.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('homeClassificaBody').innerHTML = classifica.map((r, i) => `
+      <tr class="${stato.utente.squadra && String(r.squadra._id) === String(stato.utente.squadra) ? 'mia' : ''}">
+        <td class="pos">${i + 1}</td>
+        <td class="nome-sq"><span class="stemma-mini">${renderStemma(r.squadra)}</span>${r.squadra.nome}</td>
+        <td class="punti">${r.punti}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
+
+async function caricaHomeVerdetti() {
+  const card = document.getElementById('homeVerdettiCard');
+  try {
+    if (!stato.ultimaEdizione) stato.ultimaEdizione = await api('/edizioni/ultima');
+    const e = stato.ultimaEdizione;
+    if (!e) { card.style.display = 'none'; return; }
+    if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
+
+    const [squadre, votiInfo] = await Promise.all([caricaSquadreCache(), api(`/voti/edizione/${e._id}`)]);
+    const mappaSquadre = new Map(squadre.map(s => [String(s._id), s]));
+
+    const flashes = [];
+    stato.categorie.forEach(cat => {
+      const conteggi = votiInfo.conteggi[cat.key] || {};
+      const entries = Object.entries(conteggi).sort((a, b) => b[1] - a[1]);
+      if (!entries.length) return;
+      const [idSquadra] = entries[0];
+      const sq = mappaSquadre.get(idSquadra);
+      flashes.push({ label: cat.label.replace(/^\S+\s/, ''), nome: sq?.nome || '?' });
+    });
+
+    if (!flashes.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('homeVerdettiTicker').innerHTML = flashes.map(f => `
+      <div class="flash"><div class="flash-cat">${f.label}</div><div class="flash-nome">${f.nome}</div></div>
+    `).join('');
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
+
+// ============ ULTIMA EDIZIONE / ARCHIVIO (tab "Ultima") ============
 async function caricaUltimaEdizione() {
   const container = document.getElementById('ultimaContainer');
   container.innerHTML = skeletonBlocco();
@@ -171,7 +340,7 @@ async function caricaUltimaEdizione() {
       document.getElementById('edizioneCorrente').textContent = 'Nessuna edizione ancora';
       return;
     }
-    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata}`;
+    document.getElementById('edizioneCorrente').textContent = `Giornata ${e.giornata?.numero ?? ''}`;
     container.innerHTML = renderArticolo(e);
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
@@ -181,59 +350,55 @@ async function caricaUltimaEdizione() {
 function renderArticolo(e) {
   return `
     <div class="article">
-      <div class="stamp">N. ${e.giornata}</div>
+      <div class="stamp">N. ${e.giornata?.numero ?? ''}</div>
       <div class="occhiello">${e.occhiello}</div>
       <h3>${e.titolo}</h3>
-      <div class="byline">Giornata ${e.giornata} — a cura di ${e.direttore}</div>
+      <div class="byline">Giornata ${e.giornata?.numero ?? ''} — a cura di ${e.direttore}</div>
+      ${e.immagineUrl ? `<div class="article-img"><img src="${e.immagineUrl}" alt="${e.titolo}"><div class="didascalia">${e.occhiello}</div></div>` : ''}
       ${e.corpo.map(p => `<p>${p}</p>`).join('')}
       <div class="stat-strip">
-        <div class="stat">Vincitore<b>${e.stats.vincitore}</b></div>
-        <div class="stat">Ultimo<b>${e.stats.ultimo}</b></div>
-        <div class="stat">Fenomeno<b>${e.stats.fenomeno}</b></div>
-        <div class="stat">Bidone<b>${e.stats.bidone}</b></div>
+        <div class="stat">Vincitore<b>${e.stats?.vincitore?.nome ?? '—'}</b></div>
+        <div class="stat">Ultimo<b>${e.stats?.ultimo?.nome ?? '—'}</b></div>
+        <div class="stat">Fenomeno<b>${e.stats?.fenomeno?.nome ?? '—'}</b></div>
+        <div class="stat">Bidone<b>${e.stats?.bidone?.nome ?? '—'}</b></div>
       </div>
+      <button class="ghost" style="margin-top:16px;" onclick="mostraArchivio()">📚 Vedi tutte le edizioni</button>
     </div>
   `;
 }
 
-// ============ NUOVA EDIZIONE ============
-function preparaTabNuova() {
-  const autorizzato = stato.utente?.ruolo === 'admin';
-  document.getElementById('nuovaNonAutorizzato').style.display = autorizzato ? 'none' : 'block';
-  document.getElementById('nuovaFormWrap').style.display = autorizzato ? 'block' : 'none';
-  if (autorizzato) document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
-}
-
-async function pubblicaEdizione() {
-  const erroreEl = document.getElementById('nuovaErrore');
-  erroreEl.textContent = '';
-
-  const corpo = {
-    direttore: document.getElementById('direttore').value.trim(),
-    vincitore: document.getElementById('vincitore').value.trim(),
-    puntiVincitore: document.getElementById('puntiVincitore').value.trim(),
-    ultimo: document.getElementById('ultimo').value.trim(),
-    puntiUltimo: document.getElementById('puntiUltimo').value.trim(),
-    fenomeno: document.getElementById('fenomeno').value.trim(),
-    bidone: document.getElementById('bidone').value.trim()
-  };
-
-  if (!corpo.vincitore || !corpo.ultimo) {
-    erroreEl.textContent = 'Servono almeno vincitore e ultimo classificato';
-    return;
-  }
-
+async function mostraArchivio() {
+  const container = document.getElementById('ultimaContainer');
+  container.innerHTML = skeletonBlocco();
   try {
-    await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
-    mostraToast('Edizione mandata in stampa!');
-    ['vincitore', 'puntiVincitore', 'ultimo', 'puntiUltimo', 'fenomeno', 'bidone'].forEach(id => document.getElementById(id).value = '');
-    cambiaTab('ultima');
+    const edizioni = await api('/edizioni');
+    if (!edizioni.length) {
+      container.innerHTML = `<button class="ghost" style="margin-bottom:14px;" onclick="caricaUltimaEdizione()">← Torna all'ultima</button><div class="empty">L'archivio è ancora vuoto.</div>`;
+      return;
+    }
+    container.innerHTML = `<button class="ghost" style="margin-bottom:14px;" onclick="caricaUltimaEdizione()">← Torna all'ultima</button>` +
+      edizioni.map(e => `
+        <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
+          <div class="g">Giornata ${e.giornata?.numero ?? ''}</div>
+          <h4>${e.titolo}</h4>
+        </div>
+      `).join('');
   } catch (err) {
-    erroreEl.textContent = err.message;
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-// ============ VERDETTI / MINI-GIOCHI DI VOTO ============
+async function apriEdizioneArchivio(id) {
+  try {
+    const e = await api(`/edizioni/${id}`);
+    document.getElementById('ultimaContainer').innerHTML =
+      `<button class="ghost" style="margin-bottom:14px;" onclick="mostraArchivio()">← Torna all'archivio</button>` + renderArticolo(e);
+  } catch (err) {
+    mostraToast(err.message);
+  }
+}
+
+// ============ VERDETTI / MINI-GIOCHI DI VOTO (per squadra) ============
 async function caricaVerdetti() {
   const container = document.getElementById('verdettiContainer');
   container.innerHTML = skeletonBlocco();
@@ -245,21 +410,21 @@ async function caricaVerdetti() {
     }
     if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
 
-    const [giocatori, votiInfo] = await Promise.all([
-      api('/auth/giocatori'),
+    const [squadre, votiInfo] = await Promise.all([
+      caricaSquadreCache(),
       api(`/voti/edizione/${stato.ultimaEdizione._id}`)
     ]);
 
     container.innerHTML = `
-      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata}</h2>
-      ${stato.categorie.map(cat => renderCategoriaVoto(cat, giocatori, votiInfo)).join('')}
+      <h2 class="section-title">Verdetti della Giornata ${stato.ultimaEdizione.giornata?.numero ?? ''}</h2>
+      ${stato.categorie.map(cat => renderCategoriaVoto(cat, squadre, votiInfo)).join('')}
     `;
   } catch (err) {
     container.innerHTML = `<div class="empty">${err.message}</div>`;
   }
 }
 
-function renderCategoriaVoto(cat, giocatori, votiInfo) {
+function renderCategoriaVoto(cat, squadre, votiInfo) {
   const conteggi = votiInfo.conteggi[cat.key] || {};
   const mioVoto = votiInfo.mieiVoti[cat.key];
 
@@ -267,11 +432,11 @@ function renderCategoriaVoto(cat, giocatori, votiInfo) {
     <div class="verdetto">
       <h4>${cat.label}</h4>
       <div class="voti-list">
-        ${giocatori.map(g => {
-          const n = conteggi[g.nomeVisualizzato] || 0;
-          const attivo = mioVoto === g.nomeVisualizzato;
-          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${g.nomeVisualizzato.replace(/'/g, "\\'")}')">
-            ${g.nomeVisualizzato} <span class="count">${n}</span>
+        ${squadre.map(s => {
+          const n = conteggi[String(s._id)] || 0;
+          const attivo = mioVoto === String(s._id);
+          return `<button class="voto-btn ${attivo ? 'mio-voto' : ''}" onclick="vota('${cat.key}','${s._id}')">
+            ${s.nome} <span class="count">${n}</span>
           </button>`;
         }).join('')}
       </div>
@@ -279,20 +444,41 @@ function renderCategoriaVoto(cat, giocatori, votiInfo) {
   `;
 }
 
-async function vota(categoria, votato) {
+async function vota(categoria, squadraId) {
   try {
     await api('/voti', {
       method: 'POST',
-      body: JSON.stringify({ edizioneId: stato.ultimaEdizione._id, categoria, votato })
+      body: JSON.stringify({ edizioneId: stato.ultimaEdizione._id, categoria, votato: squadraId })
     });
-    mostraToast(`Voto registrato: ${votato}`);
+    mostraToast('Voto registrato');
     caricaVerdetti();
   } catch (err) {
     mostraToast(err.message);
   }
 }
 
-// ============ ALBO D'ORO ============
+// ============ SQUADRE + ALBO D'ORO ============
+async function caricaSquadreTab() {
+  const container = document.getElementById('squadreContainer');
+  container.innerHTML = skeletonBlocco();
+  try {
+    const squadre = await caricaSquadreCache();
+    if (!squadre.length) {
+      container.innerHTML = '<div class="empty">Nessuna squadra censita.</div>';
+    } else {
+      container.innerHTML = squadre.map(s => `
+        <div class="squadra-riga">
+          <span class="stemma">${renderStemma(s)}</span>
+          <div class="info"><b>${s.nome}</b><span>${(s.rosa || []).length} giocatori in rosa</span></div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="empty">${err.message}</div>`;
+  }
+  caricaAlbo();
+}
+
 async function caricaAlbo() {
   const container = document.getElementById('alboContainer');
   container.innerHTML = skeletonBlocco();
@@ -302,7 +488,7 @@ async function caricaAlbo() {
       <div class="albo-cat">
         <h5>${cat.label}</h5>
         ${cat.top.length
-          ? cat.top.map(([nome, n], i) => `<div>${i + 1}. ${nome} — ${n} voti</div>`).join('')
+          ? cat.top.map((t, i) => `<div>${i + 1}. ${t.squadra?.nome ?? '?'} — ${t.voti} voti</div>`).join('')
           : '<div>Ancora nessun voto</div>'}
       </div>
     `).join('');
@@ -311,210 +497,13 @@ async function caricaAlbo() {
   }
 }
 
-// ============ SQUADRE ============
-function renderStemma(stemma, dimensione = 18) {
-  if (!stemma) return '⚽';
-  if (stemma.startsWith('http')) {
-    return `<img src="${stemma}" alt="" style="width:${dimensione}px;height:${dimensione}px;object-fit:cover;vertical-align:middle;border-radius:2px;">`;
-  }
-  return stemma; // emoji o testo libero
-}
-
-async function caricaSquadre() {
-  const container = document.getElementById('squadreContainer');
-  container.innerHTML = skeletonBlocco();
-  try {
-    const squadre = await api('/squadre');
-    if (!squadre.length) {
-      container.innerHTML = '<div class="empty">Nessuna squadra registrata ancora.</div>';
-      return;
-    }
-    container.innerHTML = `
-      <h2 class="section-title">Le Squadre della Lega</h2>
-      <div class="players">
-        ${squadre.map(s => `<span class="chip" style="cursor:pointer" onclick="apriSquadra('${s._id}')">${renderStemma(s.stemma, 22)} ${s.nome}</span>`).join('')}
-      </div>
-    `;
-  } catch (err) {
-    container.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-async function apriSquadra(id) {
-  const container = document.getElementById('squadreContainer');
-  try {
-    const { squadra, allenatori, premi } = await api(`/squadre/${id}`);
-    if (!stato.categorie.length) stato.categorie = await api('/voti/categorie');
-    const labelCategoria = key => (stato.categorie.find(c => c.key === key) || {}).label || key;
-
-    container.innerHTML = `
-      <button class="ghost" onclick="caricaSquadre()">← Torna alle squadre</button>
-      <div class="article" style="margin-top:14px">
-        <div class="squadra-header">
-          ${squadra.stemma ? `<img src="${squadra.stemma}" alt="" class="stemma-grande">` : ''}
-          <div>
-            <div class="occhiello">Scheda squadra</div>
-            <h3>${squadra.nome}</h3>
-          </div>
-        </div>
-        <div class="byline">Allenatori: ${allenatori.map(a => a.nomeVisualizzato).join(', ') || 'nessuno'}</div>
-        ${squadra.bio ? `<p>${squadra.bio}</p>` : '<p><i>Nessuna storia raccontata ancora.</i></p>'}
-        ${squadra.foto ? `<img src="${squadra.foto}" alt="Foto squadra" class="foto-squadra">` : ''}
-        ${(squadra.maglia || squadra.magliaAway) ? `
-          <div class="maglie-row">
-            ${squadra.maglia ? `<div><img src="${squadra.maglia}" alt="maglia home" class="maglia-img"><div class="maglia-label">Home</div></div>` : ''}
-            ${squadra.magliaAway ? `<div><img src="${squadra.magliaAway}" alt="maglia away" class="maglia-img"><div class="maglia-label">Away</div></div>` : ''}
-          </div>
-        ` : ''}
-        ${squadra.rosa && squadra.rosa.length ? `
-          <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Rosa</h4>
-          <div class="players">${squadra.rosa.map(n => `<span class="chip">${n}</span>`).join('')}</div>
-        ` : ''}
-        <h4 style="font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;margin-top:14px">Premi vinti</h4>
-        ${premi.length ? `
-          <div class="players">${premi.map(p => `<span class="chip admin">${labelCategoria(p.categoria)} — G${p.giornata}</span>`).join('')}</div>
-        ` : '<div class="empty">Ancora nessun premio vinto.</div>'}
-      </div>
-    `;
-  } catch (err) {
-    container.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-// ============ UPLOAD IMMAGINI (stemma / foto / maglia) ============
-function mostraPreview(previewId, url) {
-  const img = document.getElementById(previewId);
-  if (url) {
-    img.src = url;
-    img.style.display = 'block';
-  } else {
-    img.style.display = 'none';
-  }
-}
-
-async function caricaImmagine(fileInputId, hiddenInputId, previewId) {
-  const fileInput = document.getElementById(fileInputId);
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  // Anteprima istantanea locale, mentre l'upload è in corso
-  const anteprimaLocale = URL.createObjectURL(file);
-  mostraPreview(previewId, anteprimaLocale);
-
-  const formData = new FormData();
-  formData.append('immagine', file);
-
-  try {
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${stato.token}` },
-      body: formData
-    });
-    const dati = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(dati.errore || 'Errore nel caricamento');
-
-    document.getElementById(hiddenInputId).value = dati.url;
-    mostraPreview(previewId, dati.url);
-    mostraToast('Immagine caricata');
-  } catch (err) {
-    mostraToast(err.message);
-    fileInput.value = '';
-  }
-}
-
-document.getElementById('stemmaFile').addEventListener('change', () => caricaImmagine('stemmaFile', 'squadraStemma', 'stemmaPreview'));
-document.getElementById('fotoFile').addEventListener('change', () => caricaImmagine('fotoFile', 'squadraFoto', 'fotoPreview'));
-document.getElementById('magliaFile').addEventListener('change', () => caricaImmagine('magliaFile', 'squadraMaglia', 'magliaPreview'));
-document.getElementById('magliaAwayFile').addEventListener('change', () => caricaImmagine('magliaAwayFile', 'squadraMagliaAway', 'magliaAwayPreview'));
-
-// ============ LA MIA SQUADRA (dal profilo) ============
-async function caricaMiaSquadra() {
-  const view = document.getElementById('miaSquadraView');
-  const form = document.getElementById('miaSquadraForm');
-  if (!stato.utente.squadra) {
-    view.innerHTML = '<div class="empty">Nessuna squadra assegnata.</div>';
-    form.style.display = 'none';
-    return;
-  }
-  try {
-    const { squadra } = await api(`/squadre/${stato.utente.squadra}`);
-    view.innerHTML = `<div>Squadra: <b>${squadra.nome}</b></div>`;
-    document.getElementById('squadraStemma').value = squadra.stemma || '';
-    document.getElementById('squadraFoto').value = squadra.foto || '';
-    document.getElementById('squadraMaglia').value = squadra.maglia || '';
-    document.getElementById('squadraMagliaAway').value = squadra.magliaAway || '';
-    document.getElementById('squadraBio').value = squadra.bio || '';
-    document.getElementById('squadraRosa').value = (squadra.rosa || []).join(', ');
-    mostraPreview('stemmaPreview', squadra.stemma);
-    mostraPreview('fotoPreview', squadra.foto);
-    mostraPreview('magliaPreview', squadra.maglia);
-    mostraPreview('magliaAwayPreview', squadra.magliaAway);
-    form.style.display = 'block';
-  } catch (err) {
-    view.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-async function salvaMiaSquadra() {
-  const erroreEl = document.getElementById('squadraErrore');
-  erroreEl.textContent = '';
-  try {
-    await api(`/squadre/${stato.utente.squadra}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        stemma: document.getElementById('squadraStemma').value.trim(),
-        foto: document.getElementById('squadraFoto').value.trim(),
-        maglia: document.getElementById('squadraMaglia').value.trim(),
-        magliaAway: document.getElementById('squadraMagliaAway').value.trim(),
-        bio: document.getElementById('squadraBio').value.trim(),
-        rosa: document.getElementById('squadraRosa').value.split(',').map(s => s.trim()).filter(Boolean)
-      })
-    });
-    mostraToast('Squadra aggiornata!');
-    caricaMiaSquadra();
-  } catch (err) {
-    erroreEl.textContent = err.message;
-  }
-}
-
-// ============ ARCHIVIO ============
-async function caricaArchivio() {
-  const container = document.getElementById('archivioContainer');
-  container.innerHTML = skeletonBlocco();
-  try {
-    const edizioni = await api('/edizioni');
-    if (!edizioni.length) {
-      container.innerHTML = '<div class="empty">L\'archivio è ancora vuoto. Pubblicate la prima edizione!</div>';
-      return;
-    }
-    container.innerHTML = edizioni.map(e => `
-      <div class="archivio-item" onclick="apriEdizioneArchivio('${e._id}')">
-        <div class="g">Giornata ${e.giornata}</div>
-        <h4>${e.titolo}</h4>
-      </div>
-    `).join('');
-  } catch (err) {
-    container.innerHTML = `<div class="empty">${err.message}</div>`;
-  }
-}
-
-async function apriEdizioneArchivio(id) {
-  try {
-    const e = await api(`/edizioni/${id}`);
-    document.getElementById('archivioContainer').innerHTML =
-      `<button class="ghost" onclick="caricaArchivio()">← Torna all'archivio</button>` + renderArticolo(e);
-  } catch (err) {
-    mostraToast(err.message);
-  }
-}
-
 // ============ PROFILO ============
 async function caricaProfilo() {
   const p = document.getElementById('profiloContainer');
   p.innerHTML = `
-    <div>Nome: <b>${stato.utente.nomeVisualizzato}</b></div>
-    <div>Username: <b>${stato.utente.username}</b></div>
-    <div>Ruolo: <span class="profilo-badge">${stato.utente.ruolo === 'admin' ? 'Direttore' : 'Giocatore'}</span></div>
+    <div class="profilo-nome">${stato.utente.nomeVisualizzato}</div>
+    <div class="profilo-badge">${stato.utente.ruolo === 'admin' ? 'Direttore' : 'Giocatore'}</div>
+    <p>Username: <b>${stato.utente.username}</b></p>
   `;
 
   try {
@@ -526,15 +515,165 @@ async function caricaProfilo() {
     mostraToast(err.message);
   }
 
-  caricaMiaSquadra();
+  if (!stato.utente.squadra) return;
+  try {
+    const { squadra, allenatori } = await api(`/squadre/${stato.utente.squadra}`);
+    document.getElementById('miaSquadraView').innerHTML = `
+      <div class="squadra-riga" style="border:none;padding:0 0 10px;">
+        <span class="stemma">${renderStemma(squadra)}</span>
+        <div class="info"><b>${squadra.nome}</b><span>${allenatori.map(a => a.nomeVisualizzato).join(', ')}</span></div>
+      </div>
+      ${squadra.bio ? `<p>${squadra.bio}</p>` : ''}
+    `;
+    document.getElementById('miaSquadraForm').style.display = 'block';
+    document.getElementById('squadraBio').value = squadra.bio || '';
+    document.getElementById('squadraRosa').value = (squadra.rosa || []).join(', ');
+    document.getElementById('squadraStemma').value = squadra.stemma || '';
+    document.getElementById('squadraFoto').value = squadra.foto || '';
+    document.getElementById('squadraMaglia').value = squadra.maglia || '';
+    if (squadra.foto) { document.getElementById('fotoPreview').src = squadra.foto; document.getElementById('fotoPreview').style.display = 'block'; }
+    if (squadra.maglia) { document.getElementById('magliaPreview').src = squadra.maglia; document.getElementById('magliaPreview').style.display = 'block'; }
+  } catch (err) {
+    // la squadra non si carica: non blocca il resto del profilo
+  }
 }
+
+async function salvaMiaSquadra() {
+  const erroreEl = document.getElementById('squadraErrore');
+  erroreEl.textContent = '';
+  try {
+    const corpo = {
+      stemma: document.getElementById('squadraStemma').value,
+      foto: document.getElementById('squadraFoto').value,
+      maglia: document.getElementById('squadraMaglia').value,
+      bio: document.getElementById('squadraBio').value,
+      rosa: document.getElementById('squadraRosa').value.split(',').map(s => s.trim()).filter(Boolean)
+    };
+    await api(`/squadre/${stato.utente.squadra}`, { method: 'PATCH', body: JSON.stringify(corpo) });
+    mostraToast('Squadra aggiornata');
+    caricaProfilo();
+  } catch (err) {
+    erroreEl.textContent = err.message;
+  }
+}
+
+// ============ NUOVA EDIZIONE (FAB, solo admin) ============
+function apriSheetNuova() {
+  document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
+  caricaGiornateDisponibili();
+  document.getElementById('sheetNuovaOverlay').classList.add('aperto');
+  document.getElementById('sheetNuova').classList.add('aperto');
+}
+function chiudiSheetNuova() {
+  document.getElementById('sheetNuovaOverlay').classList.remove('aperto');
+  document.getElementById('sheetNuova').classList.remove('aperto');
+}
+
+async function caricaGiornateDisponibili() {
+  const sel = document.getElementById('selGiornata');
+  sel.innerHTML = '<option value="">Caricamento...</option>';
+  try {
+    const giornate = await api('/giornate');
+    const concluse = giornate.filter(g => g.conclusa);
+    if (!concluse.length) {
+      sel.innerHTML = '<option value="">Nessuna giornata conclusa da pubblicare</option>';
+      document.getElementById('fenomeno').innerHTML = '<option value="">— automatico (il vincitore) —</option>';
+      document.getElementById('bidone').innerHTML = '<option value="">— automatico (l\'ultimo) —</option>';
+      return;
+    }
+    sel.innerHTML = concluse.map(g => `<option value="${g._id}">Giornata ${g.numero}${g.data ? ' — ' + new Date(g.data).toLocaleDateString('it-IT') : ''}</option>`).join('');
+    popolaFenomenoBidone(concluse[0]);
+    sel.onchange = () => popolaFenomenoBidone(concluse.find(x => x._id === sel.value));
+  } catch (err) {
+    sel.innerHTML = '<option value="">Errore nel caricamento</option>';
+  }
+}
+
+function popolaFenomenoBidone(giornata) {
+  const squadreGiornata = [];
+  (giornata?.accoppiamenti || []).forEach(a => {
+    if (a.squadraCasa) squadreGiornata.push(a.squadraCasa);
+    if (a.squadraTrasferta) squadreGiornata.push(a.squadraTrasferta);
+  });
+  const opzioni = squadreGiornata.map(s => `<option value="${s._id}">${s.nome}</option>`).join('');
+  document.getElementById('fenomeno').innerHTML = '<option value="">— automatico (il vincitore) —</option>' + opzioni;
+  document.getElementById('bidone').innerHTML = '<option value="">— automatico (l\'ultimo) —</option>' + opzioni;
+}
+
+async function pubblicaEdizione() {
+  const erroreEl = document.getElementById('nuovaErrore');
+  erroreEl.textContent = '';
+
+  const giornataId = document.getElementById('selGiornata').value;
+  if (!giornataId) { erroreEl.textContent = 'Seleziona una giornata conclusa'; return; }
+
+  const corpo = {
+    giornataId,
+    direttore: document.getElementById('direttore').value.trim(),
+    fenomeno: document.getElementById('fenomeno').value || undefined,
+    bidone: document.getElementById('bidone').value || undefined,
+    immagineUrl: document.getElementById('nuovaImmagineUrl').value || undefined
+  };
+
+  try {
+    await api('/edizioni', { method: 'POST', body: JSON.stringify(corpo) });
+    mostraToast('Edizione mandata in stampa!');
+    chiudiSheetNuova();
+    document.getElementById('nuovaImgPreview').style.display = 'none';
+    document.getElementById('nuovaImmagineUrl').value = '';
+    stato.ultimaEdizione = null;
+    cambiaTab('ultima');
+  } catch (err) {
+    erroreEl.textContent = err.message;
+  }
+}
+
+// ============ INSTALLAZIONE PWA ============
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (stato.utente) mostraInstallBannerSeOpportuno();
+});
+
+function mostraInstallBannerSeOpportuno() {
+  const giaInstallata = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const chiuso = localStorage.getItem('gazzetta_install_dismesso');
+  if (deferredInstallPrompt && !giaInstallata && !chiuso) {
+    document.getElementById('installBanner').style.display = 'flex';
+  }
+}
+function chiudiInstallBanner() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('gazzetta_install_dismesso', '1');
+}
+async function installaApp() {
+  if (!deferredInstallPrompt) { chiudiInstallBanner(); return; }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  chiudiInstallBanner();
+}
+
+// ============ HEADER CHE SI COMPATTA ALLO SCROLL ============
+document.getElementById('scrollArea').addEventListener('scroll', () => {
+  const scrollArea = document.getElementById('scrollArea');
+  document.getElementById('appHeader').classList.toggle('compatto', scrollArea.scrollTop > 40);
+});
+
+// ============ UPLOAD IMMAGINI: collegamento file input -> preview -> Cloudinary ============
+collegaUploadPreview('stemmaFile', 'squadraStemma', 'stemmaPreview');
+collegaUploadPreview('fotoFile', 'squadraFoto', 'fotoPreview');
+collegaUploadPreview('magliaFile', 'squadraMaglia', 'magliaPreview');
+collegaUploadPreview('nuovaImgFile', 'nuovaImmagineUrl', 'nuovaImgPreview');
 
 // ============ AVVIO APP ============
 function avviaApp() {
   document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('ciaoUtente').textContent = `Bentornato, ${stato.utente.nomeVisualizzato}`;
-  cambiaTab('ultima');
+  document.getElementById('fabNuova').style.display = stato.utente.ruolo === 'admin' ? 'flex' : 'none';
+  mostraInstallBannerSeOpportuno();
+  cambiaTab('home');
 }
 
 // Al caricamento: se c'è una sessione salvata, entra direttamente
@@ -542,6 +681,7 @@ if (stato.token && stato.utente) {
   avviaApp();
 } else {
   document.getElementById('authScreen').style.display = 'block';
+  caricaSquadreRegistrazione();
 }
 
 // Service worker

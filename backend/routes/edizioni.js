@@ -79,9 +79,10 @@ function classificaGiornata(giornata) {
 // Pubblica nuova edizione - solo direttore/admin di turno (qualsiasi admin)
 // Vincitore/ultimo si calcolano dai punteggi reali della Giornata; fenomeno/bidone sono
 // una scelta editoriale (di default coincidono con vincitore/ultimo se non specificati).
+// immagineUrl è opzionale: url Cloudinary caricata via /api/upload prima di pubblicare.
 router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
   try {
-    const { giornataId, direttore, fenomeno, bidone } = req.body;
+    const { giornataId, direttore, fenomeno, bidone, immagineUrl } = req.body;
     if (!giornataId || !mongoose.isValidObjectId(giornataId)) {
       return res.status(400).json({ errore: 'Giornata non valida' });
     }
@@ -125,6 +126,7 @@ router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
       occhiello: pick(OCCHIELLI)(t),
       titolo: pick(TITOLI)(t),
       corpo: [pick(P_FENOMENO)(t), pick(P_BIDONE)(t), pick(P_CHIUSURA)(t)],
+      immagineUrl: immagineUrl || '',
       stats: {
         vincitore: testaClassifica.squadra._id,
         puntiVincitore: testaClassifica.punti,

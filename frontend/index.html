@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>La Gazzetta dello Sfottò</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#241b1e">
@@ -14,7 +14,7 @@
 
 <!-- SCHERMATA LOGIN / REGISTRAZIONE -->
 <div id="authScreen" class="auth-screen" style="display:none">
-  <div class="masthead">
+  <div class="masthead" style="padding:0 0 12px;border-bottom:5px solid var(--rule);margin-bottom:20px;">
     <div class="kicker">Organo ufficiale (non richiesto) della Lega</div>
     <h1>La Gazzetta dello Sfottò</h1>
   </div>
@@ -51,171 +51,220 @@
   </div>
 </div>
 
-<!-- APP PRINCIPALE -->
-<div id="appScreen" class="wrap" style="display:none">
+<!-- APP PRINCIPALE (shell: header + contenuto scrollabile + bottom nav) -->
+<div id="appScreen" style="display:none">
 
-  <div class="top-bar">
-    <span id="ciaoUtente"></span>
-    <button class="link" onclick="logout()">Esci</button>
-  </div>
-
-  <div class="masthead">
-    <div class="kicker">Organo ufficiale (non richiesto) della Lega</div>
-    <h1>La Gazzetta dello Sfottò</h1>
-    <div class="sub">
-      <span id="edizioneCorrente">Nessuna edizione ancora</span>
-      <span>Prezzo: la vostra dignità</span>
+  <div class="app-header" id="appHeader">
+    <div class="install-banner" id="installBanner" style="display:none">
+      <span>Installa La Gazzetta sulla home — anche offline</span>
+      <button class="installa" onclick="installaApp()">Installa</button>
+      <button class="chiudi" onclick="chiudiInstallBanner()">✕</button>
+    </div>
+    <div class="top-bar">
+      <span id="ciaoUtente"></span>
+      <button class="link" onclick="logout()">Esci</button>
+    </div>
+    <div class="masthead">
+      <div class="kicker">Organo ufficiale (non richiesto) della Lega</div>
+      <h1>La Gazzetta dello Sfottò</h1>
+      <div class="sub">
+        <span id="edizioneCorrente">Nessuna edizione ancora</span>
+        <span>Prezzo: la vostra dignità</span>
+      </div>
     </div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="ultima">Ultima</div>
-    <div class="tab" data-tab="nuova">Nuova</div>
-    <div class="tab" data-tab="verdetti">Verdetti</div>
-    <div class="tab" data-tab="albo">Albo</div>
-    <div class="tab" data-tab="squadre">Squadre</div>
-    <div class="tab" data-tab="archivio">Archivio</div>
-    <div class="tab" data-tab="profilo">Profilo</div>
-  </div>
+  <div class="contenuto" id="scrollArea">
 
-  <!-- ULTIMA EDIZIONE -->
-  <div id="tab-ultima" class="tab-content">
-    <div class="card" id="ultimaContainer">
-      <div class="empty">Caricamento in corso...</div>
-    </div>
-  </div>
+    <!-- HOME / PRIMA PAGINA -->
+    <div id="tab-home" class="tab-content attiva">
+      <div class="card teaser" id="homeTeaserContainer">
+        <div class="empty">Caricamento in corso...</div>
+      </div>
 
-  <!-- NUOVA EDIZIONE (solo admin) -->
-  <div id="tab-nuova" class="tab-content" style="display:none">
-    <div id="nuovaNonAutorizzato" class="card" style="display:none">
-      <div class="empty">Solo il direttore di turno può pubblicare una nuova edizione.</div>
+      <div class="card calendario-preview" id="homeCalendarioCard" style="display:none" onclick="apriSheetGiornata()" role="button" tabindex="0">
+        <h2 class="section-title">Prossima Giornata<span class="vedi-tutto">Vedi tutti gli scontri →</span></h2>
+        <div class="derby" id="homeDerby"></div>
+        <div class="derby-meta" id="homeDerbyMeta"></div>
+      </div>
+
+      <div class="card" id="homeClassificaCard" style="display:none">
+        <h2 class="section-title">Il Tabellone<span class="vedi-tutto" onclick="cambiaTab('squadre')">Squadre</span></h2>
+        <table class="classifica">
+          <thead><tr><th></th><th>Squadra</th><th style="text-align:right">Punti</th></tr></thead>
+          <tbody id="homeClassificaBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="homeVerdettiCard" style="display:none">
+        <h2 class="section-title">Ultimi Verdetti<span class="vedi-tutto" onclick="cambiaTab('verdetti')">Verdetti</span></h2>
+        <div class="verdetti-ticker" id="homeVerdettiTicker"></div>
+      </div>
     </div>
-    <div id="nuovaFormWrap">
+
+    <!-- ULTIMA EDIZIONE / ARCHIVIO -->
+    <div id="tab-ultima" class="tab-content">
+      <div class="card" id="ultimaContainer">
+        <div class="empty">Caricamento in corso...</div>
+      </div>
+    </div>
+
+    <!-- VERDETTI / MINI-GIOCHI (voto per squadra) -->
+    <div id="tab-verdetti" class="tab-content">
+      <div class="card" id="verdettiContainer">
+        <div class="empty">Nessuna edizione da votare ancora.</div>
+      </div>
+    </div>
+
+    <!-- SQUADRE + ALBO D'ORO -->
+    <div id="tab-squadre" class="tab-content">
       <div class="card">
-        <h2 class="section-title">Scrivi l'Edizione</h2>
+        <h2 class="section-title">Le Squadre della Lega</h2>
+        <div id="squadreContainer"><div class="empty">Caricamento in corso...</div></div>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Albo dei Trofei (stagione)</h2>
+        <div class="albo-grid" id="alboContainer"></div>
+      </div>
+    </div>
+
+    <!-- PROFILO -->
+    <div id="tab-profilo" class="tab-content">
+      <div class="card">
+        <h2 class="section-title">Il tuo profilo</h2>
+        <div id="profiloContainer"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">La tua squadra</h2>
+        <div id="miaSquadraView"></div>
+        <div id="miaSquadraForm" style="display:none">
+          <label>Stemma</label>
+          <div class="upload-row">
+            <img id="stemmaPreview" class="img-preview" style="display:none">
+            <input type="file" id="stemmaFile" accept="image/*">
+          </div>
+          <input type="hidden" id="squadraStemma">
+
+          <label>Foto squadra</label>
+          <div class="upload-row">
+            <img id="fotoPreview" class="img-preview" style="display:none">
+            <input type="file" id="fotoFile" accept="image/*">
+          </div>
+          <input type="hidden" id="squadraFoto">
+
+          <label>Maglia</label>
+          <div class="upload-row">
+            <img id="magliaPreview" class="img-preview" style="display:none">
+            <input type="file" id="magliaFile" accept="image/*">
+          </div>
+          <input type="hidden" id="squadraMaglia">
+          <label>Bio / storia della squadra</label>
+          <textarea id="squadraBio" rows="4" placeholder="Racconta la storia della tua squadra..."></textarea>
+          <label>Rosa (nomi separati da virgola)</label>
+          <input type="text" id="squadraRosa" placeholder="Giocatore 1, Giocatore 2, ...">
+          <button class="primary" onclick="salvaMiaSquadra()">Salva squadra</button>
+          <div id="squadraErrore" class="errore-msg"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Giocatori della Lega</h2>
+        <div class="players" id="playersList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FAB: nuova edizione, solo per l'admin di turno -->
+  <button class="fab" id="fabNuova" style="display:none" onclick="apriSheetNuova()" title="Nuova edizione">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <!-- SHEET: tutti gli scontri della prossima giornata -->
+  <div class="sheet-overlay" id="sheetGiornataOverlay" onclick="chiudiSheetGiornata()"></div>
+  <div class="sheet" id="sheetGiornata">
+    <div class="maniglia"></div>
+    <div class="sheet-header">
+      <div>
+        <h3 id="sheetGiornataTitolo">Giornata</h3>
+        <span class="sotto" id="sheetGiornataSotto"></span>
+      </div>
+      <button class="chiudi-sheet" onclick="chiudiSheetGiornata()">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetGiornataBody"></div>
+  </div>
+
+  <!-- SHEET: nuova edizione (solo admin) -->
+  <div class="sheet-overlay" id="sheetNuovaOverlay" onclick="chiudiSheetNuova()"></div>
+  <div class="sheet grande" id="sheetNuova">
+    <div class="maniglia"></div>
+    <div class="sheet-header">
+      <div><h3>Nuova Edizione</h3></div>
+      <button class="chiudi-sheet" onclick="chiudiSheetNuova()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <form onsubmit="event.preventDefault(); pubblicaEdizione();">
+        <label>Giornata da pubblicare</label>
+        <select id="selGiornata">
+          <option value="">Caricamento giornate concluse...</option>
+        </select>
+
         <label>Direttore di turno</label>
         <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
 
         <div class="row2">
           <div>
-            <label>Vincitore giornata</label>
-            <input type="text" id="vincitore" placeholder="Nome">
+            <label>Fenomeno di giornata (opzionale)</label>
+            <select id="fenomeno"><option value="">— automatico (il vincitore) —</option></select>
           </div>
           <div>
-            <label>Punti vincitore</label>
-            <input type="number" id="puntiVincitore" placeholder="es. 78">
+            <label>Bidone di giornata (opzionale)</label>
+            <select id="bidone"><option value="">— automatico (l'ultimo) —</option></select>
           </div>
         </div>
 
-        <div class="row2">
-          <div>
-            <label>Ultimo classificato</label>
-            <input type="text" id="ultimo" placeholder="Nome">
-          </div>
-          <div>
-            <label>Punti ultimo</label>
-            <input type="number" id="puntiUltimo" placeholder="es. 41">
-          </div>
+        <label>Foto dell'edizione (opzionale, grande in prima pagina)</label>
+        <div class="upload-row">
+          <img id="nuovaImgPreview" class="img-preview" style="display:none">
+          <input type="file" id="nuovaImgFile" accept="image/*">
         </div>
+        <input type="hidden" id="nuovaImmagineUrl">
 
-        <div class="row2">
-          <div>
-            <label>Fenomeno di giornata</label>
-            <input type="text" id="fenomeno" placeholder="Chi ha stupito">
-          </div>
-          <div>
-            <label>Bidone di giornata</label>
-            <input type="text" id="bidone" placeholder="Chi ha deluso">
-          </div>
-        </div>
-
-        <button class="primary" onclick="pubblicaEdizione()">Manda in stampa</button>
+        <button class="primary" type="submit">Manda in stampa</button>
         <div id="nuovaErrore" class="errore-msg"></div>
-      </div>
+      </form>
     </div>
   </div>
 
-  <!-- VERDETTI / MINI-GIOCHI -->
-  <div id="tab-verdetti" class="tab-content" style="display:none">
-    <div class="card" id="verdettiContainer">
-      <div class="empty">Nessuna edizione da votare ancora.</div>
-    </div>
-  </div>
-
-  <!-- ALBO D'ORO -->
-  <div id="tab-albo" class="tab-content" style="display:none">
-    <div class="card">
-      <h2 class="section-title">Albo dei Trofei (stagione)</h2>
-      <div class="albo-grid" id="alboContainer"></div>
-    </div>
-  </div>
-
-  <!-- SQUADRE -->
-  <div id="tab-squadre" class="tab-content" style="display:none">
-    <div class="card" id="squadreContainer">
-      <div class="empty">Caricamento squadre...</div>
-    </div>
-  </div>
-
-  <!-- ARCHIVIO -->
-  <div id="tab-archivio" class="tab-content" style="display:none">
-    <div class="card" id="archivioContainer">
-      <div class="empty">L'archivio è ancora vuoto. Pubblicate la prima edizione!</div>
-    </div>
-  </div>
-
-  <!-- PROFILO -->
-  <div id="tab-profilo" class="tab-content" style="display:none">
-    <div class="card">
-      <h2 class="section-title">Il tuo profilo</h2>
-      <div id="profiloContainer"></div>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">La tua squadra</h2>
-      <div id="miaSquadraView"></div>
-      <div id="miaSquadraForm" style="display:none">
-        <label>Stemma</label>
-        <div class="upload-row">
-          <img id="stemmaPreview" class="img-preview" style="display:none">
-          <input type="file" id="stemmaFile" accept="image/*">
-        </div>
-        <input type="hidden" id="squadraStemma">
-
-        <label>Foto squadra</label>
-        <div class="upload-row">
-          <img id="fotoPreview" class="img-preview" style="display:none">
-          <input type="file" id="fotoFile" accept="image/*">
-        </div>
-        <input type="hidden" id="squadraFoto">
-
-        <label>Maglia (home)</label>
-        <div class="upload-row">
-          <img id="magliaPreview" class="img-preview" style="display:none">
-          <input type="file" id="magliaFile" accept="image/*">
-        </div>
-        <input type="hidden" id="squadraMaglia">
-
-        <label>Maglia (away)</label>
-        <div class="upload-row">
-          <img id="magliaAwayPreview" class="img-preview" style="display:none">
-          <input type="file" id="magliaAwayFile" accept="image/*">
-        </div>
-        <input type="hidden" id="squadraMagliaAway">
-        <label>Bio / storia della squadra</label>
-        <textarea id="squadraBio" rows="4" placeholder="Racconta la storia della tua squadra..."></textarea>
-        <label>Rosa (nomi separati da virgola)</label>
-        <input type="text" id="squadraRosa" placeholder="Giocatore 1, Giocatore 2, ...">
-        <button class="primary" onclick="salvaMiaSquadra()">Salva squadra</button>
-        <div id="squadraErrore" class="errore-msg"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">Giocatori della Lega</h2>
-      <div class="players" id="playersList"></div>
-    </div>
-  </div>
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item attivo" data-tab="home" onclick="cambiaTab('home')">
+      <span class="puntino"></span>
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </button>
+    <button class="nav-item" data-tab="ultima" onclick="cambiaTab('ultima')">
+      <span class="puntino"></span>
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>
+      Ultima
+    </button>
+    <button class="nav-item" data-tab="verdetti" onclick="cambiaTab('verdetti')">
+      <span class="puntino"></span>
+      <svg viewBox="0 0 24 24"><path d="M12 3l2.5 5 5.5.8-4 4 1 5.5-5-2.6-5 2.6 1-5.5-4-4 5.5-.8z"/></svg>
+      Verdetti
+    </button>
+    <button class="nav-item" data-tab="squadre" onclick="cambiaTab('squadre')">
+      <span class="puntino"></span>
+      <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg>
+      Squadre
+    </button>
+    <button class="nav-item" data-tab="profilo" onclick="cambiaTab('profilo')">
+      <span class="puntino"></span>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 5-5.5 7-5.5s5.5 1.5 7 5.5"/></svg>
+      Profilo
+    </button>
+  </nav>
 
 </div>
 

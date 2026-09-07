@@ -17,10 +17,40 @@ router.get('/', richiediAuth, async (req, res) => {
   res.json(giornate);
 });
 
-// Prossima giornata non ancora conclusa (per countdown in home)
+// Prossima giornata non ancora conclusa (per countdown/preview in home)
 router.get('/prossima', richiediAuth, async (req, res) => {
   const g = await popolaGiornata(Giornata.findOne({ conclusa: false }).sort({ numero: 1 }));
   res.json(g || null);
+});
+
+// Classifica di stagione: somma dei punti per squadra su tutte le giornate concluse.
+// Usata per il tabellone in Home. Ordinata per punti decrescenti.
+router.get('/classifica', richiediAuth, async (req, res) => {
+  const giornateConcluse = await Giornata.find({ conclusa: true });
+
+  const puntiPerSquadra = {};
+  giornateConcluse.forEach(g => {
+    g.accoppiamenti.forEach(a => {
+      if (a.punteggioCasa != null) {
+        const id = String(a.squadraCasa);
+        puntiPerSquadra[id] = (puntiPerSquadra[id] || 0) + a.punteggioCasa;
+      }
+      if (a.punteggioTrasferta != null) {
+        const id = String(a.squadraTrasferta);
+        puntiPerSquadra[id] = (puntiPerSquadra[id] || 0) + a.punteggioTrasferta;
+      }
+    });
+  });
+
+  const squadre = await Squadra.find().select('nome stemma');
+  const classifica = squadre
+    .map(s => ({
+      squadra: { _id: s._id, nome: s.nome, stemma: s.stemma },
+      punti: puntiPerSquadra[String(s._id)] || 0
+    }))
+    .sort((a, b) => b.punti - a.punti);
+
+  res.json(classifica);
 });
 
 router.get('/:id', richiediAuth, async (req, res) => {
@@ -77,7 +107,7 @@ router.post('/importa', richiediAuth, richiediAdmin, async (req, res) => {
       return res.status(400).json({ errore: 'Intestazioni mancanti: servono almeno squadraCasa,squadraTrasferta' });
     }
 
-    const squadre = await Squadra.find({ attiva: true });
+    const squadre = await Squadra.find();
     const mappaNomi = new Map(squadre.map(s => [s.nome.trim().toLowerCase(), s._id]));
 
     const accoppiamenti = [];
@@ -209,7 +239,7 @@ router.post('/importa-calendario', richiediAuth, richiediAdmin, async (req, res)
       return res.status(400).json({ errore: 'Non ho riconosciuto nessuna giornata nel testo incollato' });
     }
 
-    const squadre = await Squadra.find({ attiva: true });
+    const squadre = await Squadra.find();
     const mappaNomi = new Map(squadre.map(s => [s.nome.trim().toLowerCase(), s._id]));
 
     const nomiNonTrovati = new Set();

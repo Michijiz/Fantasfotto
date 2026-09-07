@@ -6,6 +6,7 @@ const edizioneSchema = new mongoose.Schema({
   occhiello: { type: String, required: true },
   titolo: { type: String, required: true },
   corpo: [{ type: String }],
+  immagineUrl: { type: String, default: '' }, // foto grande dell'articolo (upload su Cloudinary)
   stats: {
     vincitore: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
     puntiVincitore: Number,
