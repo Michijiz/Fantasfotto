@@ -8,7 +8,8 @@ const router = express.Router();
 async function popolaGiornata(query) {
   return query
     .populate('accoppiamenti.squadraCasa', 'nome stemma')
-    .populate('accoppiamenti.squadraTrasferta', 'nome stemma');
+    .populate('accoppiamenti.squadraTrasferta', 'nome stemma')
+    .populate('punteggi.squadra', 'nome stemma');
 }
 
 // Elenco giornate, più recenti prima
@@ -25,6 +26,9 @@ router.get('/prossima', richiediAuth, async (req, res) => {
 
 // Classifica di stagione: somma dei punti per squadra su tutte le giornate concluse.
 // Usata per il tabellone in Home. Ordinata per punti decrescenti.
+// I punti arrivano da due fonti che si sommano: gli accoppiamenti (calendario/scontri diretti,
+// quando importato) e l'array "punteggi" (un punto per squadra, scritto direttamente dal form
+// "Nuova edizione" quando non c'è ancora un calendario con scontri diretti per quella giornata).
 router.get('/classifica', richiediAuth, async (req, res) => {
   const giornateConcluse = await Giornata.find({ conclusa: true });
 
@@ -38,6 +42,12 @@ router.get('/classifica', richiediAuth, async (req, res) => {
       if (a.punteggioTrasferta != null) {
         const id = String(a.squadraTrasferta);
         puntiPerSquadra[id] = (puntiPerSquadra[id] || 0) + a.punteggioTrasferta;
+      }
+    });
+    (g.punteggi || []).forEach(p => {
+      if (p.punti != null) {
+        const id = String(p.squadra);
+        puntiPerSquadra[id] = (puntiPerSquadra[id] || 0) + p.punti;
       }
     });
   });

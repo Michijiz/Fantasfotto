@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Edizione = require('../models/Edizione');
 const Squadra = require('../models/Squadra');
+const Giornata = require('../models/Giornata');
 const { richiediAuth, richiediAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -65,13 +66,17 @@ router.get('/:id', richiediAuth, async (req, res) => {
 });
 
 // Pubblica nuova edizione - solo direttore/admin di turno (qualsiasi admin).
-// Semplificato: NON dipende più da un documento Giornata nel DB. È semplicemente un
-// articolo mandato in stampa - l'admin scrive a mano numero giornata, vincitore/ultimo
-// (obbligatori, con i relativi punti) e fenomeno/bidone (opzionali, di default coincidono
-// con vincitore/ultimo). immagineUrl è opzionale: url Cloudinary caricata via /api/upload.
+// L'edizione (articolo) e la Giornata (punteggi/classifica) sono due modelli separati, ma si
+// pubblicano insieme in un solo passaggio: l'admin scrive a mano numero giornata, vincitore/
+// ultimo (obbligatori, con i relativi punti), fenomeno/bidone (opzionali, di default coincidono
+// con vincitore/ultimo) e, opzionalmente, il punteggio di ciascuna delle 8 squadre. Se i
+// punteggi sono presenti, alla pubblicazione viene creata/aggiornata anche la Giornata
+// corrispondente (numero = giornataNumero, con $set per non toccare un eventuale calendario/
+// accoppiamenti già importato per quella stessa giornata), che alimenta il tabellone/classifica
+// in Home. immagineUrl è opzionale: url Cloudinary caricata via /api/upload.
 router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
   try {
-    const { giornataNumero, direttore, vincitore, puntiVincitore, ultimo, puntiUltimo, fenomeno, bidone, immagineUrl } = req.body;
+    const { giornataNumero, direttore, vincitore, puntiVincitore, ultimo, puntiUltimo, fenomeno, bidone, immagineUrl, punteggi } = req.body;
 
     if (giornataNumero === undefined || giornataNumero === null || giornataNumero === '') {
       return res.status(400).json({ errore: 'Numero giornata obbligatorio' });
@@ -101,6 +106,18 @@ router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
     const squadraFenomeno = mappaSquadre.get(String(idFenomeno)) || squadraVincitore;
     const squadraBidone = mappaSquadre.get(String(idBidone)) || squadraUltimo;
 
+    // Punteggi delle squadre per questa giornata (opzionali): validati e ripuliti prima di
+    // toccare il database. Un punteggio scartato (squadra non valida, punti non numerici) non
+    // blocca la pubblicazione dell'articolo: viene semplicemente ignorato.
+    let punteggiValidi = [];
+    if (Array.isArray(punteggi) && punteggi.length) {
+      const idSquadreCensite = new Set((await Squadra.find().select('_id')).map(s => String(s._id)));
+      punteggiValidi = punteggi
+        .filter(p => p && mongoose.isValidObjectId(p.squadraId) && idSquadreCensite.has(String(p.squadraId)))
+        .map(p => ({ squadra: p.squadraId, punti: Number(p.punti) }))
+        .filter(p => !Number.isNaN(p.punti));
+    }
+
     const t = {
       vincitore: squadraVincitore.nome,
       puntiVincitore: puntiVincitore ?? '??',
@@ -128,6 +145,17 @@ router.post('/', richiediAuth, richiediAdmin, async (req, res) => {
       },
       createdBy: req.utente.id
     });
+
+    if (punteggiValidi.length) {
+      await Giornata.findOneAndUpdate(
+        { numero: giornataNumero },
+        {
+          $set: { conclusa: true, punteggi: punteggiValidi },
+          $setOnInsert: { numero: giornataNumero, createdBy: req.utente.id }
+        },
+        { upsert: true, new: true }
+      );
+    }
 
     const edizionePopolata = await popolaEdizione(Edizione.findById(edizione._id));
     res.status(201).json(edizionePopolata);

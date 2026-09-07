@@ -558,12 +558,15 @@ async function salvaMiaSquadra() {
 }
 
 // ============ NUOVA EDIZIONE (FAB, solo admin) ============
-// Semplificato: l'edizione non dipende più da una Giornata nel DB. È solo un articolo
-// mandato in stampa - numero giornata scritto a mano, vincitore/ultimo obbligatori,
-// fenomeno/bidone opzionali (di default coincidono con vincitore/ultimo).
+// L'edizione (articolo) e la Giornata (punteggi/classifica) si pubblicano insieme, in un solo
+// sheet: numero giornata scritto a mano, vincitore/ultimo obbligatori, fenomeno/bidone opzionali
+// (di default coincidono con vincitore/ultimo), e opzionalmente il punteggio di ogni squadra
+// per alimentare il Tabellone in Home. Se i punteggi vengono lasciati vuoti, l'articolo si
+// pubblica comunque: semplicemente quella giornata non entra nel Tabellone.
 function apriSheetNuova() {
   document.getElementById('direttore').value = stato.utente.nomeVisualizzato;
   popolaSelettoriSquadre();
+  popolaPunteggiSquadre();
   document.getElementById('sheetNuovaOverlay').classList.add('aperto');
   document.getElementById('sheetNuova').classList.add('aperto');
 }
@@ -579,6 +582,34 @@ async function popolaSelettoriSquadre() {
   document.getElementById('ultimo').innerHTML = '<option value="">Seleziona...</option>' + opzioni;
   document.getElementById('fenomeno').innerHTML = '<option value="">— automatico (il vincitore) —</option>' + opzioni;
   document.getElementById('bidone').innerHTML = '<option value="">— automatico (l\'ultimo) —</option>' + opzioni;
+}
+
+// Un campo punteggio per squadra, per la giornata che si sta pubblicando. Facoltativo:
+// una squadra lasciata vuota viene semplicemente esclusa dal Tabellone per quella giornata.
+async function popolaPunteggiSquadre() {
+  const container = document.getElementById('punteggiSquadreContainer');
+  container.innerHTML = skeletonBlocco();
+  try {
+    const squadre = await caricaSquadreCache();
+    if (!squadre.length) {
+      container.innerHTML = '<div class="empty" style="padding:10px 0;">Nessuna squadra censita.</div>';
+      return;
+    }
+    container.innerHTML = squadre.map(s => `
+      <div class="punteggio-item">
+        <label>${renderStemma(s)} ${s.nome}</label>
+        <input type="number" class="punteggio-input" data-squadra-id="${s._id}" placeholder="punti">
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="empty" style="padding:10px 0;">${err.message}</div>`;
+  }
+}
+
+function raccogliPunteggiSquadre() {
+  return Array.from(document.querySelectorAll('#punteggiSquadreContainer .punteggio-input'))
+    .filter(input => input.value.trim() !== '')
+    .map(input => ({ squadraId: input.dataset.squadraId, punti: Number(input.value) }));
 }
 
 async function pubblicaEdizione() {
@@ -603,7 +634,8 @@ async function pubblicaEdizione() {
     puntiUltimo: document.getElementById('puntiUltimo').value || undefined,
     fenomeno: document.getElementById('fenomeno').value || undefined,
     bidone: document.getElementById('bidone').value || undefined,
-    immagineUrl: document.getElementById('nuovaImmagineUrl').value || undefined
+    immagineUrl: document.getElementById('nuovaImmagineUrl').value || undefined,
+    punteggi: raccogliPunteggiSquadre()
   };
 
   try {
@@ -613,6 +645,7 @@ async function pubblicaEdizione() {
     ['giornataNumero', 'puntiVincitore', 'puntiUltimo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('nuovaImgPreview').style.display = 'none';
     document.getElementById('nuovaImmagineUrl').value = '';
+    document.getElementById('punteggiSquadreContainer').innerHTML = '';
     stato.ultimaEdizione = null;
     cambiaTab('ultima');
   } catch (err) {
