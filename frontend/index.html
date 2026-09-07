@@ -40,6 +40,10 @@
     <input type="text" id="regNome" placeholder="es. Michelangelo">
     <label>PIN (4-6 cifre)</label>
     <input type="password" id="regPin" inputmode="numeric" placeholder="il tuo PIN segreto">
+    <label>Squadra</label>
+    <select id="regSquadra">
+      <option value="">Caricamento squadre...</option>
+    </select>
     <label>Codice invito della Lega</label>
     <input type="text" id="regCodice" placeholder="chiedilo al direttore">
     <button class="primary" onclick="registrati()">Iscriviti</button>
@@ -92,18 +96,36 @@
         <label>Direttore di turno</label>
         <input type="text" id="direttore" placeholder="Chi scrive stavolta?">
 
-        <label>Giornata da pubblicare</label>
-        <select id="nuovaGiornata"></select>
-        <div id="nuovaGiornataInfo" class="empty" style="padding:10px 0;text-align:left"></div>
+        <div class="row2">
+          <div>
+            <label>Vincitore giornata</label>
+            <input type="text" id="vincitore" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti vincitore</label>
+            <input type="number" id="puntiVincitore" placeholder="es. 78">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Ultimo classificato</label>
+            <input type="text" id="ultimo" placeholder="Nome">
+          </div>
+          <div>
+            <label>Punti ultimo</label>
+            <input type="number" id="puntiUltimo" placeholder="es. 41">
+          </div>
+        </div>
 
         <div class="row2">
           <div>
             <label>Fenomeno di giornata</label>
-            <select id="nuovaFenomeno"></select>
+            <input type="text" id="fenomeno" placeholder="Chi ha stupito">
           </div>
           <div>
             <label>Bidone di giornata</label>
-            <select id="nuovaBidone"></select>
+            <input type="text" id="bidone" placeholder="Chi ha deluso">
           </div>
         </div>
 
@@ -130,23 +152,8 @@
 
   <!-- SQUADRE -->
   <div id="tab-squadre" class="tab-content" style="display:none">
-    <div class="card">
-      <h2 class="section-title">Le Squadre della Lega</h2>
-      <div id="squadreContainer"><div class="empty">Caricamento in corso...</div></div>
-    </div>
-
-    <div class="card" id="nuovaSquadraWrap" style="display:none">
-      <h2 class="section-title">Registra una nuova squadra</h2>
-      <label>Nome squadra</label>
-      <input type="text" id="squadraNome" placeholder="es. I Falchi di Fuorigrotta">
-      <label>Stemma (emoji)</label>
-      <input type="text" id="squadraStemma" placeholder="es. 🦅">
-      <label>Colore kit</label>
-      <input type="text" id="squadraColore" placeholder="es. #c8102e">
-      <label>Proprietario</label>
-      <select id="squadraProprietario"></select>
-      <button class="primary" onclick="creaSquadra()">Registra squadra</button>
-      <div id="squadraErrore" class="errore-msg"></div>
+    <div class="card" id="squadreContainer">
+      <div class="empty">Caricamento squadre...</div>
     </div>
   </div>
 
@@ -163,6 +170,40 @@
       <h2 class="section-title">Il tuo profilo</h2>
       <div id="profiloContainer"></div>
     </div>
+
+    <div class="card">
+      <h2 class="section-title">La tua squadra</h2>
+      <div id="miaSquadraView"></div>
+      <div id="miaSquadraForm" style="display:none">
+        <label>Stemma</label>
+        <div class="upload-row">
+          <img id="stemmaPreview" class="img-preview" style="display:none">
+          <input type="file" id="stemmaFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraStemma">
+
+        <label>Foto squadra</label>
+        <div class="upload-row">
+          <img id="fotoPreview" class="img-preview" style="display:none">
+          <input type="file" id="fotoFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraFoto">
+
+        <label>Maglia</label>
+        <div class="upload-row">
+          <img id="magliaPreview" class="img-preview" style="display:none">
+          <input type="file" id="magliaFile" accept="image/*">
+        </div>
+        <input type="hidden" id="squadraMaglia">
+        <label>Bio / storia della squadra</label>
+        <textarea id="squadraBio" rows="4" placeholder="Racconta la storia della tua squadra..."></textarea>
+        <label>Rosa (nomi separati da virgola)</label>
+        <input type="text" id="squadraRosa" placeholder="Giocatore 1, Giocatore 2, ...">
+        <button class="primary" onclick="salvaMiaSquadra()">Salva squadra</button>
+        <div id="squadraErrore" class="errore-msg"></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2 class="section-title">Giocatori della Lega</h2>
       <div class="players" id="playersList"></div>

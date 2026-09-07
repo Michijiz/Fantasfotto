@@ -152,4 +152,108 @@ router.delete('/:id', richiediAuth, richiediAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Parsa il testo copiato dalla pagina "Calendario" di Leghe Fantacalcio.
+// Formato atteso, ripetuto per ogni giornata:
+//   "N° Giornata (M° giornata di Serie A)"
+//   nome squadra / punteggio, ripetuto 8 volte (4 accoppiamenti in sequenza: casa poi trasferta)
+function parsaCalendarioLeghe(testo) {
+  const righe = testo.split('\n').map(r => r.trim()).filter(Boolean);
+  const regexHeader = /^(\d+)°\s*Giornata(?:\s*\((\d+)°\s*giornata di Serie A\))?/i;
+
+  const giornate = [];
+  let i = 0;
+  while (i < righe.length) {
+    const match = righe[i].match(regexHeader);
+    if (!match) { i++; continue; }
+
+    const numero = Number(match[1]);
+    const serieANumero = match[2] ? Number(match[2]) : undefined;
+    i++;
+
+    const voci = [];
+    while (i < righe.length && !regexHeader.test(righe[i])) {
+      const nome = righe[i];
+      const punteggioRaw = righe[i + 1];
+      if (punteggioRaw === undefined) break;
+      voci.push({ nome, punteggioRaw });
+      i += 2;
+    }
+
+    const accoppiamenti = [];
+    for (let k = 0; k + 1 < voci.length; k += 2) {
+      accoppiamenti.push({
+        nomeCasa: voci[k].nome,
+        nomeTrasferta: voci[k + 1].nome
+      });
+    }
+
+    giornate.push({ numero, serieANumero, accoppiamenti });
+  }
+
+  return giornate;
+}
+
+// Import massivo del calendario dell'intera stagione, incollando il testo copiato dalla pagina
+// "Calendario" di Leghe Fantacalcio. I punteggi non vengono letti da qui (sono placeholder a 0
+// finché non si gioca): questo endpoint crea solo gli accoppiamenti, non i risultati.
+// Le giornate il cui numero esiste già non vengono toccate, per non perdere risultati già inseriti.
+router.post('/importa-calendario', richiediAuth, richiediAdmin, async (req, res) => {
+  try {
+    const { testo } = req.body;
+    if (!testo || !testo.trim()) {
+      return res.status(400).json({ errore: 'Testo del calendario mancante' });
+    }
+
+    const giornateTestuali = parsaCalendarioLeghe(testo);
+    if (!giornateTestuali.length) {
+      return res.status(400).json({ errore: 'Non ho riconosciuto nessuna giornata nel testo incollato' });
+    }
+
+    const squadre = await Squadra.find({ attiva: true });
+    const mappaNomi = new Map(squadre.map(s => [s.nome.trim().toLowerCase(), s._id]));
+
+    const nomiNonTrovati = new Set();
+    giornateTestuali.forEach(g => {
+      g.accoppiamenti.forEach(a => {
+        if (!mappaNomi.has(a.nomeCasa.toLowerCase())) nomiNonTrovati.add(a.nomeCasa);
+        if (!mappaNomi.has(a.nomeTrasferta.toLowerCase())) nomiNonTrovati.add(a.nomeTrasferta);
+      });
+    });
+
+    if (nomiNonTrovati.size) {
+      return res.status(400).json({
+        errore: `Squadre non censite: ${[...nomiNonTrovati].join(', ')}. Registrale prima di importare il calendario.`
+      });
+    }
+
+    const numeriEsistenti = new Set(
+      (await Giornata.find({ numero: { $in: giornateTestuali.map(g => g.numero) } }).select('numero')).map(g => g.numero)
+    );
+
+    const daCreare = giornateTestuali.filter(g => !numeriEsistenti.has(g.numero));
+
+    const documenti = daCreare.map(g => ({
+      numero: g.numero,
+      serieANumero: g.serieANumero,
+      accoppiamenti: g.accoppiamenti.map(a => ({
+        squadraCasa: mappaNomi.get(a.nomeCasa.toLowerCase()),
+        squadraTrasferta: mappaNomi.get(a.nomeTrasferta.toLowerCase()),
+        punteggioCasa: null,
+        punteggioTrasferta: null
+      })),
+      createdBy: req.utente.id
+    }));
+
+    if (documenti.length) await Giornata.insertMany(documenti);
+
+    res.status(201).json({
+      create: documenti.length,
+      saltate: giornateTestuali.length - documenti.length,
+      numeriSaltati: giornateTestuali.filter(g => numeriEsistenti.has(g.numero)).map(g => g.numero)
+    });
+  } catch (e) {
+    res.status(500).json({ errore: 'Errore nell\'importazione del calendario' });
+  }
+});
+
 module.exports = router;
