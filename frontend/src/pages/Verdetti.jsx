@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
+import Stemma from '../components/ui/Stemma';
 
 const ETICHETTE = { fenomeno: 'Fenomeno di giornata', bidone: 'Bidone di giornata', culo: 'Il più culo', sfigato: 'Il più sfigato' };
 
@@ -44,7 +45,7 @@ export default function Verdetti() {
                   className={`voto-btn${mioVoto ? ' mio-voto' : ''}`}
                   onClick={() => vota(cat, s._id)}
                 >
-                  {s.stemma || '🛡️'} {s.nome}
+                  <Stemma src={s.stemma} size={16} /> {s.nome}
                   <span className="count">{count}</span>
                 </button>
               );

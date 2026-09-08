@@ -5,14 +5,7 @@ const mongoose = require('mongoose');
 const Squadra = require('../models/Squadra');
 
 const SQUADRE_BASE = [
-  'I Faraoni del Fango',
-  'Real Sconfitte',
-  'Bar Sport United',
-  'AC Domenica Pomeriggio',
-  'FC Ultima Curva',
-  'Ripescati Rovente',
-  'Ballon d\'Oro Perso',
-  'Retrocessi Anonimi'
+ 
 ];
 
 async function seed() {

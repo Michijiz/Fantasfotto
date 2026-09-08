@@ -1,8 +1,8 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
-const { verificaToken } = require('../middleware/auth');
+const { verificaToken, richiedeAdmin } = require('../middleware/auth');
 const {
-  lista, dettaglio, classifica, aggiornaMiaSquadra
+  lista, dettaglio, crea, classifica, aggiornaMiaSquadra
 } = require('../controllers/squadreController');
 
 const router = express.Router();
@@ -12,6 +12,7 @@ const router = express.Router();
 router.get('/', asyncHandler(lista));
 router.get('/classifica', verificaToken, asyncHandler(classifica));
 router.get('/:id', verificaToken, asyncHandler(dettaglio));
+router.post('/', verificaToken, richiedeAdmin, asyncHandler(crea));
 router.patch('/mia', verificaToken, asyncHandler(aggiornaMiaSquadra));
 
 module.exports = router;

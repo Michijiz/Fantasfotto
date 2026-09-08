@@ -4,6 +4,7 @@ import { useDati } from '../context/DataContext';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import ImageUpload from '../components/ui/ImageUpload';
+import Stemma from '../components/ui/Stemma';
 
 export default function Profilo() {
   const { utente } = useAuth();
@@ -66,7 +67,7 @@ export default function Profilo() {
         ) : !modifica ? (
           <div>
             <div style={{ textAlign: 'center', margin: '10px 0' }}>
-              <span style={{ fontSize: 40 }}>{miaSquadra.stemma || '🛡️'}</span>
+              <Stemma src={miaSquadra.stemma} size={64} />
               <div className="profilo-nome" style={{ fontSize: 18 }}>{miaSquadra.nome}</div>
             </div>
             {miaSquadra.foto && <div className="article-img"><img src={miaSquadra.foto} alt={miaSquadra.nome} /></div>}
@@ -84,9 +85,7 @@ export default function Profilo() {
           </div>
         ) : (
           <form onSubmit={salva}>
-            <label>Stemma (emoji)</label>
-            <input type="text" value={stemma} onChange={(e) => setStemma(e.target.value)} placeholder="es. 🦅" />
-
+            <ImageUpload label="Stemma" value={stemma} onChange={setStemma} />
             <ImageUpload label="Maglia" value={maglia} onChange={setMaglia} />
             <ImageUpload label="Foto squadra" value={foto} onChange={setFoto} />
 

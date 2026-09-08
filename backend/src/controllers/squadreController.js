@@ -7,6 +7,18 @@ const lista = async (req, res) => {
   res.json({ squadre });
 };
 
+// Non c'è più un seed fisso: le squadre della lega si creano da qui, una alla volta
+// (di norma dall'admin, dalla pagina Squadre). Il nome deve restare unico (vincolo
+// anche a livello di schema).
+const crea = async (req, res) => {
+  const { nome } = req.body;
+  if (!nome || !nome.trim()) {
+    return res.status(400).json({ errore: 'Nome squadra richiesto' });
+  }
+  const squadra = await Squadra.create({ nome: nome.trim() });
+  res.status(201).json({ squadra });
+};
+
 const dettaglio = async (req, res) => {
   const squadra = await Squadra.findById(req.params.id);
   if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
@@ -68,4 +80,4 @@ const aggiornaMiaSquadra = async (req, res) => {
   res.json({ squadra });
 };
 
-module.exports = { lista, dettaglio, classifica, aggiornaMiaSquadra };
+module.exports = { lista, dettaglio, crea, classifica, aggiornaMiaSquadra };

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import Article from '../components/ui/Article';
 import Sheet from '../components/ui/Sheet';
+import Stemma from '../components/ui/Stemma';
 
 const ETICHETTE = { fenomeno: 'Fenomeno', bidone: 'Bidone', culo: 'Il più culo', sfigato: 'Il più sfigato' };
 
@@ -36,12 +37,12 @@ export default function Home() {
           </h2>
           <div className="derby">
             <div className="squadra">
-              <span className="stemma">{primoAccoppiamento.squadraCasa.stemma || '🛡️'}</span>
+              <Stemma src={primoAccoppiamento.squadraCasa.stemma} size={34} className="stemma" />
               <div className="nome-squadra">{primoAccoppiamento.squadraCasa.nome}</div>
             </div>
             <div className="vs">VS</div>
             <div className="squadra">
-              <span className="stemma">{primoAccoppiamento.squadraTrasferta.stemma || '🛡️'}</span>
+              <Stemma src={primoAccoppiamento.squadraTrasferta.stemma} size={34} className="stemma" />
               <div className="nome-squadra">{primoAccoppiamento.squadraTrasferta.nome}</div>
             </div>
           </div>
@@ -61,7 +62,7 @@ export default function Home() {
               {tabellone.map((s, i) => (
                 <tr key={s._id}>
                   <td className="pos">{i + 1}</td>
-                  <td className="nome-sq"><span className="stemma-mini">{s.stemma || '🛡️'}</span> {s.nome}</td>
+                  <td className="nome-sq"><Stemma src={s.stemma} size={15} className="stemma-mini" /> {s.nome}</td>
                   <td className="punti">{s.punti}</td>
                 </tr>
               ))}
@@ -80,7 +81,7 @@ export default function Home() {
             {inTesta.map(({ cat, squadra, count }) => (
               <div className="flash" key={cat}>
                 <div className="flash-cat">{ETICHETTE[cat] || cat}</div>
-                <div className="flash-nome">{squadra.stemma || '🛡️'} {squadra.nome} ({count})</div>
+                <div className="flash-nome"><Stemma src={squadra.stemma} size={15} /> {squadra.nome} ({count})</div>
               </div>
             ))}
           </div>
@@ -98,11 +99,11 @@ export default function Home() {
             <div className="match-row" key={a._id}>
               <div className="sq casa">
                 <span>{a.squadraCasa.nome}</span>
-                <span className="stemma-mini">{a.squadraCasa.stemma || '🛡️'}</span>
+                <Stemma src={a.squadraCasa.stemma} size={20} className="stemma-mini" />
               </div>
               <span className="vs-mini">VS</span>
               <div className="sq trasferta">
-                <span className="stemma-mini">{a.squadraTrasferta.stemma || '🛡️'}</span>
+                <Stemma src={a.squadraTrasferta.stemma} size={20} className="stemma-mini" />
                 <span>{a.squadraTrasferta.nome}</span>
               </div>
             </div>
