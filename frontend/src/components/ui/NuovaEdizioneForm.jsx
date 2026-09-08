@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import ImageUpload from './ImageUpload';
 
 const campoIniziale = {
-  giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '',
+  giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '', immagineUrl: '',
   vincitore: '', puntiVincitore: '', ultimo: '', puntiUltimo: '', fenomeno: '', bidone: ''
 };
 
@@ -40,6 +41,7 @@ export default function NuovaEdizioneForm({ onFatto }) {
         occhiello: campi.occhiello,
         titolo: campi.titolo,
         corpo,
+        immagineUrl: campi.immagineUrl || undefined,
         vincitore: campi.vincitore || undefined,
         puntiVincitore: campi.puntiVincitore ? Number(campi.puntiVincitore) : undefined,
         ultimo: campi.ultimo || undefined,
@@ -120,6 +122,12 @@ export default function NuovaEdizioneForm({ onFatto }) {
       <input type="text" value={campi.titolo} onChange={set('titolo')} placeholder="es. Sono i re di questa giornata!" />
       <label>Corpo (un paragrafo per riga vuota tra i blocchi)</label>
       <textarea rows={8} value={campi.corpo} onChange={set('corpo')} placeholder={'Primo paragrafo...\n\nSecondo paragrafo...'} />
+
+      <ImageUpload
+        label="Foto dell'edizione (opzionale, grande in prima pagina)"
+        value={campi.immagineUrl}
+        onChange={(url) => setCampi((c) => ({ ...c, immagineUrl: url }))}
+      />
 
       <label style={{ marginTop: 20 }}>Punteggi delle squadre (opzionale, alimenta il Tabellone)</label>
       <div className="punteggi-grid">

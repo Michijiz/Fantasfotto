@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import ImageUpload from '../components/ui/ImageUpload';
 
 export default function Profilo() {
   const { utente } = useAuth();
@@ -15,6 +16,8 @@ export default function Profilo() {
   const [bio, setBio] = useState('');
   const [rosa, setRosa] = useState('');
   const [stemma, setStemma] = useState('');
+  const [maglia, setMaglia] = useState('');
+  const [foto, setFoto] = useState('');
   const [errore, setErrore] = useState('');
   const [salvando, setSalvando] = useState(false);
 
@@ -23,6 +26,8 @@ export default function Profilo() {
       setBio(miaSquadra.bio || '');
       setRosa((miaSquadra.rosa || []).join(', '));
       setStemma(miaSquadra.stemma || '');
+      setMaglia(miaSquadra.maglia || '');
+      setFoto(miaSquadra.foto || '');
     }
   }, [miaSquadra?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -31,7 +36,7 @@ export default function Profilo() {
     setErrore('');
     setSalvando(true);
     try {
-      await api.patch('/api/squadre/mia', { bio, rosa, stemma });
+      await api.patch('/api/squadre/mia', { bio, rosa, stemma, maglia, foto });
       await ricaricaSquadre();
       mostraToast('Squadra aggiornata!');
       setModifica(false);
@@ -64,6 +69,12 @@ export default function Profilo() {
               <span style={{ fontSize: 40 }}>{miaSquadra.stemma || '🛡️'}</span>
               <div className="profilo-nome" style={{ fontSize: 18 }}>{miaSquadra.nome}</div>
             </div>
+            {miaSquadra.foto && <div className="article-img"><img src={miaSquadra.foto} alt={miaSquadra.nome} /></div>}
+            {miaSquadra.maglia && (
+              <div style={{ textAlign: 'center', margin: '14px 0' }}>
+                <img src={miaSquadra.maglia} alt="Maglia" style={{ maxWidth: 140, border: '1px solid var(--ink-soft)' }} />
+              </div>
+            )}
             {miaSquadra.bio && <p>{miaSquadra.bio}</p>}
             {miaSquadra.rosa?.length > 0 && (
               <div className="players">
@@ -75,6 +86,10 @@ export default function Profilo() {
           <form onSubmit={salva}>
             <label>Stemma (emoji)</label>
             <input type="text" value={stemma} onChange={(e) => setStemma(e.target.value)} placeholder="es. 🦅" />
+
+            <ImageUpload label="Maglia" value={maglia} onChange={setMaglia} />
+            <ImageUpload label="Foto squadra" value={foto} onChange={setFoto} />
+
             <label>Bio / storia della squadra</label>
             <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Racconta la storia della tua squadra..." />
             <label>Rosa (nomi separati da virgola)</label>
