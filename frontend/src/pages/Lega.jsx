@@ -19,6 +19,11 @@ export default function Lega() {
         <div className="empty">Nessuna giornata conclusa ancora.</div>
       ) : (
         <table className="classifica">
+          <colgroup>
+            <col style={{ width: 32 }} />
+            <col />
+            <col style={{ width: 56 }} />
+          </colgroup>
           <thead><tr><th></th><th>Squadra</th><th style={{ textAlign: 'right' }}>Punti</th></tr></thead>
           <tbody>
             {tabellone.map((s, i) => (

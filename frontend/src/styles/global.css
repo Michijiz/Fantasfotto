@@ -357,15 +357,17 @@ button.link:hover{ color: var(--ink); }
 
 .classifica{width:100%;table-layout:fixed;border-collapse:collapse;font-family:'Oswald',sans-serif;font-size:12.5px;}
 .classifica th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);border-bottom:2px solid var(--rule);padding:5px 4px;}
-.classifica td{padding:7px 4px;border-bottom:1px solid rgba(36,27,30,.15);vertical-align:middle;}
+.classifica td{padding:7px 4px;vertical-align:middle;}
+.classifica tbody tr{border-bottom:1px solid rgba(36,27,30,.15);}
+.classifica tbody tr:last-child{border-bottom:none;}
 .classifica tr:nth-child(odd) td{background:rgba(0,0,0,.03);}
 .classifica tr.mia td{background:rgba(181,82,95,0.08);}
 .classifica tr.mia td:first-child{border-left:3px solid var(--stamp-red);padding-left:3px;}
-.classifica .pos{font-family:'Anton',sans-serif;font-size:14px;width:22px;}
+.classifica .pos{font-family:'Anton',sans-serif;font-size:14px;width:32px;}
 .classifica .nome-sq{display:flex;align-items:center;gap:7px;overflow:hidden;}
 .classifica .nome-sq span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .classifica .stemma-mini{font-size:15px;}
-.classifica .punti{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;}
+.classifica .punti{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;width:56px;}
 
 .verdetti-ticker{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
 .flash{flex:0 0 auto;min-width:135px;border:1px solid var(--ink-soft);background:rgba(255,255,255,0.3);padding:8px 11px;}
@@ -487,8 +489,8 @@ button.link:hover{ color: var(--ink); }
   display:flex;border-top:5px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0);z-index:8;
 }
 .pillola{
-  position:absolute;top:7px;left:0;height:calc(100% - 14px);width:20%;
-  background:rgba(255,255,255,.09);border-radius:14px;
+  position:absolute;top:10px;left:0;height:calc(100% - 20px);width:20%;
+  background:rgba(255,255,255,.09);border-radius:16px;
   transition: transform .3s var(--ease-tap);z-index:0;
 }
 .nav-item{
