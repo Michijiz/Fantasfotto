@@ -12,7 +12,7 @@
   --paper-highlight: rgba(255,255,255,0.65);
   --radius: 0;
   --ease-tap: cubic-bezier(.2,.8,.2,1);
-  --nav-h: 68px;
+  --nav-h: 88px;
 }
 
 *{box-sizing:border-box;}
@@ -484,7 +484,7 @@ button.link:hover{ color: var(--ink); }
 
 .bottom-nav{
   position:absolute;left:0;right:0;bottom:0;height:var(--nav-h);background:var(--ink);
-  display:flex;border-top:2px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0);z-index:8;
+  display:flex;border-top:5px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0);z-index:8;
 }
 .pillola{
   position:absolute;top:7px;left:0;height:calc(100% - 14px);width:20%;
@@ -498,7 +498,7 @@ button.link:hover{ color: var(--ink); }
   -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 .nav-item svg{
-  width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;
+  width:50px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;
   filter: drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink));
 }
 .nav-item.attivo{color:var(--gold);}
