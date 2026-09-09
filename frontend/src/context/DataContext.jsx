@@ -3,8 +3,9 @@ import { api } from '../api/client';
 import { useAuth } from './AuthContext';
 
 // Stato condiviso tra le pagine per i dati "di lega" che tutte usano (squadre,
-// tabellone, ultima edizione, prossima giornata), così non vengono richiesti due
-// volte e restano sincronizzati dopo un'azione (es. pubblicare una nuova edizione).
+// tabellone, ultima edizione, prossima giornata, calendario completo), così non
+// vengono richiesti due volte e restano sincronizzati dopo un'azione (es.
+// pubblicare una nuova edizione).
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
@@ -13,6 +14,7 @@ export function DataProvider({ children }) {
   const [tabellone, setTabellone] = useState([]);
   const [ultimaEdizione, setUltimaEdizione] = useState(null);
   const [prossimaGiornata, setProssimaGiornata] = useState(null);
+  const [giornate, setGiornate] = useState([]);
   const [risultatiVoti, setRisultatiVoti] = useState({ conteggi: {}, mioVoto: {} });
 
   const ricaricaSquadre = useCallback(async () => {
@@ -35,6 +37,14 @@ export function DataProvider({ children }) {
     setProssimaGiornata(giornata);
   }, []);
 
+  // Calendario completo della stagione, ordinato per numero crescente (il
+  // backend le restituisce in ordine decrescente, comodo per altri usi ma non
+  // per mostrare "Giornata 1, 2, 3...").
+  const ricaricaGiornate = useCallback(async () => {
+    const { giornate } = await api.get('/api/giornate');
+    setGiornate([...giornate].sort((a, b) => a.numero - b.numero));
+  }, []);
+
   const ricaricaRisultatiVoti = useCallback(async (edizioneId) => {
     if (!edizioneId) return;
     const dati = await api.get(`/api/voti/${edizioneId}`);
@@ -47,8 +57,9 @@ export function DataProvider({ children }) {
       ricaricaTabellone();
       ricaricaUltimaEdizione();
       ricaricaProssimaGiornata();
+      ricaricaGiornate();
     }
-  }, [utente, ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata]);
+  }, [utente, ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata, ricaricaGiornate]);
 
   useEffect(() => {
     ricaricaTutto();
@@ -62,9 +73,9 @@ export function DataProvider({ children }) {
 
   return (
     <DataContext.Provider value={{
-      squadre, tabellone, ultimaEdizione, prossimaGiornata, risultatiVoti,
+      squadre, tabellone, ultimaEdizione, prossimaGiornata, giornate, risultatiVoti,
       ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata,
-      ricaricaRisultatiVoti, ricaricaTutto
+      ricaricaGiornate, ricaricaRisultatiVoti, ricaricaTutto
     }}>
       {children}
     </DataContext.Provider>
