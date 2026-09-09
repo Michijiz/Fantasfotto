@@ -1,11 +1,9 @@
-
-
 :root{
   --paper: #f1cdda;
   --paper-dark: #e7bccc;
   --ink: #000000;
   --ink-soft: #4a3a3f;
-  --stamp-red: #c8102e;
+  --stamp-red: #b5525f;
   --rule: #050505;
   --gold: #b8892f;
 
@@ -56,7 +54,7 @@ body{
 ::selection{ background: var(--stamp-red); color:#fff; }
 
 :focus-visible{
-  outline: 2px solid var(--stamp-red);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
@@ -111,7 +109,7 @@ body{
   font-family:'Anton',sans-serif;font-size:17px;margin-bottom:2px;
   color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
-.drawer .ruolo{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--stamp-red);margin-bottom:4px;}
+.drawer .ruolo{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;}
 .drawer-intestazione{
   display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
   padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--ink-soft);
@@ -199,7 +197,7 @@ h2.section-title{
 }
 h2.section-title .vedi-tutto{
   font-family:'Oswald',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;
-  color:var(--stamp-red);text-decoration:underline;cursor:pointer;white-space:nowrap;
+  color:var(--ink);text-decoration:underline;cursor:pointer;white-space:nowrap;
   background:none;border:none;padding:0;
 }
 
@@ -210,8 +208,8 @@ input[type=text],input[type=number],input[type=password],select,textarea{
   transition: border-color .15s, box-shadow .15s;
 }
 input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{
-  border-color: var(--stamp-red);
-  box-shadow: 0 0 0 3px rgba(200,16,46,0.12);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184,137,47,0.14);
   outline:none;
 }
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -242,11 +240,11 @@ button.ghost{
 }
 button.ghost:hover{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-button.link{background:none;border:none;color:var(--stamp-red);font-family:'Oswald',sans-serif;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;}
+button.link{background:none;border:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;}
 button.link:hover{ color: var(--ink); }
 
 .article{ position:relative; }
-.article .occhiello{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--stamp-red);margin-bottom:4px;}
+.article .occhiello{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin-bottom:4px;}
 .article h3{
   font-family:'Anton',sans-serif;font-size:clamp(22px,6vw,30px);line-height:1.05;margin:0 0 8px;
   color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
@@ -316,7 +314,7 @@ button.link:hover{ color: var(--ink); }
 
 .teaser h3{font-size:21px;}
 .teaser p{font-size:13.5px;line-height:1.6;margin-bottom:4px;}
-.teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:11px;color:var(--stamp-red);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
+.teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:11px;color:var(--ink);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
 
 /* ===== card squadra in Dashboard: stemma + nome + stat-strip + prossimo scontro ===== */
 .squadra-card-riga{display:flex;align-items:center;gap:12px;}
@@ -358,7 +356,7 @@ button.link:hover{ color: var(--ink); }
 .classifica th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);border-bottom:2px solid var(--rule);padding:5px 4px;}
 .classifica td{padding:7px 4px;border-bottom:1px solid rgba(36,27,30,.15);vertical-align:middle;}
 .classifica tr:nth-child(odd) td{background:rgba(0,0,0,.03);}
-.classifica tr.mia td{background:rgba(200,16,46,0.08);}
+.classifica tr.mia td{background:rgba(181,82,95,0.08);}
 .classifica tr.mia td:first-child{border-left:3px solid var(--stamp-red);padding-left:3px;}
 .classifica .pos{font-family:'Anton',sans-serif;font-size:14px;width:22px;}
 .classifica .nome-sq{display:flex;align-items:center;gap:7px;}
@@ -367,14 +365,14 @@ button.link:hover{ color: var(--ink); }
 
 .verdetti-ticker{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
 .flash{flex:0 0 auto;min-width:135px;border:1px solid var(--ink-soft);background:rgba(255,255,255,0.3);padding:8px 11px;}
-.flash .flash-cat{font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;color:var(--stamp-red);letter-spacing:.04em;margin-bottom:2px;}
+.flash .flash-cat{font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;color:var(--gold);letter-spacing:.04em;margin-bottom:2px;}
 .flash .flash-nome{
   font-family:'Anton',sans-serif;font-size:13px;
   color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 
 .verdetto{margin-bottom:20px;}
-.verdetto h4{font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;color:var(--stamp-red);}
+.verdetto h4{font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;color:var(--gold);}
 .voti-list{display:flex;flex-wrap:wrap;gap:8px;}
 .voto-btn{
   font-family:'Oswald',sans-serif;font-size:12px;padding:7px 11px;border:1px solid var(--ink);background:#fff8fa;cursor:pointer;
@@ -404,7 +402,7 @@ button.link:hover{ color: var(--ink); }
   display:flex;align-items:center;gap:6px;
   box-shadow: 1px 1px 0 rgba(36,27,30,0.15);
 }
-.chip.admin{background:var(--stamp-red);}
+.chip.admin{background:var(--gold);}
 .chip button{background:none;border:none;color:var(--paper);cursor:pointer;font-weight:bold;}
 .profilo-nome{font-family:'Anton',sans-serif;font-size:22px;margin:4px 0 2px;}
 .profilo-badge{
@@ -421,7 +419,7 @@ button.link:hover{ color: var(--ink); }
   background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;
 }
 .archivio-item:hover{ background: rgba(0,0,0,0.035); padding-left:8px; }
-.archivio-item .g{font-family:'Oswald',sans-serif;font-size:10px;color:var(--stamp-red);text-transform:uppercase;letter-spacing:.06em;}
+.archivio-item .g{font-family:'Oswald',sans-serif;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
 .archivio-item h4{font-family:'Anton',sans-serif;font-size:17px;margin:2px 0;}
 
 .empty{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);text-align:center;padding:30px 10px;}
@@ -444,7 +442,7 @@ button.link:hover{ color: var(--ink); }
 
 .albo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .albo-cat{border:1px solid var(--ink-soft);padding:11px;background: rgba(255,255,255,0.3);}
-.albo-cat h5{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--stamp-red);margin:0 0 6px;}
+.albo-cat h5{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--gold);margin:0 0 6px;}
 .albo-cat div{font-family:'Oswald',sans-serif;font-size:12px;margin-bottom:3px;font-variant-numeric:tabular-nums;}
 
 .toast{
@@ -525,7 +523,7 @@ button.link:hover{ color: var(--ink); }
 .match-row .sq.casa{justify-content:flex-end;text-align:right;}
 .match-row .sq.trasferta{justify-content:flex-start;text-align:left;}
 .match-row .stemma-mini{font-size:20px;}
-.match-row .vs-mini{font-family:'Anton',sans-serif;color:var(--stamp-red);font-size:11px;padding:0 6px;flex:0 0 auto;}
+.match-row .vs-mini{font-family:'Anton',sans-serif;color:var(--gold);font-size:11px;padding:0 6px;flex:0 0 auto;}
 .match-row .punteggio{font-variant-numeric:tabular-nums;font-weight:600;}
 
 .sheet.grande{max-height:92%;}
@@ -577,4 +575,3 @@ button.link:hover{ color: var(--ink); }
   from{ width:0; }
   to{ width:72px; }
 }
- 
