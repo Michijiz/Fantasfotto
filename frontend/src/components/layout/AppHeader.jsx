@@ -11,7 +11,7 @@ export default function AppHeader({ scrollRef, onApriMenu }) {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      setCompatto(el.scrollTop > 28);
+      setCompatto(el.scrollTop > 60);
       ultimoScroll.current = el.scrollTop;
     };
     el.addEventListener('scroll', onScroll, { passive: true });

@@ -109,7 +109,7 @@ body{
 .drawer.aperto{transform:translateX(0);}
 .drawer .chi{
   font-family:'Anton',sans-serif;font-size:17px;margin-bottom:2px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 .drawer .ruolo{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;}
 .drawer-intestazione{
@@ -145,16 +145,16 @@ body{
 }
 .tema-opzione.selezionata{box-shadow:0 0 0 2px var(--paper-dark), 0 0 0 4px var(--ink);}
 
-.masthead{position:relative;text-align:center;padding:10px 16px 12px;transition: padding .2s var(--ease-tap);}
+.masthead{position:relative;text-align:center;padding:10px 16px 12px;transition: padding .32s var(--ease-tap);}
 .masthead .kicker{
   font-family:'Oswald',sans-serif;letter-spacing:.18em;font-size:11px;text-transform:uppercase;color:var(--ink-soft);
-  transition:opacity .18s var(--ease-tap), max-height .2s var(--ease-tap);
+  transition:opacity .28s var(--ease-tap), max-height .32s var(--ease-tap);
 }
 .masthead h1{
   font-family:'Anton', sans-serif;font-size:clamp(30px, 8vw, 50px);letter-spacing:.5px;margin:5px 0 6px;line-height:0.95;
   text-shadow: 1px 1px 0 rgba(36,27,30,0.08);
-  transition: font-size .2s var(--ease-tap);
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  transition: font-size .32s var(--ease-tap);
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 .masthead .sub{
   font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink-soft);
@@ -195,7 +195,7 @@ h2.section-title{
   border-bottom: 1px solid var(--ink-soft);
   padding-bottom:8px;
   display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 h2.section-title .vedi-tutto{
   font-family:'Oswald',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;
@@ -249,7 +249,7 @@ button.link:hover{ color: var(--ink); }
 .article .occhiello{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin-bottom:4px;}
 .article h3{
   font-family:'Anton',sans-serif;font-size:clamp(22px,6vw,30px);line-height:1.05;margin:0 0 8px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 .article .byline{
   font-family:'Oswald',sans-serif;
@@ -323,7 +323,7 @@ button.link:hover{ color: var(--ink); }
 .squadra-card-riga .stemma{width:46px;height:46px;flex:0 0 auto;font-size:34px;line-height:1;}
 .squadra-nome{
   font-family:'Anton',sans-serif;font-size:16px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .squadra-owner{font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
@@ -336,7 +336,7 @@ button.link:hover{ color: var(--ink); }
 .countdown{
   background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:10px;
   padding:3px 10px;border-radius:100px;letter-spacing:.04em;
-  -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 
 .calendario-preview{cursor:pointer;transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);}
@@ -374,7 +374,7 @@ button.link:hover{ color: var(--ink); }
 .flash .flash-cat{font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;color:var(--gold);letter-spacing:.04em;margin-bottom:2px;}
 .flash .flash-nome{
   font-family:'Anton',sans-serif;font-size:13px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 
 .verdetto{margin-bottom:20px;}
@@ -497,7 +497,7 @@ button.link:hover{ color: var(--ink); }
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   color:rgba(241,205,218,0.78);background:none;border:none;font-family:'Oswald',sans-serif;font-size:9px;
   text-transform:uppercase;letter-spacing:.04em;cursor:pointer;transition: color .15s;position:relative;z-index:1;
-  -webkit-text-stroke:0.4px var(--ink); text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 .nav-item svg{
   width:50px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;
