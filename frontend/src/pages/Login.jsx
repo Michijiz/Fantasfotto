@@ -7,6 +7,7 @@ export default function Login() {
   const { utente, login, registrati } = useAuth();
   const [tab, setTab] = useState('login');
   const [squadre, setSquadre] = useState([]);
+  const [caricandoSquadre, setCaricandoSquadre] = useState(true);
   const [errore, setErrore] = useState('');
   const [caricando, setCaricando] = useState(false);
 
@@ -20,7 +21,10 @@ export default function Login() {
   const [regCodice, setRegCodice] = useState('');
 
   useEffect(() => {
-    api.get('/api/squadre').then(({ squadre }) => setSquadre(squadre)).catch(() => {});
+    api.get('/api/squadre')
+      .then(({ squadre }) => setSquadre(squadre))
+      .catch(() => {})
+      .finally(() => setCaricandoSquadre(false));
   }, []);
 
   if (utente) return <Navigate to="/" replace />;
@@ -87,13 +91,17 @@ export default function Login() {
           <label>PIN (4-6 cifre)</label>
           <input type="password" inputMode="numeric" value={regPin} onChange={(e) => setRegPin(e.target.value)} placeholder="il tuo PIN segreto" />
           <label>Squadra</label>
-          <select value={regSquadra} onChange={(e) => setRegSquadra(e.target.value)}>
-            <option value="">{squadre.length ? 'Seleziona...' : 'Caricamento squadre...'}</option>
-            {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
-          </select>
+          {caricandoSquadre ? (
+            <div className="skeleton-line w-60" />
+          ) : (
+            <select value={regSquadra} onChange={(e) => setRegSquadra(e.target.value)} disabled={squadre.length === 0}>
+              <option value="">{squadre.length ? 'Seleziona...' : 'Nessuna squadra disponibile'}</option>
+              {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
+            </select>
+          )}
           <label>Codice invito della Lega</label>
           <input type="text" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
-          <button className="primary" type="submit" disabled={caricando}>Iscriviti</button>
+          <button className="primary" type="submit" disabled={caricando || caricandoSquadre}>Iscriviti</button>
           {errore && <div className="errore-msg">{errore}</div>}
         </form>
       )}

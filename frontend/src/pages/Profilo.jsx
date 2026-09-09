@@ -53,7 +53,7 @@ export default function Profilo() {
       <div className="card">
         <h2 className="section-title">Il tuo profilo</h2>
         <div className="profilo-nome">{utente.nomeVisualizzato}</div>
-        <span className={`profilo-badge`}>{utente.ruolo === 'admin' ? 'Direttore di turno' : 'Abbonato'}</span>
+        <span className="profilo-badge">{utente.ruolo === 'admin' ? 'Direttore di turno' : 'Abbonato'}</span>
       </div>
 
       <div className="card">
