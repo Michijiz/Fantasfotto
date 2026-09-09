@@ -47,7 +47,7 @@ export default function BottomNav() {
           end={voce.end}
           className={({ isActive }) => `nav-item${isActive ? ' attivo' : ''}`}
         >
-          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="1.8" strokeLinecap="round">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round">
             {voce.icona}
           </svg>
           {voce.label}

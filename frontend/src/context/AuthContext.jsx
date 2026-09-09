@@ -3,25 +3,40 @@ import { api, impostaToken, tokenCorrente } from '../api/client';
 
 const AuthContext = createContext(null);
 
+// Tempo minimo (ms) in cui lo splash resta a schermo, anche se il controllo
+// del token è istantaneo (utente non loggato: non c'è nulla da verificare col
+// server, quindi senza questo minimo lo splash sparirebbe prima di finire
+// l'animazione).
+const SPLASH_DURATA_MINIMA = 1400;
+
 export function AuthProvider({ children }) {
   const [utente, setUtente] = useState(null);
   const [caricamento, setCaricamento] = useState(true);
 
   useEffect(() => {
+    const inizio = Date.now();
+
     const carica = async () => {
-      if (!tokenCorrente()) {
-        setCaricamento(false);
-        return;
+      let utenteTrovato = null;
+
+      if (tokenCorrente()) {
+        try {
+          const { utente } = await api.get('/api/auth/me');
+          utenteTrovato = utente;
+        } catch {
+          impostaToken(null);
+        }
       }
-      try {
-        const { utente } = await api.get('/api/auth/me');
-        setUtente(utente);
-      } catch {
-        impostaToken(null);
-      } finally {
+
+      const trascorso = Date.now() - inizio;
+      const attesa = Math.max(0, SPLASH_DURATA_MINIMA - trascorso);
+
+      setTimeout(() => {
+        setUtente(utenteTrovato);
         setCaricamento(false);
-      }
+      }, attesa);
     };
+
     carica();
   }, []);
 
