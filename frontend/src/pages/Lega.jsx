@@ -24,7 +24,7 @@ export default function Lega() {
             {tabellone.map((s, i) => (
               <tr key={s._id} className={s._id === miaSquadraId ? 'mia' : ''}>
                 <td className="pos">{i + 1}</td>
-                <td className="nome-sq"><Stemma src={s.stemma} size={15} className="stemma-mini" /> {s.nome}</td>
+                <td className="nome-sq"><Stemma src={s.stemma} size={15} className="stemma-mini" /><span>{s.nome}</span></td>
                 <td className="punti">{s.punti}</td>
               </tr>
             ))}
