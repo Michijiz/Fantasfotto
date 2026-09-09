@@ -5,22 +5,27 @@ import { DataProvider } from '../../context/DataContext';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import InstallBanner from './InstallBanner';
+import Drawer from './Drawer';
 import Sheet from '../ui/Sheet';
 import NuovaEdizioneForm from '../ui/NuovaEdizioneForm';
+import Splash from '../ui/Splash';
 
 function ShellInterno({ utente }) {
   const scrollRef = useRef(null);
   const [sheetNuovaAperta, setSheetNuovaAperta] = useState(false);
+  const [drawerAperto, setDrawerAperto] = useState(false);
 
   return (
     <div id="appScreen">
       <InstallBanner />
-      <AppHeader scrollRef={scrollRef} />
+      <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
       <div className="contenuto" ref={scrollRef}>
         <div className="tab-content attiva">
           <Outlet context={{ utente }} />
         </div>
       </div>
+
+      <Drawer aperto={drawerAperto} onChiudi={() => setDrawerAperto(false)} />
 
       {utente.ruolo === 'admin' && (
         <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Nuova edizione">
@@ -42,7 +47,7 @@ function ShellInterno({ utente }) {
 export default function AppShell() {
   const { utente, caricamento } = useAuth();
 
-  if (caricamento) return null;
+  if (caricamento) return <Splash />;
   if (!utente) return <Navigate to="/login" replace />;
 
   return (

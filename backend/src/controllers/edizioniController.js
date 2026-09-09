@@ -51,17 +51,31 @@ const crea = async (req, res) => {
 
   // Se sono stati inseriti i punteggi delle squadre, li registriamo su una Giornata
   // conclusa così alimentano il Tabellone anche senza calendario/scontri importati.
+  // $set (non sostituzione totale del documento) preserva eventuali accoppiamenti già
+  // presenti sulla stessa giornata.
   if (Array.isArray(punteggiSquadre) && punteggiSquadre.length) {
-    await Giornata.findOneAndUpdate(
-      { numero: giornataNumero },
-      {
-        numero: giornataNumero,
-        punteggi: punteggiSquadre,
-        conclusa: true,
-        createdBy: req.utente.id
-      },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
+    try {
+      await Giornata.findOneAndUpdate(
+        { numero: giornataNumero },
+        {
+          $set: { punteggi: punteggiSquadre, conclusa: true, createdBy: req.utente.id },
+          $setOnInsert: { numero: giornataNumero }
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (err) {
+      // Race condition nota di Mongo su upsert concorrenti sulla stessa chiave unica
+      // (es. doppio click sul bottone "Manda in stampa"): a quel punto il documento
+      // esiste già, quindi un update semplice (senza upsert) completa comunque.
+      if (err.code === 11000) {
+        await Giornata.updateOne(
+          { numero: giornataNumero },
+          { $set: { punteggi: punteggiSquadre, conclusa: true, createdBy: req.utente.id } }
+        );
+      } else {
+        throw err;
+      }
+    }
   }
 
   await edizione.populate(POPOLA_STATS);

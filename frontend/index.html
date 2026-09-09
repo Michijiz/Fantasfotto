@@ -6,8 +6,21 @@
     <title>La Gazzetta dello Sfottò</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#241b1e" />
+
+    <!-- Comportamento "da app" su iOS: Safari ignora buona parte del manifest e si
+         affida a queste meta proprietarie invece che al manifest.json. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gazzetta" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Evita il flash bianco prima che React monti: stessi colori del tema/manifest. -->
+    <style>
+      html, body { background: #f1cdda; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

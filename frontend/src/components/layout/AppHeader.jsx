@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { useDati } from '../../context/DataContext';
 
-export default function AppHeader({ scrollRef }) {
-  const { utente, logout } = useAuth();
+export default function AppHeader({ scrollRef, onApriMenu }) {
   const { ultimaEdizione } = useDati();
   const [compatto, setCompatto] = useState(false);
   const ultimoScroll = useRef(0);
@@ -21,9 +19,12 @@ export default function AppHeader({ scrollRef }) {
 
   return (
     <div className={`app-header${compatto ? ' compatto' : ''}`}>
-      <div className="top-bar">
-        <span>{utente ? `Ciao, ${utente.nomeVisualizzato}` : ''}</span>
-        <button onClick={logout}>Esci</button>
+      <div className="top-row">
+        <button className="hamburger" aria-label="Apri profilo" onClick={onApriMenu}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
       </div>
       <div className="masthead">
         <div className="kicker">Organo ufficiale (non richiesto) della Lega</div>

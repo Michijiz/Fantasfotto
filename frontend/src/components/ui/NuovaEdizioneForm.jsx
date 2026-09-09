@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
@@ -16,11 +16,14 @@ export default function NuovaEdizioneForm({ onFatto }) {
   const [punteggi, setPunteggi] = useState({});
   const [errore, setErrore] = useState('');
   const [inviando, setInviando] = useState(false);
+  const inviandoRef = useRef(false); // guardia sincrona: lo state da solo non basta a bloccare un doppio click molto ravvicinato
 
   const set = (chiave) => (e) => setCampi((c) => ({ ...c, [chiave]: e.target.value }));
 
   const submit = async (e) => {
     e.preventDefault();
+    if (inviandoRef.current) return;
+
     setErrore('');
 
     const corpo = campi.corpo.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
@@ -28,6 +31,8 @@ export default function NuovaEdizioneForm({ onFatto }) {
       setErrore('Compila i campi obbligatori (numero, direttore, occhiello, titolo, testo).');
       return;
     }
+
+    inviandoRef.current = true;
 
     const punteggiSquadre = Object.entries(punteggi)
       .filter(([, v]) => v !== '' && v !== undefined)
@@ -59,6 +64,7 @@ export default function NuovaEdizioneForm({ onFatto }) {
       setErrore(err.message);
     } finally {
       setInviando(false);
+      inviandoRef.current = false;
     }
   };
 
