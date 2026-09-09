@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import AppShell from './components/layout/AppShell';
+import Splash from './components/ui/Splash';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Ultima from './pages/Ultima';
@@ -10,23 +11,36 @@ import Verdetti from './pages/Verdetti';
 import Squadre from './pages/Squadre';
 import Profilo from './pages/Profilo';
 
+// Mostra lo splash finché AuthContext non ha finito di capire se c'è una
+// sessione valida — a prescindere da dove l'utente stia per atterrare
+// (app protetta o /login), così lo splash si vede sempre all'apertura.
+function Gate() {
+  const { caricamento } = useAuth();
+
+  if (caricamento) return <Splash />;
+
+  return (
+    <ToastProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/gazzetta" element={<Ultima />} />
+          <Route path="/lega" element={<Lega />} />
+          <Route path="/gioca" element={<Verdetti />} />
+          <Route path="/squadre" element={<Squadre />} />
+          <Route path="/profilo" element={<Profilo />} />
+        </Route>
+      </Routes>
+    </ToastProvider>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<AppShell />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/gazzetta" element={<Ultima />} />
-              <Route path="/lega" element={<Lega />} />
-              <Route path="/gioca" element={<Verdetti />} />
-              <Route path="/squadre" element={<Squadre />} />
-              <Route path="/profilo" element={<Profilo />} />
-            </Route>
-          </Routes>
-        </ToastProvider>
+        <Gate />
       </AuthProvider>
     </BrowserRouter>
   );

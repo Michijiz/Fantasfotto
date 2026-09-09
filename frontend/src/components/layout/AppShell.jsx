@@ -8,7 +8,6 @@ import InstallBanner from './InstallBanner';
 import Drawer from './Drawer';
 import Sheet from '../ui/Sheet';
 import NuovaEdizioneForm from '../ui/NuovaEdizioneForm';
-import Splash from '../ui/Splash';
 
 function ShellInterno({ utente }) {
   const scrollRef = useRef(null);
@@ -45,9 +44,8 @@ function ShellInterno({ utente }) {
 }
 
 export default function AppShell() {
-  const { utente, caricamento } = useAuth();
+  const { utente } = useAuth();
 
-  if (caricamento) return <Splash />;
   if (!utente) return <Navigate to="/login" replace />;
 
   return (

@@ -1,14 +1,12 @@
-/* Tema "La Gazzetta dello Sfottò" — quotidiano satirico da fantacalcio.
-   Portato 1:1 dalla vecchia versione vanilla-JS: qui vive SOLO lo stile,
-   la logica dell'app è stata riscritta da zero in React (vedi src/pages, src/components). */
+
 
 :root{
   --paper: #f1cdda;
   --paper-dark: #e7bccc;
-  --ink: #241b1e;
+  --ink: #000000;
   --ink-soft: #4a3a3f;
   --stamp-red: #c8102e;
-  --rule: #241b1e;
+  --rule: #050505;
   --gold: #b8892f;
 
   --shadow-hard: 6px 6px 0 rgba(36,27,30,0.9);
@@ -547,7 +545,7 @@ button.link:hover{ color: var(--ink); }
 .splash-kicker{
   font-family:'Oswald',sans-serif; letter-spacing:.18em; font-size:11px; text-transform:uppercase;
   color:var(--ink-soft);
-  opacity:0; animation: splash-sale .5s var(--ease-tap) .55s forwards;
+  opacity:0; animation: splash-sale .6s var(--ease-tap) .75s forwards;
 }
 .splash-titolo{
   margin:0; display:flex; flex-direction:column; line-height:.95;
@@ -556,12 +554,12 @@ button.link:hover{ color: var(--ink); }
 }
 .splash-titolo span{
   opacity:0; transform: scale(1.2);
-  animation: splash-timbro .55s var(--ease-tap) forwards;
+  animation: splash-timbro .65s var(--ease-tap) forwards;
 }
-.splash-titolo span:last-child{ color: var(--stamp-red); animation-delay: .18s; }
+.splash-titolo span:last-child{ color: var(--stamp-red); animation-delay: .28s; }
 .splash-rigo{
   width:0; height:3px; background: var(--stamp-red);
-  animation: splash-riga .4s var(--ease-tap) .4s forwards;
+  animation: splash-riga .5s var(--ease-tap) .55s forwards;
 }
 .splash-sr{
   position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);
@@ -578,3 +576,4 @@ button.link:hover{ color: var(--ink); }
   from{ width:0; }
   to{ width:72px; }
 }
+ 
