@@ -458,6 +458,7 @@ button.link:hover{ color: var(--ink); }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
 .auth-screen{max-width:420px;margin:40px auto;padding:0 16px;}
+.masthead-auth{ padding:0 0 12px; border-bottom:5px solid var(--rule); margin-bottom:20px; }
 .auth-toggle{display:flex;gap:2px;margin-bottom:16px;}
 .auth-toggle .tab{flex:1;}
 .tabs{display:flex;gap:2px;border-bottom:2px solid var(--rule);flex-wrap:wrap;}

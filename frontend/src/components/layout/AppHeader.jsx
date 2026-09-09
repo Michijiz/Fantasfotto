@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDati } from '../../context/DataContext';
+import Masthead from '../ui/Masthead';
 
 export default function AppHeader({ scrollRef, onApriMenu }) {
   const { ultimaEdizione } = useDati();
@@ -26,14 +27,14 @@ export default function AppHeader({ scrollRef, onApriMenu }) {
           </svg>
         </button>
       </div>
-      <div className="masthead">
-        <div className="kicker">Organo ufficiale (non richiesto) della Lega</div>
-        <h1>La Gazzetta dello Sfottò</h1>
-        <div className="sub">
-          <span>{ultimaEdizione ? `Giornata ${ultimaEdizione.giornataNumero}` : 'Nessuna edizione ancora'}</span>
-          <span>Prezzo: la vostra dignità</span>
-        </div>
-      </div>
+      <Masthead
+        sub={
+          <>
+            <span>{ultimaEdizione ? `Giornata ${ultimaEdizione.giornataNumero}` : 'Nessuna edizione ancora'}</span>
+            <span>Prezzo: la vostra dignità</span>
+          </>
+        }
+      />
     </div>
   );
 }

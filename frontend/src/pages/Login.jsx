@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
+import Masthead from '../components/ui/Masthead';
 
 export default function Login() {
   const { utente, login, registrati } = useAuth();
@@ -28,6 +29,12 @@ export default function Login() {
   }, []);
 
   if (utente) return <Navigate to="/" replace />;
+
+  const cambiaTab = (nuovo) => {
+    if (nuovo === tab) return;
+    setErrore('');
+    setTab(nuovo);
+  };
 
   const submitLogin = async (e) => {
     e.preventDefault();
@@ -63,18 +70,23 @@ export default function Login() {
 
   return (
     <div className="auth-screen">
-      <div className="masthead" style={{ padding: '0 0 12px', borderBottom: '5px solid var(--rule)', marginBottom: 20 }}>
-        <div className="kicker">Organo ufficiale (non richiesto) della Lega</div>
-        <h1>La Gazzetta dello Sfottò</h1>
-      </div>
+      <Masthead
+        className="masthead-auth"
+        sub={
+          <>
+            <span>Ingresso riservato agli abbonati</span>
+            <span>Tessera: gratis. Dignità: non rimborsabile.</span>
+          </>
+        }
+      />
 
       <div className="auth-toggle tabs">
-        <div className={`tab${tab === 'login' ? ' active' : ''}`} onClick={() => setTab('login')}>Accedi</div>
-        <div className={`tab${tab === 'registrati' ? ' active' : ''}`} onClick={() => setTab('registrati')}>Iscriviti alla Lega</div>
+        <div className={`tab${tab === 'login' ? ' active' : ''}`} onClick={() => cambiaTab('login')}>Accedi</div>
+        <div className={`tab${tab === 'registrati' ? ' active' : ''}`} onClick={() => cambiaTab('registrati')}>Iscriviti alla Lega</div>
       </div>
 
       {tab === 'login' ? (
-        <form className="card" onSubmit={submitLogin}>
+        <form key="login" className="card tab-content" onSubmit={submitLogin}>
           <label>Username</label>
           <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="il tuo username" />
           <label>PIN</label>
@@ -83,7 +95,7 @@ export default function Login() {
           {errore && <div className="errore-msg">{errore}</div>}
         </form>
       ) : (
-        <form className="card" onSubmit={submitRegistrati}>
+        <form key="registrati" className="card tab-content" onSubmit={submitRegistrati}>
           <label>Username</label>
           <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} placeholder="scegline uno" />
           <label>Nome da mostrare</label>
