@@ -1,6 +1,7 @@
 const Squadra = require('../models/Squadra');
 const Giornata = require('../models/Giornata');
 const User = require('../models/User');
+const { calcolaClassifica } = require('../utils/regolamento');
 
 const lista = async (req, res) => {
   const squadre = await Squadra.find().sort('nome');
@@ -25,38 +26,20 @@ const dettaglio = async (req, res) => {
   res.json({ squadra });
 };
 
-// Somma i punti di ogni squadra su tutte le giornate concluse: sia dai punteggi
-// "semplici" (form Nuova Edizione) sia dagli accoppiamenti con risultato importato.
+// Classifica di campionato sulle giornate concluse, secondo il regolamento:
+// fantapunti → gol (soglia 66, poi un gol ogni 4), V/N/P da 3/1/0, ordinamento
+// per punti, punti totali, gol fatti, differenza reti, gol subiti, avulsa.
+// Logica in utils/regolamento.js.
+//
+// Ogni riga: la squadra + giocate, vinte, pareggiate, perse, punti (punti-lega),
+// puntiTotali (fantapunti), golFatti, golSubiti, differenzaReti.
 const classifica = async (req, res) => {
   const [squadre, giornate] = await Promise.all([
     Squadra.find().sort('nome').lean(),
-    Giornata.find({ conclusa: true }).lean()
+    Giornata.find({ conclusa: true }).sort('numero').lean()
   ]);
 
-  const punti = new Map(squadre.map((s) => [String(s._id), 0]));
-
-  for (const g of giornate) {
-    for (const p of g.punteggi || []) {
-      const id = String(p.squadra);
-      punti.set(id, (punti.get(id) || 0) + p.punti);
-    }
-    for (const a of g.accoppiamenti || []) {
-      if (a.punteggioCasa != null) {
-        const id = String(a.squadraCasa);
-        punti.set(id, (punti.get(id) || 0) + a.punteggioCasa);
-      }
-      if (a.punteggioTrasferta != null) {
-        const id = String(a.squadraTrasferta);
-        punti.set(id, (punti.get(id) || 0) + a.punteggioTrasferta);
-      }
-    }
-  }
-
-  const tabellone = squadre
-    .map((s) => ({ ...s, punti: punti.get(String(s._id)) || 0 }))
-    .sort((a, b) => b.punti - a.punti);
-
-  res.json({ tabellone });
+  res.json({ tabellone: calcolaClassifica(squadre, giornate) });
 };
 
 // L'utente autenticato aggiorna solo la propria squadra (profilo, non i punti).

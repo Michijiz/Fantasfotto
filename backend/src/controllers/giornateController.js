@@ -1,11 +1,18 @@
 const Giornata = require('../models/Giornata');
+const { arricchisciGiornata } = require('../utils/regolamento');
+
+// Le giornate in uscita hanno, per ogni accoppiamento, i campi calcolati
+// fantapuntiCasa/fantapuntiTrasferta e golCasa/golTrasferta (null finché manca
+// uno dei due punteggi). I punteggi salvati restano quelli originali: i campi
+// calcolati non vanno rimandati indietro con PATCH.
 
 const lista = async (req, res) => {
   const giornate = await Giornata.find()
     .sort('-numero')
     .populate('accoppiamenti.squadraCasa', 'nome stemma')
-    .populate('accoppiamenti.squadraTrasferta', 'nome stemma');
-  res.json({ giornate });
+    .populate('accoppiamenti.squadraTrasferta', 'nome stemma')
+    .lean();
+  res.json({ giornate: giornate.map(arricchisciGiornata) });
 };
 
 // La prossima giornata non ancora conclusa, usata per il derby-preview in Home.
@@ -13,8 +20,9 @@ const prossima = async (req, res) => {
   const giornata = await Giornata.findOne({ conclusa: false })
     .sort('numero')
     .populate('accoppiamenti.squadraCasa', 'nome stemma')
-    .populate('accoppiamenti.squadraTrasferta', 'nome stemma');
-  res.json({ giornata });
+    .populate('accoppiamenti.squadraTrasferta', 'nome stemma')
+    .lean();
+  res.json({ giornata: arricchisciGiornata(giornata) });
 };
 
 const crea = async (req, res) => {

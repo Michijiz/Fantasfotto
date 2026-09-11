@@ -10,6 +10,7 @@ import Lega from './pages/Lega';
 import Verdetti from './pages/Verdetti';
 import Squadre from './pages/Squadre';
 import Profilo from './pages/Profilo';
+import Regolamento from './pages/Regolamento';
 
 // Mostra lo splash finché AuthContext non ha finito di capire se c'è una
 // sessione valida — a prescindere da dove l'utente stia per atterrare
@@ -30,6 +31,7 @@ function Gate() {
           <Route path="/gioca" element={<Verdetti />} />
           <Route path="/squadre" element={<Squadre />} />
           <Route path="/profilo" element={<Profilo />} />
+          <Route path="/regolamento" element={<Regolamento />} />
         </Route>
       </Routes>
     </ToastProvider>

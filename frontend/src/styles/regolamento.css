@@ -1,0 +1,98 @@
+/* ===== Regolamento & FAQ + classifica punti-lega + risultati in calendario =====
+   Importato da Lega.jsx e Regolamento.jsx (Vite lo carica dopo global.css).
+   Colori: oro solo decorativo, rosso non usato (niente elementi funzionali qui). */
+
+/* ---------- Classifica a punti-lega ---------- */
+.classifica-lega{font-size:12px;}
+.classifica-lega th,
+.classifica-lega td{padding-left:2px;padding-right:2px;}
+.classifica-lega th.c-pos{width:24px;}
+.classifica-lega th.c-num{width:19px;text-align:center;}
+.classifica-lega th.c-gol{width:38px;text-align:center;}
+.classifica-lega th.c-pt{width:28px;text-align:right;}
+.classifica-lega th.c-fp{width:44px;text-align:right;}
+.classifica-lega td.num{text-align:center;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
+.classifica-lega td.gol{text-align:center;font-variant-numeric:tabular-nums;font-size:11px;}
+.classifica-lega td.pt{text-align:right;font-family:'Anton',sans-serif;font-size:14px;font-variant-numeric:tabular-nums;}
+.classifica-lega td.fp{text-align:right;font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink-soft);}
+.classifica-lega .nome-sq span{min-width:0;}
+
+.legenda-classifica{
+  font-family:'Oswald',sans-serif;font-size:10.5px;line-height:1.5;color:var(--ink-soft);
+  margin:12px 0 0;letter-spacing:.02em;
+}
+
+/* ---------- Risultati nel calendario ---------- */
+.match-row .risultato{
+  display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:66px;gap:1px;
+}
+.match-row .risultato .gol{
+  font-family:'Anton',sans-serif;font-size:17px;line-height:1.1;font-variant-numeric:tabular-nums;
+}
+.match-row .risultato .fp{
+  font-size:9.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.match-row .sq .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.match-row .sq.vince .nome{font-weight:700;}
+
+/* ---------- Regolamento ---------- */
+.faq-intro{font-size:13.5px;line-height:1.65;margin:0 0 6px;color:var(--ink);}
+
+.faq-voce{border-bottom:1px dashed var(--ink-soft);scroll-margin-top:12px;}
+.faq-voce:last-child{border-bottom:none;}
+.faq-voce summary{
+  list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:13px 2px;font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--ink);
+  touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
+}
+.faq-voce summary::-webkit-details-marker{display:none;}
+.faq-voce summary::after{
+  content:'+';flex:0 0 auto;font-family:'Anton',sans-serif;font-size:20px;line-height:1;color:var(--gold);
+  transition:transform .2s var(--ease-tap);
+}
+.faq-voce[open] summary::after{transform:rotate(45deg);}
+.faq-voce summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+.faq-corpo{padding:0 2px 16px;font-size:13.5px;line-height:1.65;}
+.faq-corpo p{margin:0 0 10px;max-width:68ch;}
+.faq-corpo p:last-child{margin-bottom:0;}
+
+.faq-sottotitolo{
+  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--gold);margin:14px 0 4px;
+}
+.faq-sottotitolo:first-child{margin-top:0;}
+
+.faq-tabella{width:100%;border-collapse:collapse;font-family:'Oswald',sans-serif;font-size:12.5px;margin:4px 0 12px;}
+.faq-tabella td{padding:7px 2px;border-bottom:1px solid rgba(36,27,30,.15);vertical-align:baseline;}
+.faq-tabella tr:last-child td{border-bottom:none;}
+.faq-tabella td.val{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;padding-left:12px;}
+
+.faq-moduli{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px;}
+.faq-chip{
+  border:1px solid var(--ink);background:#fff8fa;padding:4px 9px;
+  font-family:'Oswald',sans-serif;font-size:12px;font-variant-numeric:tabular-nums;
+  box-shadow:2px 2px 0 rgba(36,27,30,.9);
+}
+
+.faq-criteri{margin:4px 0 12px;padding-left:22px;font-family:'Oswald',sans-serif;font-size:13px;}
+.faq-criteri li{padding:3px 0;}
+.faq-criteri li::marker{font-family:'Anton',sans-serif;color:var(--gold);}
+
+.faq-nota{font-family:'Oswald',sans-serif;font-size:11px;line-height:1.5;color:var(--ink-soft);margin:8px 0 0;}
+
+/* ---------- Calcolatrice gol ---------- */
+.calcolatrice-riga{display:flex;align-items:flex-end;gap:16px;}
+.calcolatrice-input{flex:1;min-width:0;}
+.calcolatrice-input label{margin-top:0;}
+.calcolatrice-esito{
+  flex:0 0 auto;display:flex;align-items:baseline;gap:6px;
+  border:2px solid var(--rule);background:var(--paper);padding:2px 14px 4px;
+  box-shadow:var(--shadow-hard-sm);
+}
+.calcolatrice-esito .numero{
+  font-family:'Anton',sans-serif;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;
+  color:var(--paper);-webkit-text-stroke:1px var(--ink);paint-order:stroke fill;
+}
+.calcolatrice-esito .unita{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.06em;}

@@ -63,6 +63,7 @@ export default function Drawer({ aperto, onChiudi }) {
 
         <button className="drawer-link" onClick={() => vai('/profilo')}>Il mio profilo</button>
         <button className="drawer-link" onClick={() => vai('/squadre')}>Le squadre della lega</button>
+        <button className="drawer-link" onClick={() => vai('/regolamento')}>Regolamento e FAQ</button>
         <button className="drawer-link esci" onClick={logout}>Esci</button>
       </div>
     </>
