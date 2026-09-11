@@ -13,6 +13,7 @@
   --radius: 0;
   --ease-tap: cubic-bezier(.2,.8,.2,1);
   --nav-h: 88px;
+  --barra-compatta: 48px; /* altezza della testata compatta, sotto la safe area */
 }
 
 *{box-sizing:border-box;}
@@ -68,6 +69,21 @@ body{
   display:flex;
   flex-direction:column;
   overflow:hidden;
+  /* clip (non hidden): un elemento con overflow:hidden si può ancora scorrere via
+     codice, e scrollIntoView spostava tutta la shell verso l'alto mostrando lo
+     sheet nascosto sotto la barra. Dove clip non è supportato resta hidden. */
+  overflow:clip;
+}
+
+/* Area sotto l'eventuale banner di installazione: la testata sta sopra il
+   contenuto (non prima), così quando si compatta non sposta nulla dentro lo
+   scroll e non genera scatti. */
+.area-scroll{
+  position:relative;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  overflow:clip;
 }
 
 .install-banner{
@@ -83,16 +99,26 @@ body{
 }
 .install-banner button.chiudi{background:none;border:none;color:var(--paper);opacity:.6;font-size:16px;cursor:pointer;padding:0 2px;}
 
-.app-header{flex:0 0 auto;background:var(--paper);border-bottom:0 solid var(--rule);position:relative;z-index:5;}
-.app-header .top-row{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 0;}
+.app-header{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  background:var(--paper);border-bottom:0 solid var(--rule);
+  /* In PWA su iOS la pagina disegna anche sotto la barra di stato (orario,
+     batteria): senza questo margine l'hamburger finiva lì sotto e non si toccava. */
+  padding-top:env(safe-area-inset-top, 0px);
+}
+.app-header .top-row{display:flex;justify-content:space-between;align-items:center;padding:4px 10px 0;}
 
+/* Area di tocco 44px (minimo consigliato su iOS); il cerchio disegnato resta 34px. */
 .hamburger{
-  width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink);
-  display:flex;align-items:center;justify-content:center;background:none;color:var(--ink);
+  position:relative;width:44px;height:44px;padding:0;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;color:var(--ink);cursor:pointer;
   transition: transform .15s var(--ease-tap);
 }
+.hamburger::before{
+  content:'';position:absolute;inset:5px;border:1.5px solid var(--ink);border-radius:50%;
+}
 .hamburger:active{ transform:scale(.9); }
-.hamburger svg{width:17px;height:17px;}
+.hamburger svg{width:17px;height:17px;position:relative;}
 
 /* ===== drawer profilo (menu hamburger) ===== */
 .scrim{
@@ -162,14 +188,24 @@ body{
 }
 
 .app-header.compatto{border-bottom-width:2px;}
-.app-header.compatto .masthead{padding:8px 16px;}
+/* Da compatta la testata è una sola riga: hamburger a sinistra, titolo al centro. */
+.app-header.compatto .top-row{
+  position:absolute;top:env(safe-area-inset-top, 0px);left:0;z-index:1;
+  height:var(--barra-compatta);padding:0 10px;
+}
+.app-header.compatto .masthead{
+  min-height:var(--barra-compatta);padding:0 60px;
+  display:flex;flex-direction:column;justify-content:center;
+}
 .app-header.compatto .masthead .kicker{opacity:0;max-height:0;overflow:hidden;}
-.app-header.compatto .masthead h1{font-size:20px;margin-bottom:0;}
+.app-header.compatto .masthead h1{font-size:20px;margin:0;}
 .app-header.compatto .masthead .sub{display:none;}
 
+/* Lo scroll occupa tutta l'area e passa sotto la testata; il margine in alto è
+   l'altezza della testata aperta, misurata da AppHeader in --header-h. */
 .contenuto{
-  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:6px 16px calc(var(--nav-h) + 22px);
+  position:absolute;inset:0;overflow-y:auto;
+  padding:calc(var(--header-h, 170px) + 6px) 16px calc(var(--nav-h) + 22px);
   overscroll-behavior-y: contain;
 }
 

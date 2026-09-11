@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DataProvider } from '../../context/DataContext';
 import AppHeader from './AppHeader';
@@ -11,16 +11,27 @@ import NuovaEdizioneForm from '../ui/NuovaEdizioneForm';
 
 function ShellInterno({ utente }) {
   const scrollRef = useRef(null);
+  const { pathname } = useLocation();
   const [sheetNuovaAperta, setSheetNuovaAperta] = useState(false);
   const [drawerAperto, setDrawerAperto] = useState(false);
+
+  // Il contenitore di scroll è unico per tutte le pagine: senza questo, passando
+  // da una pagina scorsa in basso a un'altra si atterrava a metà. Layout effect,
+  // così avviene prima degli effetti delle pagine (es. Regolamento che scorre a
+  // una sezione).
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div id="appScreen">
       <InstallBanner />
-      <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
-      <div className="contenuto" ref={scrollRef}>
-        <div className="tab-content attiva">
-          <Outlet context={{ utente }} />
+      <div className="area-scroll">
+        <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
+        <div className="contenuto" ref={scrollRef}>
+          <div className="tab-content attiva">
+            <Outlet context={{ utente }} />
+          </div>
         </div>
       </div>
 

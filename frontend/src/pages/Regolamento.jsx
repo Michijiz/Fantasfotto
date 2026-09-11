@@ -108,9 +108,24 @@ export default function Regolamento() {
   const { squadre } = useDati();
   const sezione = state?.sezione;
 
+  // Porta la voce richiesta (es. "Come si calcola" dalla classifica) appena sotto la
+  // testata compatta. Si scorre solo il contenitore .contenuto: scrollIntoView
+  // scorrerebbe anche la shell dell'app, spostando testata e barra in basso.
   useEffect(() => {
     if (!sezione) return;
-    document.getElementById(`faq-${sezione}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const frame = requestAnimationFrame(() => {
+      const voce = document.getElementById(`faq-${sezione}`);
+      const scroller = voce?.closest('.contenuto');
+      if (!voce || !scroller) return;
+
+      const header = document.querySelector('.app-header');
+      const safeArea = header ? parseFloat(getComputedStyle(header).paddingTop) || 0 : 0;
+      const barra = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--barra-compatta')) || 48;
+
+      const posizione = voce.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      scroller.scrollTo({ top: Math.max(0, posizione - safeArea - barra - 10), behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [sezione]);
 
   const numeroSquadre = squadre.length || 8;
