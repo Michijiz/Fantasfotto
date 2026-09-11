@@ -15,22 +15,43 @@ export function tokenCorrente() {
   return token;
 }
 
+// Quando la risposta non è il nostro JSON (pagina d'errore di Vercel, timeout,
+// body troppo grande) serve comunque un messaggio comprensibile.
+function messaggioPerStato(status) {
+  if (status === 413) return 'File troppo grande';
+  if (status === 429) return 'Troppe richieste, riprova tra poco';
+  if (status === 502 || status === 503 || status === 504) return 'Il server non risponde, riprova tra poco';
+  return `Errore ${status}`;
+}
+
 async function richiesta(path, { method = 'GET', body, isFormData = false } = {}) {
   const headers = {};
   if (!isFormData) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined
+    });
+  } catch {
+    throw new Error('Connessione assente, riprova');
+  }
 
   const testo = await res.text();
-  const dati = testo ? JSON.parse(testo) : {};
+  let dati = {};
+  if (testo) {
+    try {
+      dati = JSON.parse(testo);
+    } catch {
+      dati = {};
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(dati.errore || `Errore ${res.status}`);
+    throw new Error(dati.errore || messaggioPerStato(res.status));
   }
   return dati;
 }

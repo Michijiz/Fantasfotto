@@ -31,15 +31,21 @@ const VOCI = [
 
 export default function BottomNav() {
   const { pathname } = useLocation();
-  // stesso criterio di "attivo" di NavLink (end solo sulla prima voce)
-  const indiceAttivo = Math.max(
-    0,
-    VOCI.findIndex((v) => (v.end ? pathname === v.to : pathname.startsWith(v.to)))
-  );
+  // stesso criterio di "attivo" di NavLink (end solo sulla prima voce).
+  // Sulle pagine fuori dalla barra (Profilo, Regolamento) nessuna voce è attiva:
+  // la pillola si nasconde invece di restare sotto Dashboard.
+  const indiceAttivo = VOCI.findIndex((v) => (v.end ? pathname === v.to : pathname.startsWith(v.to)));
+  const fuoriBarra = indiceAttivo === -1;
 
   return (
     <nav className="bottom-nav">
-      <div className="pillola" style={{ transform: `translateX(${indiceAttivo * 100}%)` }} />
+      <div
+        className="pillola"
+        style={{
+          transform: `translateX(${Math.max(0, indiceAttivo) * 100}%)`,
+          opacity: fuoriBarra ? 0 : 1
+        }}
+      />
       {VOCI.map((voce) => (
         <NavLink
           key={voce.to}

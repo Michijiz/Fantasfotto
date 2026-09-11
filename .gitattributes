@@ -1,0 +1,7 @@
+# Fine riga uniformi (LF) nel repo, qualunque editor/sistema si usi.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
