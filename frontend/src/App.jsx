@@ -7,7 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Ultima from './pages/Ultima';
 import Lega from './pages/Lega';
-import Verdetti from './pages/Verdetti';
+import Gioca from './pages/Gioca';
 import Squadre from './pages/Squadre';
 import Profilo from './pages/Profilo';
 import Regolamento from './pages/Regolamento';
@@ -28,7 +28,7 @@ function Gate() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/gazzetta" element={<Ultima />} />
           <Route path="/lega" element={<Lega />} />
-          <Route path="/gioca" element={<Verdetti />} />
+          <Route path="/gioca" element={<Gioca />} />
           <Route path="/squadre" element={<Squadre />} />
           <Route path="/profilo" element={<Profilo />} />
           <Route path="/regolamento" element={<Regolamento />} />

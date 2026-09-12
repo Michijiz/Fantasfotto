@@ -59,6 +59,7 @@ async function richiesta(path, { method = 'GET', body, isFormData = false } = {}
 export const api = {
   get: (path) => richiesta(path),
   post: (path, body) => richiesta(path, { method: 'POST', body }),
+  put: (path, body) => richiesta(path, { method: 'PUT', body }),
   patch: (path, body) => richiesta(path, { method: 'PATCH', body }),
   upload: (path, formData) => richiesta(path, { method: 'POST', body: formData, isFormData: true })
 };

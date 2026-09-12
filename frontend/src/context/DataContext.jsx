@@ -3,10 +3,21 @@ import { api } from '../api/client';
 import { useAuth } from './AuthContext';
 
 // Stato condiviso tra le pagine per i dati "di lega" che tutte usano (squadre,
-// tabellone, ultima edizione, prossima giornata, calendario completo), così non
-// vengono richiesti due volte e restano sincronizzati dopo un'azione (es.
-// pubblicare una nuova edizione).
+// tabellone, ultima edizione, prossima giornata, calendario completo, categorie
+// di voto, schedina aperta), così non vengono richiesti due volte e restano
+// sincronizzati dopo un'azione (es. pubblicare una nuova edizione).
 const DataContext = createContext(null);
+
+const SCHEDINA_VUOTA = { giornata: null, miaSchedina: null, chiusa: true, motivo: null, precedente: null };
+
+// Le categorie di voto arrivano dal backend già con etichetta e descrizione. Una
+// vecchia versione dell'API mandava solo gli id come stringhe: normalizziamo qui
+// così le pagine vedono sempre la stessa forma.
+function normalizzaCategorie(elenco) {
+  return (elenco || []).map((c) => (
+    typeof c === 'string' ? { id: c, etichetta: c, breve: c, descrizione: '' } : c
+  ));
+}
 
 export function DataProvider({ children }) {
   const { utente } = useAuth();
@@ -16,6 +27,8 @@ export function DataProvider({ children }) {
   const [prossimaGiornata, setProssimaGiornata] = useState(null);
   const [giornate, setGiornate] = useState([]);
   const [risultatiVoti, setRisultatiVoti] = useState({ conteggi: {}, mioVoto: {} });
+  const [categorieVoto, setCategorieVoto] = useState([]);
+  const [schedina, setSchedina] = useState(SCHEDINA_VUOTA);
 
   const ricaricaSquadre = useCallback(async () => {
     const { squadre } = await api.get('/api/squadre');
@@ -51,15 +64,36 @@ export function DataProvider({ children }) {
     setRisultatiVoti(dati);
   }, []);
 
+  const ricaricaCategorieVoto = useCallback(async () => {
+    const { categorie } = await api.get('/api/voti/categorie');
+    setCategorieVoto(normalizzaCategorie(categorie));
+  }, []);
+
+  // La schedina aperta porta con sé la giornata già arricchita di quote: una sola
+  // chiamata serve sia alla pagina Gioca sia al riquadro in Dashboard.
+  const ricaricaSchedina = useCallback(async () => {
+    try {
+      const dati = await api.get('/api/schedine/apertura');
+      setSchedina({ ...SCHEDINA_VUOTA, ...dati });
+    } catch {
+      setSchedina(SCHEDINA_VUOTA);
+    }
+  }, []);
+
   const ricaricaTutto = useCallback(() => {
     ricaricaSquadre();
+    ricaricaCategorieVoto();
     if (utente) {
       ricaricaTabellone();
       ricaricaUltimaEdizione();
       ricaricaProssimaGiornata();
       ricaricaGiornate();
+      ricaricaSchedina();
     }
-  }, [utente, ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata, ricaricaGiornate]);
+  }, [
+    utente, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
+    ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina
+  ]);
 
   useEffect(() => {
     ricaricaTutto();
@@ -74,8 +108,9 @@ export function DataProvider({ children }) {
   return (
     <DataContext.Provider value={{
       squadre, tabellone, ultimaEdizione, prossimaGiornata, giornate, risultatiVoti,
+      categorieVoto, schedina,
       ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata,
-      ricaricaGiornate, ricaricaRisultatiVoti, ricaricaTutto
+      ricaricaGiornate, ricaricaRisultatiVoti, ricaricaCategorieVoto, ricaricaSchedina, ricaricaTutto
     }}>
       {children}
     </DataContext.Provider>

@@ -206,11 +206,98 @@ function calcolaClassifica(squadre, giornate) {
   return risultato;
 }
 
+// ===================== Schedina: quote e pronostici =====================
+//
+// Nessuna valuta, nessuna puntata: la quota serve solo a dire "quanto era
+// scontata questa previsione". Si calcola dal distacco in classifica tra le due
+// squadre (differenza di posizione), non dai fantapunti: funziona anche a
+// stagione appena iniziata, quando i punti-lega sono tutti a zero.
+
+const QUOTE = {
+  base: 1.8,
+  passoFavorita: 0.08,   // quanto scende la quota della favorita per ogni posizione di distacco
+  minFavorita: 1.2,
+  passoSfavorita: 0.25,  // quanto sale quella della sfavorita
+  maxSfavorita: 6,
+  basePareggio: 3,
+  passoPareggio: 0.1,    // il pari si allunga un po' quando le due sono lontane
+  maxPareggio: 4.5
+};
+
+const arrotondaQuota = (n) => Math.round(n * 100) / 100;
+
+// Torna { '1': q, 'X': q, '2': q } per uno scontro, dato il distacco con segno:
+// negativo = la squadra di casa sta più in alto, positivo = sta più in basso.
+function quotePerScontro(distaccoConSegno) {
+  const d = Math.abs(Number(distaccoConSegno) || 0);
+  const favorita = arrotondaQuota(Math.max(QUOTE.minFavorita, QUOTE.base - QUOTE.passoFavorita * d));
+  const sfavorita = arrotondaQuota(Math.min(QUOTE.maxSfavorita, QUOTE.base + QUOTE.passoSfavorita * d));
+  const pareggio = arrotondaQuota(Math.min(QUOTE.maxPareggio, QUOTE.basePareggio + QUOTE.passoPareggio * d));
+
+  // distacco 0 = stessa posizione (impossibile) o classifica non ancora formata:
+  // in quel caso 1 e 2 valgono uguale.
+  if (distaccoConSegno === 0) return { 1: QUOTE.base, X: pareggio, 2: QUOTE.base };
+  return distaccoConSegno < 0
+    ? { 1: favorita, X: pareggio, 2: sfavorita }
+    : { 1: sfavorita, X: pareggio, 2: favorita };
+}
+
+// Mappa id squadra → posizione (1-based) a partire da un tabellone già ordinato.
+function mappaPosizioni(tabellone) {
+  return new Map(tabellone.map((r, i) => [String(r._id), i + 1]));
+}
+
+// Aggiunge a ogni accoppiamento di una giornata le quote 1/X/2 calcolate sulla
+// classifica passata. La giornata va già passata da arricchisciGiornata.
+function arricchisciConQuote(giornata, tabellone) {
+  if (!giornata) return giornata;
+  const posizioni = mappaPosizioni(tabellone || []);
+  return {
+    ...giornata,
+    accoppiamenti: (giornata.accoppiamenti || []).map((a) => {
+      const posCasa = posizioni.get(idDi(a.squadraCasa)) ?? 0;
+      const posTrasferta = posizioni.get(idDi(a.squadraTrasferta)) ?? 0;
+      const distacco = posCasa && posTrasferta ? posCasa - posTrasferta : 0;
+      return { ...a, quote: quotePerScontro(distacco) };
+    })
+  };
+}
+
+// '1' | 'X' | '2' per uno scontro già giocato, null se mancano i gol.
+function esitoAccoppiamento(accoppiamento) {
+  const { golCasa, golTrasferta } = accoppiamento;
+  if (golCasa == null || golTrasferta == null) return null;
+  if (golCasa > golTrasferta) return '1';
+  if (golCasa < golTrasferta) return '2';
+  return 'X';
+}
+
+// Esito della multipla: 'vinta' solo se ogni pronostico è azzeccato, 'persa' se
+// almeno uno sbaglia, 'attesa' finché manca anche un solo risultato.
+function esitoSchedina(pronostici, giornataArricchita) {
+  const esiti = new Map(
+    (giornataArricchita?.accoppiamenti || []).map((a) => [String(a._id), esitoAccoppiamento(a)])
+  );
+
+  let completa = true;
+  for (const p of pronostici || []) {
+    const reale = esiti.get(String(p.accoppiamento));
+    if (reale == null) { completa = false; continue; }
+    if (reale !== p.esito) return 'persa';
+  }
+  return completa && (pronostici || []).length > 0 ? 'vinta' : 'attesa';
+}
+
 module.exports = {
   REGOLE,
+  QUOTE,
   fantapuntiInGol,
   puntiPerGol,
   risolviAccoppiamento,
   arricchisciGiornata,
-  calcolaClassifica
+  calcolaClassifica,
+  quotePerScontro,
+  arricchisciConQuote,
+  esitoAccoppiamento,
+  esitoSchedina
 };

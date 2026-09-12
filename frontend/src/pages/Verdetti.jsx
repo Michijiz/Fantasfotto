@@ -1,19 +1,13 @@
-import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import Stemma from '../components/ui/Stemma';
 
-const ETICHETTE = { fenomeno: 'Fenomeno di giornata', bidone: 'Bidone di giornata', culo: 'Il più culo', sfigato: 'Il più sfigato' };
-
+// Le categorie arrivano dal backend con etichetta e descrizione: qui non c'è più
+// una copia locale da tenere allineata, aggiungerne una è una riga sola lì.
 export default function Verdetti() {
-  const { ultimaEdizione, squadre, risultatiVoti, ricaricaRisultatiVoti } = useDati();
-  const [categorie, setCategorie] = useState([]);
+  const { ultimaEdizione, squadre, risultatiVoti, categorieVoto, ricaricaRisultatiVoti } = useDati();
   const mostraToast = useToast();
-
-  useEffect(() => {
-    api.get('/api/voti/categorie').then(({ categorie }) => setCategorie(categorie)).catch(() => {});
-  }, []);
 
   if (!ultimaEdizione) {
     return <div className="card"><div className="empty">Nessuna edizione da votare ancora.</div></div>;
@@ -29,30 +23,57 @@ export default function Verdetti() {
     }
   };
 
+  // Chi è in testa in una categoria, per mostrarlo già nel titolo chiuso.
+  const inTesta = (catId) => {
+    const conteggi = risultatiVoti.conteggi?.[catId] || {};
+    const top = Object.entries(conteggi).sort((a, b) => b[1] - a[1])[0];
+    if (!top) return null;
+    const squadra = squadre.find((s) => s._id === top[0]);
+    return squadra ? { squadra, count: top[1] } : null;
+  };
+
   return (
     <div className="card">
       <h2 className="section-title">Verdetti — Giornata {ultimaEdizione.giornataNumero}</h2>
-      {categorie.map((cat) => (
-        <div className="verdetto" key={cat}>
-          <h4>{ETICHETTE[cat] || cat}</h4>
-          <div className="voti-list">
-            {squadre.map((s) => {
-              const count = risultatiVoti.conteggi?.[cat]?.[s._id] || 0;
-              const mioVoto = risultatiVoti.mioVoto?.[cat] === s._id;
-              return (
-                <button
-                  key={s._id}
-                  className={`voto-btn${mioVoto ? ' mio-voto' : ''}`}
-                  onClick={() => vota(cat, s._id)}
-                >
-                  <Stemma src={s.stemma} size={16} /> {s.nome}
-                  <span className="count">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+      <p className="nota-form" style={{ marginTop: 0 }}>
+        Un voto per categoria: cambiarlo sovrascrive il precedente, non se ne aggiunge un altro.
+      </p>
+
+      {categorieVoto.length === 0 ? (
+        <div className="empty">Categorie non disponibili.</div>
+      ) : categorieVoto.map((cat, i) => {
+        const testa = inTesta(cat.id);
+        const mioVoto = risultatiVoti.mioVoto?.[cat.id];
+        return (
+          <details className="verdetto" key={cat.id} open={i === 0}>
+            <summary>
+              <span className="titolo">{cat.etichetta}</span>
+              <span className="sommario">
+                {testa
+                  ? <><Stemma src={testa.squadra.stemma} size={15} /> {testa.squadra.nome} ({testa.count})</>
+                  : 'nessun voto'}
+              </span>
+            </summary>
+            {cat.descrizione && <p className="descrizione-cat">{cat.descrizione}</p>}
+            <div className="voti-list">
+              {squadre.map((s) => {
+                const count = risultatiVoti.conteggi?.[cat.id]?.[s._id] || 0;
+                return (
+                  <button
+                    key={s._id}
+                    className={`voto-btn${mioVoto === s._id ? ' mio-voto' : ''}`}
+                    onClick={() => vota(cat.id, s._id)}
+                  >
+                    <Stemma src={s.stemma} size={16} />
+                    <span className="nome">{s.nome}</span>
+                    <span className="count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }

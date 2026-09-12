@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
+import Sheet from '../components/ui/Sheet';
+import CalendarioForm from '../components/ui/CalendarioForm';
 import { formattaFantapunti } from '../utils/regolamento';
 import '../styles/regolamento.css';
 
@@ -9,13 +11,18 @@ export default function Lega() {
   const { utente } = useOutletContext();
   const { tabellone, giornate } = useDati();
   const [tab, setTab] = useState('classifica');
+  const [giornataDaModificare, setGiornataDaModificare] = useState(null);
   const navigate = useNavigate();
   const miaSquadraId = typeof utente.squadra === 'object' ? utente.squadra?._id : utente.squadra;
+  const sonoAdmin = utente.ruolo === 'admin';
 
   const scontriGiocati = tabellone.reduce((tot, s) => tot + (s.giocate || 0), 0);
   const ciSonoFantapunti = tabellone.some((s) => (s.puntiTotali || 0) > 0);
 
   const apriRegolamento = (sezione) => navigate('/regolamento', { state: { sezione } });
+
+  // Numero proposto quando si crea un calendario da zero: la prima giornata libera.
+  const prossimoNumero = giornate.length ? Math.max(...giornate.map((g) => g.numero)) + 1 : 1;
 
   return (
     <>
@@ -35,49 +42,45 @@ export default function Lega() {
             <div className="empty">Nessuna squadra iscritta alla lega.</div>
           ) : (
             <>
-              <table className="classifica classifica-lega">
-                <thead>
-                  <tr>
-                    <th className="c-pos" />
-                    <th>Squadra</th>
-                    <th className="c-num" title="Vinte">V</th>
-                    <th className="c-num" title="Pareggiate">N</th>
-                    <th className="c-num" title="Perse">P</th>
-                    <th className="c-gol" title="Gol fatti e subiti">Gol</th>
-                    <th className="c-pt" title="Punti-lega">Pt</th>
-                    <th className="c-fp" title="Fantapunti totali">Tot</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tabellone.map((s, i) => (
-                    <tr key={s._id} className={s._id === miaSquadraId ? 'mia' : ''}>
-                      <td className="pos">{i + 1}</td>
-                      <td className="nome-sq">
-                        <Stemma src={s.stemma} size={15} className="stemma-mini" />
-                        <span>{s.nome}</span>
-                      </td>
-                      <td className="num">{s.vinte ?? 0}</td>
-                      <td className="num">{s.pareggiate ?? 0}</td>
-                      <td className="num">{s.perse ?? 0}</td>
-                      <td className="gol">{s.golFatti ?? 0}:{s.golSubiti ?? 0}</td>
-                      <td className="pt">{s.punti ?? 0}</td>
-                      <td className="fp">{formattaFantapunti(s.puntiTotali ?? 0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Riga per riga invece che tabella: i nomi delle squadre sono lunghi e
+                  con sei colonne numeriche finivano schiacciati o fuori dal bordo.
+                  Qui il nome ha tutta la larghezza e i numeri stanno sotto. */}
+              <div className="classifica-lista">
+                <div className="classifica-intestazione">
+                  <span>Squadra</span>
+                  <span>Pt</span>
+                </div>
+
+                {tabellone.map((s, i) => (
+                  <div key={s._id} className={`riga-classifica${s._id === miaSquadraId ? ' mia' : ''}`}>
+                    <span className="posto">{i + 1}</span>
+                    <Stemma src={s.stemma} size={26} className="stemma-riga" />
+                    <div className="dati">
+                      <div className="nome">{s.nome}</div>
+                      <div className="meta">
+                        <span><b>{s.vinte ?? 0}</b>V</span>
+                        <span><b>{s.pareggiate ?? 0}</b>N</span>
+                        <span><b>{s.perse ?? 0}</b>P</span>
+                        <span className="gol">{s.golFatti ?? 0}:{s.golSubiti ?? 0}</span>
+                        <span className="fp">{formattaFantapunti(s.puntiTotali ?? 0)} fp</span>
+                      </div>
+                    </div>
+                    <span className="punti-lega">{s.punti ?? 0}</span>
+                  </div>
+                ))}
+              </div>
 
               {scontriGiocati === 0 && (
                 <div className="empty" style={{ marginTop: 14 }}>
                   {ciSonoFantapunti
-                    ? 'Nessuno scontro diretto concluso: per ora la classifica è ordinata sui fantapunti totali.'
+                    ? 'Ci sono i fantapunti ma nessuno scontro in calendario: i punti-lega restano a zero finché non si carica il calendario della giornata.'
                     : 'Nessuna giornata conclusa: la classifica si riempie alla prima edizione con i punteggi.'}
                 </div>
               )}
 
               <p className="legenda-classifica">
-                Pt sono i punti-lega (vittoria 3, pareggio 1, sconfitta 0), Gol sono fatti e subiti,
-                Tot è la somma dei fantapunti.
+                Pt sono i punti-lega (vittoria 3, pareggio 1, sconfitta 0), V/N/P vinte, pareggiate
+                e perse, poi i gol fatti e subiti e la somma dei fantapunti.
               </p>
             </>
           )}
@@ -88,16 +91,38 @@ export default function Lega() {
             Calendario
             <button className="vedi-tutto" onClick={() => apriRegolamento('gol')}>Da punti a gol</button>
           </h2>
+
+          {sonoAdmin && (
+            <button
+              className="ghost blocco"
+              onClick={() => setGiornataDaModificare({ numero: prossimoNumero })}
+            >
+              + Imposta gli scontri di una giornata
+            </button>
+          )}
+
           {giornate.length === 0 ? (
             <div className="empty">Nessuna giornata caricata ancora.</div>
           ) : (
             giornate.map((g) => (
               <div key={g._id} style={{ marginBottom: 18 }}>
-                <div className="derby-meta" style={{ textAlign: 'left', marginTop: 0, borderTop: 'none', paddingTop: 0 }}>
-                  Giornata {g.numero}{g.serieANumero ? ` · ${g.serieANumero}ª Serie A` : ''}
-                  {g.conclusa ? ' · conclusa' : ''}
+                <div className="giornata-testa">
+                  <span>
+                    Giornata {g.numero}{g.serieANumero ? ` · ${g.serieANumero}ª Serie A` : ''}
+                    {g.conclusa ? ' · conclusa' : ''}
+                  </span>
+                  {sonoAdmin && (
+                    <button className="link" onClick={() => setGiornataDaModificare(g)}>
+                      {g.accoppiamenti.length ? 'Modifica' : 'Imposta scontri'}
+                    </button>
+                  )}
                 </div>
-                {g.accoppiamenti.map((a) => {
+
+                {g.accoppiamenti.length === 0 ? (
+                  <div className="empty" style={{ padding: '14px 10px' }}>
+                    Scontri non ancora impostati: i punti-lega di questa giornata non sono assegnati.
+                  </div>
+                ) : g.accoppiamenti.map((a) => {
                   const haRisultato = a.golCasa != null && a.golTrasferta != null;
                   const vinceCasa = haRisultato && a.golCasa > a.golTrasferta;
                   const vinceTrasferta = haRisultato && a.golTrasferta > a.golCasa;
@@ -129,6 +154,21 @@ export default function Lega() {
           )}
         </div>
       )}
+
+      <Sheet
+        aperto={Boolean(giornataDaModificare)}
+        onChiudi={() => setGiornataDaModificare(null)}
+        titolo="Scontri di giornata"
+        sottotitolo="I punti-lega si calcolano da qui"
+        grande
+      >
+        {giornataDaModificare && (
+          <CalendarioForm
+            giornata={giornataDaModificare}
+            onFatto={() => setGiornataDaModificare(null)}
+          />
+        )}
+      </Sheet>
     </>
   );
 }

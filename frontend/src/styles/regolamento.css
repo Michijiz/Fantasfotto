@@ -2,20 +2,89 @@
    Importato da Lega.jsx e Regolamento.jsx (Vite lo carica dopo global.css).
    Colori: oro solo decorativo, rosso non usato (niente elementi funzionali qui). */
 
-/* ---------- Classifica a punti-lega ---------- */
-.classifica-lega{font-size:12px;}
-.classifica-lega th,
-.classifica-lega td{padding-left:2px;padding-right:2px;}
-.classifica-lega th.c-pos{width:24px;}
-.classifica-lega th.c-num{width:19px;text-align:center;}
-.classifica-lega th.c-gol{width:38px;text-align:center;}
-.classifica-lega th.c-pt{width:28px;text-align:right;}
-.classifica-lega th.c-fp{width:44px;text-align:right;}
-.classifica-lega td.num{text-align:center;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
-.classifica-lega td.gol{text-align:center;font-variant-numeric:tabular-nums;font-size:11px;}
-.classifica-lega td.pt{text-align:right;font-family:'Anton',sans-serif;font-size:14px;font-variant-numeric:tabular-nums;}
-.classifica-lega td.fp{text-align:right;font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink-soft);}
-.classifica-lega .nome-sq span{min-width:0;}
+/* ---------- Classifica a punti-lega ----------
+   Non è una tabella: con sei colonne numeriche il nome della squadra restava
+   largo una quarantina di pixel e sbordava. Qui ogni squadra è una riga a due
+   piani — nome sopra a tutta larghezza, numeri sotto in piccolo — e i punti-lega
+   stanno a destra, l'unico dato che si guarda davvero a colpo d'occhio. */
+.classifica-lista{font-family:'Oswald',sans-serif;}
+
+.classifica-intestazione{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+  border-bottom:2px solid var(--rule);padding:0 2px 5px;
+}
+
+.riga-classifica{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 2px;border-bottom:1px solid rgba(36,27,30,.15);
+}
+.riga-classifica:last-child{border-bottom:none;}
+.riga-classifica:nth-child(even){background:rgba(0,0,0,.03);}
+/* Filo rosso sulla propria riga con box-shadow e non con un bordo: un bordo
+   aggiunge larghezza e disallineerebbe quella riga rispetto alle altre. */
+.riga-classifica.mia{background:rgba(181,82,95,0.08);box-shadow:inset 3px 0 0 var(--stamp-red);}
+
+.riga-classifica .posto{
+  flex:0 0 auto;width:17px;text-align:center;
+  font-family:'Anton',sans-serif;font-size:15px;font-variant-numeric:tabular-nums;
+}
+.riga-classifica .stemma-riga{flex:0 0 auto;font-size:22px;line-height:1;}
+
+/* min-width:0 è ciò che permette davvero al nome di accorciarsi invece di
+   spingere fuori la riga: senza, un flex item non scende sotto la sua larghezza
+   naturale. */
+.riga-classifica .dati{flex:1 1 auto;min-width:0;}
+.riga-classifica .nome{
+  font-size:13.5px;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.riga-classifica .meta{
+  display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;
+  font-size:10.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+}
+.riga-classifica .meta b{font-weight:600;color:var(--ink);}
+.riga-classifica .meta .gol::before,
+.riga-classifica .meta .fp::before{content:'·';margin-right:8px;opacity:.5;}
+
+.riga-classifica .punti-lega{
+  flex:0 0 auto;min-width:26px;text-align:right;
+  font-family:'Anton',sans-serif;font-size:19px;line-height:1;font-variant-numeric:tabular-nums;
+}
+
+/* Schermi molto stretti: il nome resta comunque prioritario, si asciugano i numeri. */
+@media (max-width:340px){
+  .riga-classifica{gap:7px;}
+  .riga-classifica .stemma-riga{font-size:19px;}
+  .riga-classifica .meta{font-size:10px;gap:0 6px;}
+}
+
+/* ---------- Gestione calendario (admin) ---------- */
+.giornata-testa{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);
+  text-transform:uppercase;letter-spacing:.04em;
+  border-top:1px solid var(--ink-soft);padding-top:8px;margin-bottom:2px;
+}
+
+.scontro-riga{
+  display:flex;align-items:center;gap:6px;margin-bottom:8px;
+}
+.scontro-riga select{flex:1 1 0;min-width:0;font-size:12.5px;padding:7px 6px;}
+.scontro-riga .vs-mini{
+  flex:0 0 auto;font-family:'Anton',sans-serif;color:var(--gold);font-size:11px;
+}
+.scontro-riga .togli{
+  flex:0 0 auto;background:none;border:none;color:var(--ink-soft);cursor:pointer;
+  font-size:14px;line-height:1;padding:4px 2px;
+}
+
+button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
+
+.nota-form{
+  font-family:'Oswald',sans-serif;font-size:10.5px;line-height:1.5;color:var(--ink-soft);
+  margin:6px 0 0;
+}
 
 .legenda-classifica{
   font-family:'Oswald',sans-serif;font-size:10.5px;line-height:1.5;color:var(--ink-soft);

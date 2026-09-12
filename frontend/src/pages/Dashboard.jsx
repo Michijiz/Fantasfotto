@@ -5,8 +5,6 @@ import Article from '../components/ui/Article';
 import Sheet from '../components/ui/Sheet';
 import Stemma from '../components/ui/Stemma';
 
-const ETICHETTE = { fenomeno: 'Fenomeno', bidone: 'Bidone', culo: 'Il più culo', sfigato: 'Il più sfigato' };
-
 // Calcola "Xg Xh" tra ora e la data della prossima giornata. Torna null se la
 // giornata non ha ancora una data (l'admin non l'ha impostata) o è già passata.
 function formattaCountdown(data) {
@@ -20,7 +18,9 @@ function formattaCountdown(data) {
 
 export default function Dashboard() {
   const { utente } = useOutletContext();
-  const { ultimaEdizione, prossimaGiornata, tabellone, squadre, risultatiVoti } = useDati();
+  const {
+    ultimaEdizione, prossimaGiornata, tabellone, squadre, risultatiVoti, categorieVoto, schedina
+  } = useDati();
   const [sheetAperta, setSheetAperta] = useState(false);
   const navigate = useNavigate();
 
@@ -39,6 +39,7 @@ export default function Dashboard() {
   const countdown = formattaCountdown(prossimaGiornata?.data);
 
   const squadraPerId = Object.fromEntries(squadre.map((s) => [s._id, s]));
+  const etichettaCat = (id) => categorieVoto.find((c) => c.id === id)?.breve || id;
   const inTesta = Object.entries(risultatiVoti.conteggi || {})
     .map(([cat, conteggi]) => {
       const top = Object.entries(conteggi).sort((a, b) => b[1] - a[1])[0];
@@ -86,6 +87,21 @@ export default function Dashboard() {
         </div>
       )}
 
+      {schedina.giornata && !schedina.chiusa && (schedina.giornata.accoppiamenti?.length > 0) && (
+        <button className="card schedina-invito" onClick={() => navigate('/gioca')}>
+          <div className="invito-testo">
+            <div className="invito-occhiello">Schedina · Giornata {schedina.giornata.numero}</div>
+            <b>{schedina.miaSchedina ? 'Schedina consegnata' : 'Non hai ancora gufato'}</b>
+            <span>
+              {schedina.miaSchedina
+                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2).replace('.', ',')} · chi azzecca tutto è Re dei Gufi`
+                : `${schedina.giornata.accoppiamenti.length} scontri da pronosticare`}
+            </span>
+          </div>
+          <span className="freccia">→</span>
+        </button>
+      )}
+
       <div className="card teaser">
         <Article edizione={ultimaEdizione} teaser onContinua={() => navigate('/gazzetta')} />
       </div>
@@ -99,7 +115,7 @@ export default function Dashboard() {
           <div className="verdetti-ticker">
             {inTesta.map(({ cat, squadra, count }) => (
               <div className="flash" key={cat}>
-                <div className="flash-cat">{ETICHETTE[cat] || cat}</div>
+                <div className="flash-cat">{etichettaCat(cat)}</div>
                 <div className="flash-nome"><Stemma src={squadra.stemma} size={15} /> {squadra.nome} ({count})</div>
               </div>
             ))}

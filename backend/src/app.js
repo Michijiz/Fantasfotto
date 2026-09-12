@@ -8,6 +8,7 @@ const squadreRoutes = require('./routes/squadre');
 const giornateRoutes = require('./routes/giornate');
 const edizioniRoutes = require('./routes/edizioni');
 const votiRoutes = require('./routes/voti');
+const schedineRoutes = require('./routes/schedine');
 const uploadRoutes = require('./routes/upload');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/squadre', squadreRoutes);
 app.use('/api/giornate', giornateRoutes);
 app.use('/api/edizioni', edizioniRoutes);
 app.use('/api/voti', votiRoutes);
+app.use('/api/schedine', schedineRoutes);
 app.use('/api/upload', uploadRoutes);
 
 app.use((req, res) => res.status(404).json({ errore: 'Rotta non trovata' }));

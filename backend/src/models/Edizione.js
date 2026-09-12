@@ -15,7 +15,11 @@ const edizioneSchema = new mongoose.Schema({
     ultimo: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
     puntiUltimo: Number,
     fenomeno: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
-    bidone: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' }
+    bidone: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
+
+    // Premio automatico, non scelto dal direttore: le squadre di chi ha azzeccato
+    // tutta la schedina di quella giornata. Vuoto se non ha vinto nessuno.
+    reDeiGufi: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' }]
   },
   votazioniChiuse: { type: Boolean, default: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
