@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
 import Sheet from '../components/ui/Sheet';
-import CalendarioForm from '../components/ui/CalendarioForm';
+import GiornataForm from '../components/ui/GiornataForm';
 import { formattaFantapunti } from '../utils/regolamento';
 import '../styles/regolamento.css';
 
@@ -73,8 +73,8 @@ export default function Lega() {
               {scontriGiocati === 0 && (
                 <div className="empty" style={{ marginTop: 14 }}>
                   {ciSonoFantapunti
-                    ? 'Ci sono i fantapunti ma nessuno scontro in calendario: i punti-lega restano a zero finché non si carica il calendario della giornata.'
-                    : 'Nessuna giornata conclusa: la classifica si riempie alla prima edizione con i punteggi.'}
+                    ? 'Ci sono i fantapunti ma nessuno scontro in calendario: i punti-lega restano a zero finché non si impostano gli scontri della giornata.'
+                    : 'Nessuna giornata conclusa: la classifica si riempie dalla tab Calendario, inserendo scontri e punteggi di una giornata.'}
                 </div>
               )}
 
@@ -97,7 +97,7 @@ export default function Lega() {
               className="ghost blocco"
               onClick={() => setGiornataDaModificare({ numero: prossimoNumero })}
             >
-              + Imposta gli scontri di una giornata
+              + Nuova giornata: scontri e punteggi
             </button>
           )}
 
@@ -113,14 +113,14 @@ export default function Lega() {
                   </span>
                   {sonoAdmin && (
                     <button className="link" onClick={() => setGiornataDaModificare(g)}>
-                      {g.accoppiamenti.length ? 'Modifica' : 'Imposta scontri'}
+                      Modifica
                     </button>
                   )}
                 </div>
 
                 {g.accoppiamenti.length === 0 ? (
                   <div className="empty" style={{ padding: '14px 10px' }}>
-                    Scontri non ancora impostati: i punti-lega di questa giornata non sono assegnati.
+                    Scontri non ancora impostati: i punti-lega di questa giornata non sono assegnati. Tocca Modifica per inserirli.
                   </div>
                 ) : g.accoppiamenti.map((a) => {
                   const haRisultato = a.golCasa != null && a.golTrasferta != null;
@@ -158,12 +158,12 @@ export default function Lega() {
       <Sheet
         aperto={Boolean(giornataDaModificare)}
         onChiudi={() => setGiornataDaModificare(null)}
-        titolo="Scontri di giornata"
-        sottotitolo="I punti-lega si calcolano da qui"
+        titolo="Giornata"
+        sottotitolo="Scontri e punteggi fantacalcio"
         grande
       >
         {giornataDaModificare && (
-          <CalendarioForm
+          <GiornataForm
             giornata={giornataDaModificare}
             onFatto={() => setGiornataDaModificare(null)}
           />

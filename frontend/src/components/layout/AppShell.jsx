@@ -7,7 +7,7 @@ import BottomNav from './BottomNav';
 import InstallBanner from './InstallBanner';
 import Drawer from './Drawer';
 import Sheet from '../ui/Sheet';
-import NuovaEdizioneForm from '../ui/NuovaEdizioneForm';
+import EdizioneForm from '../ui/EdizioneForm';
 
 function ShellInterno({ utente }) {
   const scrollRef = useRef(null);
@@ -46,7 +46,7 @@ function ShellInterno({ utente }) {
       )}
 
       <Sheet aperto={sheetNuovaAperta} onChiudi={() => setSheetNuovaAperta(false)} titolo="Nuova Edizione" grande>
-        {sheetNuovaAperta && <NuovaEdizioneForm onFatto={() => setSheetNuovaAperta(false)} />}
+        {sheetNuovaAperta && <EdizioneForm onFatto={() => setSheetNuovaAperta(false)} />}
       </Sheet>
 
       <BottomNav />

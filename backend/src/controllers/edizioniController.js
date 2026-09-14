@@ -1,5 +1,5 @@
 const Edizione = require('../models/Edizione');
-const Giornata = require('../models/Giornata');
+const Voto = require('../models/Voto');
 const { risolviSchedine } = require('./schedineController');
 
 const POPOLA_STATS = [
@@ -22,51 +22,18 @@ const dettaglio = async (req, res) => {
   res.json({ edizione });
 };
 
-// Registra i punteggi delle squadre su una Giornata conclusa, così alimentano il
-// Tabellone anche senza calendario/scontri importati. $set (non sostituzione
-// totale del documento) preserva eventuali accoppiamenti già presenti.
-async function registraPunteggi(giornataNumero, punteggiSquadre, utenteId) {
-  const aggiornamento = {
-    $set: { punteggi: punteggiSquadre, conclusa: true, createdBy: utenteId },
-    $setOnInsert: { numero: giornataNumero }
-  };
-  try {
-    await Giornata.findOneAndUpdate({ numero: giornataNumero }, aggiornamento, {
-      upsert: true, setDefaultsOnInsert: true
-    });
-  } catch (err) {
-    // Race condition nota di Mongo su upsert concorrenti sulla stessa chiave unica
-    // (es. doppio click sul bottone "Manda in stampa"): a quel punto il documento
-    // esiste già, quindi un update semplice (senza upsert) completa comunque.
-    if (err.code !== 11000) throw err;
-    await Giornata.updateOne(
-      { numero: giornataNumero },
-      { $set: { punteggi: punteggiSquadre, conclusa: true, createdBy: utenteId } }
-    );
-  }
-}
+// I fantapunti NON si inseriscono più da qui: stanno sulla Giornata, insieme agli
+// scontri (vedi giornateController.salva). Scrivere gli stessi numeri in due posti
+// voleva dire due posti in cui sbagliarli e un solo posto in cui accorgersene.
+// L'edizione è tornata a essere l'articolo più i premi di giornata.
 
-const crea = async (req, res) => {
+function campiEdizione(body) {
   const {
     giornataNumero, direttore, occhiello, titolo, corpo, immagineUrl,
-    vincitore, puntiVincitore, ultimo: ultimoId, puntiUltimo, fenomeno, bidone,
-    punteggiSquadre
-  } = req.body;
+    vincitore, puntiVincitore, ultimo, puntiUltimo, fenomeno, bidone
+  } = body;
 
-  if (!giornataNumero || !direttore || !occhiello || !titolo || !corpo?.length) {
-    return res.status(400).json({ errore: 'Compila i campi obbligatori dell\'articolo' });
-  }
-
-  // Prima i punteggi, poi le schedine: il Re dei Gufi si può calcolare solo quando
-  // i risultati della giornata sono già a posto.
-  if (Array.isArray(punteggiSquadre) && punteggiSquadre.length) {
-    await registraPunteggi(giornataNumero, punteggiSquadre, req.utente.id);
-  }
-
-  const schedineVinte = await risolviSchedine(giornataNumero);
-  const reDeiGufi = [...new Set(schedineVinte.map((s) => String(s.squadra)))];
-
-  const edizione = await Edizione.create({
+  return {
     giornataNumero,
     direttore,
     occhiello,
@@ -76,17 +43,69 @@ const crea = async (req, res) => {
     stats: {
       vincitore: vincitore || undefined,
       puntiVincitore,
-      ultimo: ultimoId || undefined,
+      ultimo: ultimo || undefined,
       puntiUltimo,
       fenomeno: fenomeno || vincitore || undefined,
-      bidone: bidone || ultimoId || undefined,
-      reDeiGufi
-    },
-    createdBy: req.utente.id
-  });
+      bidone: bidone || ultimo || undefined
+    }
+  };
+}
 
+function mancaQualcosa(body) {
+  return !body.giornataNumero || !body.direttore || !body.occhiello
+    || !body.titolo || !body.corpo?.length;
+}
+
+// Le squadre di chi ha azzeccato tutta la schedina di quella giornata. Si ricalcola
+// sia alla pubblicazione sia alla modifica: se l'edizione viene scritta prima che i
+// punteggi siano a posto, basta risalvarla per rimettere a posto anche il premio.
+async function calcolaReDeiGufi(giornataNumero) {
+  const vinte = await risolviSchedine(giornataNumero);
+  return [...new Set(vinte.map((s) => String(s.squadra)))];
+}
+
+const crea = async (req, res) => {
+  if (mancaQualcosa(req.body)) {
+    return res.status(400).json({ errore: 'Compila i campi obbligatori dell\'articolo' });
+  }
+
+  const campi = campiEdizione(req.body);
+  campi.stats.reDeiGufi = await calcolaReDeiGufi(campi.giornataNumero);
+
+  const edizione = await Edizione.create({ ...campi, createdBy: req.utente.id });
   await edizione.populate(POPOLA_STATS);
   res.status(201).json({ edizione });
 };
 
-module.exports = { lista, ultima, dettaglio, crea };
+// Correzione di un'edizione già in stampa: un refuso nel titolo non deve costare
+// la cancellazione e la riscrittura del pezzo.
+const aggiorna = async (req, res) => {
+  if (mancaQualcosa(req.body)) {
+    return res.status(400).json({ errore: 'Compila i campi obbligatori dell\'articolo' });
+  }
+
+  const campi = campiEdizione(req.body);
+  campi.stats.reDeiGufi = await calcolaReDeiGufi(campi.giornataNumero);
+
+  const edizione = await Edizione.findByIdAndUpdate(req.params.id, campi, { new: true });
+  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
+
+  await edizione.populate(POPOLA_STATS);
+  res.json({ edizione });
+};
+
+// Elimina anche i voti dell'edizione: senza l'edizione i conteggi non sono più
+// raggiungibili da nessuna schermata e resterebbero solo a occupare spazio.
+// I punteggi della giornata NON vengono toccati: la classifica vive sulla
+// Giornata, non sull'articolo.
+const elimina = async (req, res) => {
+  const edizione = await Edizione.findById(req.params.id);
+  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
+
+  await Voto.deleteMany({ edizione: edizione._id });
+  await edizione.deleteOne();
+
+  res.json({ ok: true });
+};
+
+module.exports = { lista, ultima, dettaglio, crea, aggiorna, elimina };

@@ -24,6 +24,7 @@ export function DataProvider({ children }) {
   const [squadre, setSquadre] = useState([]);
   const [tabellone, setTabellone] = useState([]);
   const [ultimaEdizione, setUltimaEdizione] = useState(null);
+  const [edizioni, setEdizioni] = useState([]);
   const [prossimaGiornata, setProssimaGiornata] = useState(null);
   const [giornate, setGiornate] = useState([]);
   const [risultatiVoti, setRisultatiVoti] = useState({ conteggi: {}, mioVoto: {} });
@@ -43,6 +44,13 @@ export function DataProvider({ children }) {
   const ricaricaUltimaEdizione = useCallback(async () => {
     const { edizione } = await api.get('/api/edizioni/ultima');
     setUltimaEdizione(edizione);
+  }, []);
+
+  // L'archivio completo sta nel contesto e non nella pagina Gazzetta: dopo una
+  // correzione o un'eliminazione deve aggiornarsi insieme a tutto il resto.
+  const ricaricaEdizioni = useCallback(async () => {
+    const { edizioni } = await api.get('/api/edizioni');
+    setEdizioni(edizioni);
   }, []);
 
   const ricaricaProssimaGiornata = useCallback(async () => {
@@ -86,13 +94,14 @@ export function DataProvider({ children }) {
     if (utente) {
       ricaricaTabellone();
       ricaricaUltimaEdizione();
+      ricaricaEdizioni();
       ricaricaProssimaGiornata();
       ricaricaGiornate();
       ricaricaSchedina();
     }
   }, [
     utente, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
-    ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina
+    ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina
   ]);
 
   useEffect(() => {
@@ -107,10 +116,11 @@ export function DataProvider({ children }) {
 
   return (
     <DataContext.Provider value={{
-      squadre, tabellone, ultimaEdizione, prossimaGiornata, giornate, risultatiVoti,
+      squadre, tabellone, ultimaEdizione, edizioni, prossimaGiornata, giornate, risultatiVoti,
       categorieVoto, schedina,
-      ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaProssimaGiornata,
-      ricaricaGiornate, ricaricaRisultatiVoti, ricaricaCategorieVoto, ricaricaSchedina, ricaricaTutto
+      ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaEdizioni,
+      ricaricaProssimaGiornata, ricaricaGiornate, ricaricaRisultatiVoti, ricaricaCategorieVoto,
+      ricaricaSchedina, ricaricaTutto
     }}>
       {children}
     </DataContext.Provider>

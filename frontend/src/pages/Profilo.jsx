@@ -14,6 +14,7 @@ export default function Profilo() {
   const miaSquadra = squadre.find((s) => s._id === utente.squadra || s._id === utente.squadra?._id);
 
   const [modifica, setModifica] = useState(false);
+  const [nome, setNome] = useState('');
   const [bio, setBio] = useState('');
   const [rosa, setRosa] = useState('');
   const [stemma, setStemma] = useState('');
@@ -24,6 +25,7 @@ export default function Profilo() {
 
   useEffect(() => {
     if (miaSquadra) {
+      setNome(miaSquadra.nome || '');
       setBio(miaSquadra.bio || '');
       setRosa((miaSquadra.rosa || []).join(', '));
       setStemma(miaSquadra.stemma || '');
@@ -37,7 +39,7 @@ export default function Profilo() {
     setErrore('');
     setSalvando(true);
     try {
-      await api.patch('/api/squadre/mia', { bio, rosa, stemma, maglia, foto });
+      await api.patch('/api/squadre/mia', { nome, bio, rosa, stemma, maglia, foto });
       await ricaricaSquadre();
       mostraToast('Squadra aggiornata!');
       setModifica(false);
@@ -85,6 +87,11 @@ export default function Profilo() {
           </div>
         ) : (
           <form onSubmit={salva}>
+            {/* Il nome si corregge da qui: le squadre non si creano più dall'app,
+                quindi questo è l'unico posto dove rimediare a un refuso. */}
+            <label>Nome della squadra</label>
+            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Come si chiama" />
+
             <ImageUpload label="Stemma" value={stemma} onChange={setStemma} />
             <ImageUpload label="Maglia" value={maglia} onChange={setMaglia} />
             <ImageUpload label="Foto squadra" value={foto} onChange={setFoto} />

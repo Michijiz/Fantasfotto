@@ -8,17 +8,10 @@ const lista = async (req, res) => {
   res.json({ squadre });
 };
 
-// Non c'è più un seed fisso: le squadre della lega si creano da qui, una alla volta
-// (di norma dall'admin, dalla pagina Squadre). Il nome deve restare unico (vincolo
-// anche a livello di schema).
-const crea = async (req, res) => {
-  const { nome } = req.body;
-  if (!nome || !nome.trim()) {
-    return res.status(400).json({ errore: 'Nome squadra richiesto' });
-  }
-  const squadra = await Squadra.create({ nome: nome.trim() });
-  res.status(201).json({ squadra });
-};
+// Le squadre NON si creano più dall'app: la lega è chiusa e iscrivere una squadra
+// nuova è un fatto raro, che non vale un bottone sempre a portata di dito (e un
+// bottone che crea record a caso è un bottone che prima o poi viene premuto per
+// sbaglio). Per aggiungerle si usa `npm run seed -- "Nome Squadra"` sul backend.
 
 const dettaglio = async (req, res) => {
   const squadra = await Squadra.findById(req.params.id);
@@ -43,12 +36,25 @@ const classifica = async (req, res) => {
 };
 
 // L'utente autenticato aggiorna solo la propria squadra (profilo, non i punti).
+// Il nome è modificabile: ora che le squadre non si creano più dall'app, se uno
+// se lo ritrova scritto male deve poterlo correggere da qualche parte.
 const aggiornaMiaSquadra = async (req, res) => {
-  const { stemma, maglia, foto, bio, rosa } = req.body;
+  const { nome, stemma, maglia, foto, bio, rosa } = req.body;
   const utente = await User.findById(req.utente.id);
   if (!utente) return res.status(404).json({ errore: 'Utente non trovato' });
 
   const aggiornamenti = {};
+
+  if (nome !== undefined) {
+    const pulito = String(nome).trim();
+    if (!pulito) return res.status(400).json({ errore: 'Il nome della squadra non può essere vuoto' });
+
+    const gia = await Squadra.findOne({ nome: pulito, _id: { $ne: utente.squadra } }).lean();
+    if (gia) return res.status(400).json({ errore: 'Esiste già una squadra con questo nome' });
+
+    aggiornamenti.nome = pulito;
+  }
+
   if (stemma !== undefined) aggiornamenti.stemma = stemma;
   if (maglia !== undefined) aggiornamenti.maglia = maglia;
   if (foto !== undefined) aggiornamenti.foto = foto;
@@ -63,4 +69,4 @@ const aggiornaMiaSquadra = async (req, res) => {
   res.json({ squadra });
 };
 
-module.exports = { lista, dettaglio, crea, classifica, aggiornaMiaSquadra };
+module.exports = { lista, dettaglio, classifica, aggiornaMiaSquadra };

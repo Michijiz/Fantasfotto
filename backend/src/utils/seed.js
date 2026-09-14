@@ -1,25 +1,34 @@
-// Popola le 8 squadre di base della lega, se non esistono già. Esegui con:
-//   npm run seed
+// Crea le squadre della lega, se non esistono già. È l'unico modo di aggiungerne
+// una: dall'app non si creano più.
+//
+//   npm run seed -- "US Ticchiu" "Bubbeo FC" "Real Cumbia"
+//
+// Ripetibile senza danni: una squadra già presente viene lasciata com'è, con
+// stemma, bio e rosa intatti.
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Squadra = require('../models/Squadra');
 
-const SQUADRE_BASE = [
- 
-];
-
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
+  const nomi = process.argv.slice(2).map((n) => n.trim()).filter(Boolean);
 
-  for (const nome of SQUADRE_BASE) {
-    await Squadra.findOneAndUpdate(
-      { nome },
-      { nome },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
+  if (nomi.length === 0) {
+    console.log('Uso: npm run seed -- "Nome Squadra" ["Altra Squadra" ...]');
+    process.exit(1);
   }
 
-  console.log(`[seed] ${SQUADRE_BASE.length} squadre pronte.`);
+  await mongoose.connect(process.env.MONGODB_URI);
+
+  for (const nome of nomi) {
+    const gia = await Squadra.findOne({ nome });
+    if (gia) {
+      console.log(`[seed] "${nome}" esiste già, lasciata com'è.`);
+      continue;
+    }
+    await Squadra.create({ nome });
+    console.log(`[seed] "${nome}" creata.`);
+  }
+
   await mongoose.disconnect();
 }
 
