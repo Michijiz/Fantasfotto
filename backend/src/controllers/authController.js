@@ -24,9 +24,16 @@ function pubblico(user) {
     nomeVisualizzato: user.nomeVisualizzato,
     ruolo: user.ruolo,
     avatar: user.avatar,
-    squadra: user.squadra
+    squadra: user.squadra,
+    tema: user.tema || TEMA_DEFAULT
   };
 }
+
+// Lo slug del tema arriva dal frontend (id di una squadra di Serie A o
+// 'palermo'): qui non si valida contro un elenco — sarebbe una seconda verità da
+// tenere allineata a src/temi.js — ma si controlla che sia uno slug plausibile.
+const TEMA_DEFAULT = 'palermo';
+const temaValido = (v) => /^[a-z][a-z0-9-]{1,23}$/.test(v);
 
 // I campi arrivano da JSON: un PIN numerico (1234 invece di "1234") farebbe
 // esplodere bcrypt con un 500. Normalizziamo tutto a stringa.
@@ -38,6 +45,7 @@ const registrati = async (req, res) => {
   const pin = testo(req.body.pin);
   const squadraId = testo(req.body.squadraId);
   const codiceInvito = testo(req.body.codiceInvito);
+  const temaRichiesto = testo(req.body.tema).toLowerCase();
 
   if (!username || !nomeVisualizzato || !pin || !squadraId || !codiceInvito) {
     return res.status(400).json({ errore: 'Compila tutti i campi' });
@@ -59,7 +67,8 @@ const registrati = async (req, res) => {
     username,
     nomeVisualizzato,
     pinHash,
-    squadra: squadra._id
+    squadra: squadra._id,
+    tema: temaValido(temaRichiesto) ? temaRichiesto : TEMA_DEFAULT
   });
 
   const token = firmaToken(user);
@@ -115,4 +124,22 @@ const me = async (req, res) => {
   res.json({ utente: pubblico(user) });
 };
 
-module.exports = { registrati, login, me };
+// Il tema segue l'utente, non il dispositivo: cambiandolo dal telefono lo si
+// ritrova anche aprendo l'app dal browser del computer.
+const aggiornaTema = async (req, res) => {
+  const tema = testo(req.body.tema).toLowerCase();
+  if (!temaValido(tema)) {
+    return res.status(400).json({ errore: 'Tema non valido' });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.utente.id,
+    { $set: { tema } },
+    { new: true }
+  ).populate('squadra', 'nome stemma');
+
+  if (!user) return res.status(404).json({ errore: 'Utente non trovato' });
+  res.json({ utente: pubblico(user) });
+};
+
+module.exports = { registrati, login, me, aggiornaTema };

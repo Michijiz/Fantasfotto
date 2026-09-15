@@ -11,7 +11,7 @@
 
 .classifica-intestazione{
   display:flex;justify-content:space-between;align-items:baseline;
-  font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
   border-bottom:2px solid var(--rule);padding:0 2px 5px;
 }
 
@@ -23,25 +23,25 @@
 .riga-classifica:nth-child(even){background:rgba(0,0,0,.03);}
 /* Filo rosso sulla propria riga con box-shadow e non con un bordo: un bordo
    aggiunge larghezza e disallineerebbe quella riga rispetto alle altre. */
-.riga-classifica.mia{background:rgba(181,82,95,0.08);box-shadow:inset 3px 0 0 var(--stamp-red);}
+.riga-classifica.mia{background:color-mix(in srgb, var(--stamp-red) 10%, transparent);box-shadow:inset 3px 0 0 var(--stamp-red);}
 
 .riga-classifica .posto{
   flex:0 0 auto;width:17px;text-align:center;
-  font-family:'Anton',sans-serif;font-size:15px;font-variant-numeric:tabular-nums;
+  font-family:'Anton',sans-serif;font-size:16.5px;font-variant-numeric:tabular-nums;
 }
-.riga-classifica .stemma-riga{flex:0 0 auto;font-size:22px;line-height:1;}
+.riga-classifica .stemma-riga{flex:0 0 auto;font-size:24px;line-height:1;}
 
 /* min-width:0 è ciò che permette davvero al nome di accorciarsi invece di
    spingere fuori la riga: senza, un flex item non scende sotto la sua larghezza
    naturale. */
 .riga-classifica .dati{flex:1 1 auto;min-width:0;}
 .riga-classifica .nome{
-  font-size:13.5px;line-height:1.2;
+  font-size:15px;line-height:1.2;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .riga-classifica .meta{
   display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;
-  font-size:10.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+  font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums;
 }
 .riga-classifica .meta b{font-weight:600;color:var(--ink);}
 .riga-classifica .meta .gol::before,
@@ -49,20 +49,20 @@
 
 .riga-classifica .punti-lega{
   flex:0 0 auto;min-width:26px;text-align:right;
-  font-family:'Anton',sans-serif;font-size:19px;line-height:1;font-variant-numeric:tabular-nums;
+  font-family:'Anton',sans-serif;font-size:21px;line-height:1;font-variant-numeric:tabular-nums;
 }
 
 /* Schermi molto stretti: il nome resta comunque prioritario, si asciugano i numeri. */
 @media (max-width:340px){
   .riga-classifica{gap:7px;}
-  .riga-classifica .stemma-riga{font-size:19px;}
-  .riga-classifica .meta{font-size:10px;gap:0 6px;}
+  .riga-classifica .stemma-riga{font-size:21px;}
+  .riga-classifica .meta{font-size:11.5px;gap:0 6px;}
 }
 
 /* ---------- Gestione calendario (admin) ---------- */
 .giornata-testa{
   display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-  font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);
   text-transform:uppercase;letter-spacing:.04em;
   border-top:1px solid var(--ink-soft);padding-top:8px;margin-bottom:2px;
 }
@@ -70,24 +70,24 @@
 .scontro-riga{
   display:flex;align-items:center;gap:6px;margin-bottom:8px;
 }
-.scontro-riga select{flex:1 1 0;min-width:0;font-size:12.5px;padding:7px 6px;}
+.scontro-riga select{flex:1 1 0;min-width:0;font-size:14px;padding:7px 6px;}
 .scontro-riga .vs-mini{
-  flex:0 0 auto;font-family:'Anton',sans-serif;color:var(--gold);font-size:11px;
+  flex:0 0 auto;font-family:'Anton',sans-serif;color:var(--gold);font-size:12.5px;
 }
 .scontro-riga .togli{
   flex:0 0 auto;background:none;border:none;color:var(--ink-soft);cursor:pointer;
-  font-size:14px;line-height:1;padding:4px 2px;
+  font-size:15.5px;line-height:1;padding:4px 2px;
 }
 
 button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 
 .nota-form{
-  font-family:'Oswald',sans-serif;font-size:10.5px;line-height:1.5;color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;font-size:12px;line-height:1.5;color:var(--ink-soft);
   margin:6px 0 0;
 }
 
 .legenda-classifica{
-  font-family:'Oswald',sans-serif;font-size:10.5px;line-height:1.5;color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;font-size:12px;line-height:1.5;color:var(--ink-soft);
   margin:12px 0 0;letter-spacing:.02em;
 }
 
@@ -96,60 +96,60 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
   display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:66px;gap:1px;
 }
 .match-row .risultato .gol{
-  font-family:'Anton',sans-serif;font-size:17px;line-height:1.1;font-variant-numeric:tabular-nums;
+  font-family:'Anton',sans-serif;font-size:18.5px;line-height:1.1;font-variant-numeric:tabular-nums;
 }
 .match-row .risultato .fp{
-  font-size:9.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 .match-row .sq .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .match-row .sq.vince .nome{font-weight:700;}
 
 /* ---------- Regolamento ---------- */
-.faq-intro{font-size:13.5px;line-height:1.65;margin:0 0 6px;color:var(--ink);}
+.faq-intro{font-size:15px;line-height:1.65;margin:0 0 6px;color:var(--ink);}
 
 .faq-voce{border-bottom:1px dashed var(--ink-soft);scroll-margin-top:12px;}
 .faq-voce:last-child{border-bottom:none;}
 .faq-voce summary{
   list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;
-  padding:13px 2px;font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.04em;
+  padding:13px 2px;font-family:'Oswald',sans-serif;font-size:14.5px;text-transform:uppercase;letter-spacing:.04em;
   color:var(--ink);
   touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
 }
 .faq-voce summary::-webkit-details-marker{display:none;}
 .faq-voce summary::after{
-  content:'+';flex:0 0 auto;font-family:'Anton',sans-serif;font-size:20px;line-height:1;color:var(--gold);
+  content:'+';flex:0 0 auto;font-family:'Anton',sans-serif;font-size:22px;line-height:1;color:var(--gold);
   transition:transform .2s var(--ease-tap);
 }
 .faq-voce[open] summary::after{transform:rotate(45deg);}
 .faq-voce summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
 
-.faq-corpo{padding:0 2px 16px;font-size:13.5px;line-height:1.65;}
+.faq-corpo{padding:0 2px 16px;font-size:15px;line-height:1.65;}
 .faq-corpo p{margin:0 0 10px;max-width:68ch;}
 .faq-corpo p:last-child{margin-bottom:0;}
 
 .faq-sottotitolo{
-  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
+  font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.06em;
   color:var(--gold);margin:14px 0 4px;
 }
 .faq-sottotitolo:first-child{margin-top:0;}
 
-.faq-tabella{width:100%;border-collapse:collapse;font-family:'Oswald',sans-serif;font-size:12.5px;margin:4px 0 12px;}
+.faq-tabella{width:100%;border-collapse:collapse;font-family:'Oswald',sans-serif;font-size:14px;margin:4px 0 12px;}
 .faq-tabella td{padding:7px 2px;border-bottom:1px solid rgba(36,27,30,.15);vertical-align:baseline;}
 .faq-tabella tr:last-child td{border-bottom:none;}
 .faq-tabella td.val{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;padding-left:12px;}
 
 .faq-moduli{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px;}
 .faq-chip{
-  border:1px solid var(--ink);background:#fff8fa;padding:4px 9px;
-  font-family:'Oswald',sans-serif;font-size:12px;font-variant-numeric:tabular-nums;
+  border:1px solid var(--ink);background:var(--paper-input);padding:4px 9px;
+  font-family:'Oswald',sans-serif;font-size:13.5px;font-variant-numeric:tabular-nums;
   box-shadow:2px 2px 0 rgba(36,27,30,.9);
 }
 
-.faq-criteri{margin:4px 0 12px;padding-left:22px;font-family:'Oswald',sans-serif;font-size:13px;}
+.faq-criteri{margin:4px 0 12px;padding-left:22px;font-family:'Oswald',sans-serif;font-size:14.5px;}
 .faq-criteri li{padding:3px 0;}
 .faq-criteri li::marker{font-family:'Anton',sans-serif;color:var(--gold);}
 
-.faq-nota{font-family:'Oswald',sans-serif;font-size:11px;line-height:1.5;color:var(--ink-soft);margin:8px 0 0;}
+.faq-nota{font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.5;color:var(--ink-soft);margin:8px 0 0;}
 
 /* ---------- Calcolatrice gol ---------- */
 .calcolatrice-riga{display:flex;align-items:flex-end;gap:16px;}
@@ -161,7 +161,7 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
   box-shadow:var(--shadow-hard-sm);
 }
 .calcolatrice-esito .numero{
-  font-family:'Anton',sans-serif;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;
-  color:var(--paper);-webkit-text-stroke:1px var(--ink);paint-order:stroke fill;
+  font-family:'Anton',sans-serif;font-size:42px;line-height:1;font-variant-numeric:tabular-nums;
+  color:var(--ink);
 }
-.calcolatrice-esito .unita{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
+.calcolatrice-esito .unita{font-family:'Oswald',sans-serif;font-size:13.5px;text-transform:uppercase;letter-spacing:.06em;}

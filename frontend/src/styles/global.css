@@ -1,11 +1,18 @@
+/* I colori vivono tutti qui: il tema scelto dall'utente (src/temi.js) riscrive
+   queste variabili su :root, quindi qualunque regola che usi un colore letterale
+   invece di una var() resterebbe indietro quando si cambia squadra. */
 :root{
   --paper: #f1cdda;
   --paper-dark: #e7bccc;
+  --paper-input: #fff8fa;
   --ink: #000000;
   --ink-soft: #4a3a3f;
   --stamp-red: #b5525f;
   --rule: #050505;
-  --gold: #b8892f;
+  --gold: #73561d;
+  --gold-chiaro: #d2a441; /* decorativo su fondo scuro (nav attiva) */
+  --nav-testo: #f1cdda;
+  --verde: #2f7a4a; /* esito positivo: non dipende dal tema */
 
   --shadow-hard: 6px 6px 0 rgba(36,27,30,0.9);
   --shadow-hard-sm: 4px 4px 0 rgba(36,27,30,0.9);
@@ -89,15 +96,15 @@ body{
 .install-banner{
   display:flex;align-items:center;gap:10px;
   background:var(--ink);color:var(--paper);
-  padding:8px 16px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.02em;
+  padding:8px 16px;font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.02em;
   flex:0 0 auto;
 }
 .install-banner span{flex:1;}
 .install-banner button.installa{
   background:var(--stamp-red);color:#fff;border:none;padding:6px 12px;
-  font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;
 }
-.install-banner button.chiudi{background:none;border:none;color:var(--paper);opacity:.6;font-size:16px;cursor:pointer;padding:0 2px;}
+.install-banner button.chiudi{background:none;border:none;color:var(--paper);opacity:.6;font-size:17.5px;cursor:pointer;padding:0 2px;}
 
 .app-header{
   position:absolute;top:0;left:0;right:0;z-index:5;
@@ -133,57 +140,87 @@ body{
   display:flex;flex-direction:column;gap:4px;
 }
 .drawer.aperto{transform:translateX(0);}
+/* Il filo nero su testo color carta funziona solo sui corpi grandi (testata,
+   titolo dell'articolo): sotto i ~24px il contorno si impasta e la scritta
+   diventa un'ombra chiara su fondo chiaro. Da qui in giù i titoli sono pieni. */
 .drawer .chi{
-  font-family:'Anton',sans-serif;font-size:17px;margin-bottom:2px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  font-family:'Anton',sans-serif;font-size:18.5px;margin-bottom:2px;
+  color:var(--ink);
 }
-.drawer .ruolo{font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;}
+.drawer .ruolo{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;}
 .drawer-intestazione{
   display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
   padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--ink-soft);
 }
 .drawer a, .drawer button.drawer-link{
-  font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;
+  font-family:'Oswald',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.05em;
   color:var(--ink);text-decoration:none;padding:11px 6px;border-bottom:1px dashed var(--ink-soft);
   background:none;border-left:none;border-right:none;border-top:none;text-align:left;cursor:pointer;
 }
 .drawer a.esci, .drawer button.esci{color:var(--stamp-red);margin-top:auto;border-bottom:none;}
 
+/* ===== selettore tema =====
+   Il bollino nel drawer mostra i colori sociali della squadra scelta, divisi a
+   metà come una maglia: prima era un cerchietto arcobaleno che non diceva nulla
+   e apriva cinque campioni finti. Ora apre il foglio con tutte le squadre. */
 .tema-dot{
-  width:26px;height:26px;flex:0 0 auto;cursor:pointer;background:none;
-  margin-left:auto;padding-left:10px;border-left:1px dashed var(--ink-soft);
-  display:flex;align-items:center;justify-content:flex-end;border-radius:0;
+  flex:0 0 auto;cursor:pointer;background:none;border:none;
+  margin-left:auto;padding:0 0 0 10px;border-left:1px dashed var(--ink-soft);
+  display:flex;align-items:center;gap:7px;border-radius:0;
 }
 .tema-dot .pallina{
-  width:24px;height:24px;border-radius:50%;border:2px solid var(--ink);
-  background: conic-gradient(from 180deg, #c8102e, #b8892f, #2f9e57, #2f6fb0, #7a3fae, #c8102e);
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);
+  background: var(--tema-sfondo, linear-gradient(135deg, var(--stamp-red) 0 50%, var(--ink) 50% 100%));
+  box-shadow: 1px 1px 0 rgba(36,27,30,.5);
   transition: transform .15s var(--ease-tap);
 }
 .tema-dot:active .pallina{transform:scale(.88);}
-.tema-popover{
-  display:none;gap:9px;margin:-4px 0 16px;padding:9px 10px;flex-wrap:wrap;
-  background:rgba(36,27,30,.05);border:1px dashed var(--ink-soft);
+
+.tema-griglia{
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(92px, 1fr));gap:10px;
+  padding-top:4px;
 }
-.tema-popover.aperto{display:flex;}
-.tema-opzione{
-  width:22px;height:22px;border-radius:50%;border:2px solid var(--ink);
-  background:var(--tema);cursor:pointer;padding:0;
+.tema-carta{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:11px 6px;cursor:pointer;
+  background:var(--paper-input);border:1px solid var(--ink-soft);
+  font:inherit;color:var(--ink);
+  transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);
 }
-.tema-opzione.selezionata{box-shadow:0 0 0 2px var(--paper-dark), 0 0 0 4px var(--ink);}
+.tema-carta:active{transform:translate(1px,1px);}
+.tema-carta .dischetto{
+  width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);
+  box-shadow:1px 1px 0 rgba(36,27,30,.5);
+}
+.tema-carta .nome{
+  font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
+  text-align:center;line-height:1.15;
+}
+.tema-carta.scelto{
+  border-color:var(--stamp-red);
+  box-shadow: inset 0 0 0 2px var(--stamp-red), var(--shadow-hard-sm);
+}
+.tema-nota{
+  font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.5;color:var(--ink-soft);
+  margin:0 0 10px;
+}
 
 .masthead{position:relative;text-align:center;padding:10px 16px 12px;transition: padding .32s var(--ease-tap);}
 .masthead .kicker{
-  font-family:'Oswald',sans-serif;letter-spacing:.18em;font-size:11px;text-transform:uppercase;color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;letter-spacing:.18em;font-size:12.5px;text-transform:uppercase;color:var(--ink-soft);
   transition:opacity .28s var(--ease-tap), max-height .32s var(--ease-tap);
 }
 .masthead h1{
-  font-family:'Anton', sans-serif;font-size:clamp(30px, 8vw, 50px);letter-spacing:.5px;margin:5px 0 6px;line-height:0.95;
+  font-family:'Anton', sans-serif;font-size: clamp(32px, 8vw, 52px);letter-spacing:.5px;margin:5px 0 6px;line-height:0.95;
   text-shadow: 1px 1px 0 rgba(36,27,30,0.08);
   transition: font-size .32s var(--ease-tap);
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  /* Testata "stampata": pieno quasi bianco invece che color carta — con il pieno
+     alla stessa tinta dello sfondo restava un contorno vuoto, illeggibile. */
+  color:#fffdfd; -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;
+  text-shadow: 2px 2px 0 rgba(36,27,30,0.22);
 }
 .masthead .sub{
-  font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.06em;color:var(--ink-soft);
   display:flex;justify-content:space-between;border-top:1px solid var(--ink-soft);padding-top:7px;margin-top:7px;
 }
 
@@ -198,7 +235,7 @@ body{
   display:flex;flex-direction:column;justify-content:center;
 }
 .app-header.compatto .masthead .kicker{opacity:0;max-height:0;overflow:hidden;}
-.app-header.compatto .masthead h1{font-size:20px;margin:0;}
+.app-header.compatto .masthead h1{font-size:22px;margin:0;}
 .app-header.compatto .masthead .sub{display:none;}
 
 /* Lo scroll occupa tutta l'area e passa sotto la testata; il margine in alto è
@@ -225,29 +262,29 @@ body{
 }
 h2.section-title{
   font-family:'Anton',sans-serif;
-  font-size:19px;
+  font-size:21px;
   margin:0 0 12px;
   letter-spacing:.5px;
   border-bottom: 1px solid var(--ink-soft);
   padding-bottom:8px;
   display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  color:var(--ink);
 }
 h2.section-title .vedi-tutto{
-  font-family:'Oswald',sans-serif;font-size:11px;text-transform:none;letter-spacing:0;
+  font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:none;letter-spacing:0;
   color:var(--ink);text-decoration:underline;cursor:pointer;white-space:nowrap;
   background:none;border:none;padding:0;
 }
 
-label{display:block;font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:10px 0 4px;}
+label{display:block;font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:10px 0 4px;}
 input[type=text],input[type=number],input[type=password],select,textarea{
-  width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
-  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);
+  width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:15.5px;
+  border:1px solid var(--ink-soft);background:var(--paper-input);color:var(--ink);
   transition: border-color .15s, box-shadow .15s;
 }
 input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(184,137,47,0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent);
   outline:none;
 }
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -255,8 +292,8 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,selec
 .img-preview{width:52px;height:52px;object-fit:cover;border:1px solid var(--ink-soft);}
 
 .campo-data{
-  width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:14px;
-  border:1px solid var(--ink-soft);background:#fff8fa;color:var(--ink);
+  width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:15.5px;
+  border:1px solid var(--ink-soft);background:var(--paper-input);color:var(--ink);
 }
 
 /* ---------- Punteggi fantacalcio di giornata ----------
@@ -269,23 +306,23 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,selec
 }
 .punteggio-riga:last-child{border-bottom:none;}
 .punteggio-riga label{
-  flex:1 1 auto;min-width:0;margin:0;text-transform:none;font-size:12px;letter-spacing:0;
+  flex:1 1 auto;min-width:0;margin:0;text-transform:none;font-size:13.5px;letter-spacing:0;
   color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .punteggio-riga input{flex:0 0 84px;width:84px;padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums;}
 .punteggio-riga .gol-calcolati{
   flex:0 0 46px;text-align:right;
-  font-family:'Oswald',sans-serif;font-size:11px;color:var(--gold);font-variant-numeric:tabular-nums;
+  font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--gold);font-variant-numeric:tabular-nums;
 }
 
 label.spunta{
   display:flex;align-items:center;gap:9px;margin:18px 0 0;
-  text-transform:none;font-size:12.5px;letter-spacing:0;color:var(--ink);cursor:pointer;
+  text-transform:none;font-size:14px;letter-spacing:0;color:var(--ink);cursor:pointer;
 }
 label.spunta input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--stamp-red);}
 
 .avviso-form{
-  font-family:'Oswald',sans-serif;font-size:11px;line-height:1.5;
+  font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.5;
   color:var(--stamp-red);margin:7px 0 0;
   border-left:3px solid var(--stamp-red);padding-left:9px;
 }
@@ -296,7 +333,7 @@ label.spunta input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--stamp
   display:flex;justify-content:center;
 }
 button.link.pericolo{
-  color:var(--stamp-red);font-size:12px;text-decoration:underline;
+  color:var(--stamp-red);font-size:13.5px;text-decoration:underline;
   padding:6px 4px;
 }
 button.link.pericolo.armato{
@@ -325,13 +362,13 @@ button.primary:active{
 button.primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none;}
 
 button.ghost{
-  padding:8px 10px;font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;
+  padding:8px 10px;font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;
   background:transparent;border:1px solid var(--ink-soft);color:var(--ink);cursor:pointer;
   transition: background .15s, color .15s;
 }
 button.ghost:hover{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-button.link{background:none;border:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;}
+button.link{background:none;border:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
 button.link:hover{ color: var(--ink); }
 
 /* ===== L'edizione impaginata =====
@@ -348,25 +385,26 @@ button.link:hover{ color: var(--ink); }
 .article .timbro-giornata{
   flex:0 0 auto;
   border:3px solid var(--stamp-red);color:var(--stamp-red);background:var(--paper);
-  font-family:'Anton',sans-serif;font-size:12px;letter-spacing:.1em;
+  font-family:'Anton',sans-serif;font-size:13.5px;letter-spacing:.1em;
   padding:4px 10px;transform:rotate(-2deg);
   box-shadow:2px 2px 0 rgba(36,27,30,0.9);
   animation: timbra .4s var(--ease-tap);
 }
 .article .data-edizione{
-  font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;
   color:var(--ink-soft);text-align:right;
 }
 
-.article .occhiello{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin-bottom:4px;}
+.article .occhiello{font-family:'Oswald',sans-serif;font-size:13.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin-bottom:4px;}
 .article h3{
-  font-family:'Anton',sans-serif;font-size:clamp(22px,6vw,30px);line-height:1.05;margin:0 0 8px;
+  font-family:'Anton',sans-serif;font-size: clamp(24px,6vw,32px);line-height:1.05;margin:0 0 8px;
   overflow-wrap:anywhere;
-  color:var(--paper); -webkit-text-stroke:0.9px var(--ink); paint-order: stroke fill;
+  /* Il titolo dell'articolo si legge, non si guarda: pieno di inchiostro. */
+  color:var(--ink);
 }
 .article .byline{
   font-family:'Oswald',sans-serif;
-  font-size:12px;
+  font-size:13.5px;
   font-variant:small-caps;
   letter-spacing:.04em;
   color:var(--ink-soft);
@@ -376,7 +414,7 @@ button.link:hover{ color: var(--ink); }
 }
 .article .byline b{font-weight:600;color:var(--ink);}
 .article .corpo{margin-top:2px;}
-.article p{font-size:15px;line-height:1.7;margin:0 0 12px; max-width:68ch;}
+.article p{font-size:16.5px;line-height:1.7;margin:0 0 12px; max-width:68ch;}
 .article .corpo p:last-child{margin-bottom:0;}
 
 .article .corpo p:first-child::first-letter{
@@ -399,7 +437,7 @@ button.link:hover{ color: var(--ink); }
   margin-top:16px;border-top:3px double var(--rule);padding-top:12px;
 }
 .article .tabellino-titolo{
-  font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;
   color:var(--gold);margin-bottom:9px;
 }
 .article .tabellino-griglia{
@@ -410,14 +448,14 @@ button.link:hover{ color: var(--ink); }
 }
 .article .tabellino .voce.largo{grid-column:1 / -1;}
 .article .tabellino .etichetta{
-  display:block;font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;
+  display:block;font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;
   letter-spacing:.06em;color:var(--ink-soft);margin-bottom:3px;
 }
 .article .tabellino .valore{
   display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;
-  font-family:'Anton',sans-serif;font-size:14px;line-height:1.2;
+  font-family:'Anton',sans-serif;font-size:15.5px;line-height:1.2;
 }
-.article .tabellino .valore.vuoto{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);}
+.article .tabellino .valore.vuoto{font-family:'Oswald',sans-serif;font-size:13.5px;color:var(--ink-soft);}
 .article .tabellino .squadra{display:flex;align-items:center;gap:5px;min-width:0;}
 /* Il nome va a capo invece di essere troncato: "ASs Gotiche-Gotiche" in mezza
    colonna diventava "ASs Gotiche…", che non dice più chi è. */
@@ -432,7 +470,7 @@ button.link:hover{ color: var(--ink); }
 .article-img{width:calc(100% + 36px);margin:14px -18px 0;}
 .article-img img, .article-img svg{display:block;width:100%;height:auto;object-fit:cover;border-top:3px solid var(--rule);border-bottom:3px solid var(--rule);}
 .article-img .didascalia{
-  font-family:'Libre Baskerville',serif;font-style:italic;font-size:12px;color:var(--ink-soft);
+  font-family:'Libre Baskerville',serif;font-style:italic;font-size:13.5px;color:var(--ink-soft);
   padding:7px 18px 16px;border-bottom:1px solid var(--ink-soft);margin-bottom:14px;
 }
 
@@ -441,13 +479,13 @@ button.link:hover{ color: var(--ink); }
   border:1px solid var(--ink-soft);
   padding:7px 11px;
   font-family:'Oswald',sans-serif;
-  font-size:11px;
+  font-size:12.5px;
   background: rgba(255,255,255,0.3);
 }
 .stat b{
   font-family:'Anton',sans-serif;
   display:block;
-  font-size:16px;
+  font-size:17.5px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -456,16 +494,16 @@ button.link:hover{ color: var(--ink); }
   to{ opacity:1; transform: rotate(-2deg) scale(1); }
 }
 
-.teaser h3{font-size:21px;}
-.teaser p{font-size:13.5px;line-height:1.6;margin-bottom:4px;}
-.teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:11px;color:var(--ink);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
+.teaser h3{font-size:23px;}
+.teaser p{font-size:15px;line-height:1.6;margin-bottom:4px;}
+.teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
 
 /* ===== card squadra in Dashboard: stemma + nome + stat-strip + prossimo scontro ===== */
 .squadra-card-riga{display:flex;align-items:center;gap:12px;}
-.squadra-card-riga .stemma{width:46px;height:46px;flex:0 0 auto;font-size:34px;line-height:1;}
+.squadra-card-riga .stemma{width:46px;height:46px;flex:0 0 auto;font-size:36px;line-height:1;}
 .squadra-nome{
-  font-family:'Anton',sans-serif;font-size:16px;
-  color:var(--paper); -webkit-text-stroke:0.8px var(--ink); paint-order: stroke fill;
+  font-family:'Anton',sans-serif;font-size:19px;
+  color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 
@@ -478,45 +516,44 @@ button.card.schedina-invito{
 button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:none; }
 .schedina-invito .invito-testo{flex:1 1 auto;min-width:0;}
 .schedina-invito .invito-occhiello{
-  font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;
+  font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
   color:var(--gold);margin-bottom:2px;
 }
 .schedina-invito b{
-  display:block;font-family:'Anton',sans-serif;font-size:16px;line-height:1.15;
-  color:var(--paper); -webkit-text-stroke:0.8px var(--ink); paint-order: stroke fill;
+  display:block;font-family:'Anton',sans-serif;font-size:17.5px;line-height:1.15;
+  color:var(--ink);
 }
 .schedina-invito span:not(.invito-occhiello):not(.freccia){
-  display:block;font-family:'Oswald',sans-serif;font-size:11px;color:var(--ink-soft);margin-top:2px;
+  display:block;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink-soft);margin-top:2px;
 }
 .schedina-invito .freccia{
-  flex:0 0 auto;font-family:'Anton',sans-serif;font-size:20px;color:var(--stamp-red);
+  flex:0 0 auto;font-family:'Anton',sans-serif;font-size:22px;color:var(--stamp-red);
 }
-.squadra-owner{font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+.squadra-owner{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
 
 .match-preview{display:flex;align-items:center;justify-content:space-between;margin-top:14px;border-top:2px dashed var(--ink-soft);padding-top:12px;}
 .match-preview .sq{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;}
-.match-preview .sq span{font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.03em;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
-.match-preview .stemma{font-size:30px;line-height:1;}
+.match-preview .sq span{font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.match-preview .stemma{font-size:32px;line-height:1;}
 .match-mid{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;padding:0 6px;}
 .countdown{
-  background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:10px;
+  background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:11.5px;
   padding:3px 10px;border-radius:100px;letter-spacing:.04em;
-  -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
 
 .calendario-preview{cursor:pointer;transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);}
 .calendario-preview:active{ transform: translate(2px,2px); box-shadow:none; }
 .derby{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;}
 .derby .squadra{flex:1;text-align:center;}
-.derby .stemma{font-size:34px;display:block;margin-bottom:5px;line-height:1;}
-.derby .nome-squadra{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.derby .stemma{font-size:36px;display:block;margin-bottom:5px;line-height:1;}
+.derby .nome-squadra{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;}
 .derby .vs{
   font-family:'Anton',sans-serif;color:var(--stamp-red);border:3px solid var(--stamp-red);
-  padding:5px 10px;transform:rotate(-8deg);font-size:13px;background:var(--paper);
+  padding:5px 10px;transform:rotate(-8deg);font-size:14.5px;background:var(--paper);
   box-shadow:2px 2px 0 rgba(36,27,30,.9);flex:0 0 auto;
 }
 .derby-meta{
-  font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;
+  font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;
   text-align:center;margin-top:12px;border-top:1px solid var(--ink-soft);padding-top:8px;
 }
 
@@ -525,17 +562,17 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 
 .verdetti-ticker{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
 .flash{flex:0 0 auto;min-width:135px;border:1px solid var(--ink-soft);background:rgba(255,255,255,0.3);padding:8px 11px;}
-.flash .flash-cat{font-family:'Oswald',sans-serif;font-size:9.5px;text-transform:uppercase;color:var(--gold);letter-spacing:.04em;margin-bottom:2px;}
+.flash .flash-cat{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--gold);letter-spacing:.04em;margin-bottom:2px;}
 .flash .flash-nome{
-  font-family:'Anton',sans-serif;font-size:13px;
-  color:var(--paper); -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  font-family:'Anton',sans-serif;font-size:15.5px;
+  color:var(--ink);
 }
 
 .verdetto{margin-bottom:20px;}
-.verdetto h4{font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;color:var(--gold);}
+.verdetto h4{font-family:'Oswald',sans-serif;font-size:14.5px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;color:var(--gold);}
 .voti-list{display:flex;flex-wrap:wrap;gap:8px;}
 .voto-btn{
-  font-family:'Oswald',sans-serif;font-size:12px;padding:7px 11px;border:1px solid var(--ink);background:#fff8fa;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-size:13.5px;padding:7px 11px;border:1px solid var(--ink);background:var(--paper-input);cursor:pointer;
   display:flex;align-items:center;gap:7px;
   transition: transform .08s var(--ease-tap), background .12s, box-shadow .12s;
   box-shadow: 1px 1px 0 rgba(36,27,30,0.12);
@@ -544,29 +581,29 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .voto-btn:active{ transform: translate(1px,1px); box-shadow:none; }
 .voto-btn .count{
   background:var(--ink);color:var(--paper);border-radius:50%;min-width:18px;height:18px;
-  display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-variant-numeric:tabular-nums;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-variant-numeric:tabular-nums;
 }
 .voto-btn.mio-voto{background:var(--stamp-red);color:#fff;border-color:var(--stamp-red);}
 .voto-btn.mio-voto .count{background:#fff;color:var(--stamp-red);}
 
 .squadra-riga{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed var(--ink-soft);cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;}
 .squadra-riga:last-child{border-bottom:none;}
-.squadra-riga .stemma{font-size:28px;}
+.squadra-riga .stemma{font-size:30px;}
 .squadra-riga .info{flex:1;}
-.squadra-riga .info b{font-family:'Anton',sans-serif;font-size:15px;display:block;}
-.squadra-riga .info span{font-family:'Oswald',sans-serif;font-size:10.5px;color:var(--ink-soft);}
+.squadra-riga .info b{font-family:'Anton',sans-serif;font-size:16.5px;display:block;}
+.squadra-riga .info span{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);}
 
 .players{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 .chip{
-  font-family:'Oswald',sans-serif;font-size:11px;background:var(--ink);color:var(--paper);padding:5px 11px;
+  font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--ink);color:var(--paper);padding:5px 11px;
   display:flex;align-items:center;gap:6px;
   box-shadow: 1px 1px 0 rgba(36,27,30,0.15);
 }
 .chip.admin{background:var(--gold);}
 .chip button{background:none;border:none;color:var(--paper);cursor:pointer;font-weight:bold;}
-.profilo-nome{font-family:'Anton',sans-serif;font-size:22px;margin:4px 0 2px;}
+.profilo-nome{font-family:'Anton',sans-serif;font-size:24px;margin:4px 0 2px;}
 .profilo-badge{
-  display:inline-block;font-family:'Oswald',sans-serif;font-size:11px;background:var(--gold);color:#fff;
+  display:inline-block;font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--gold);color:var(--paper);
   padding:3px 9px;letter-spacing:.05em;text-transform:uppercase;
   box-shadow: 1px 1px 0 rgba(36,27,30,0.15);
 }
@@ -579,12 +616,12 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;
 }
 .archivio-item:hover{ background: rgba(0,0,0,0.035); padding-left:8px; }
-.archivio-item.corrente{ background: rgba(181,82,95,0.08); box-shadow: inset 3px 0 0 var(--stamp-red); padding-left:8px; }
-.archivio-item .g{font-family:'Oswald',sans-serif;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
-.archivio-item h4{font-family:'Anton',sans-serif;font-size:17px;margin:2px 0;}
+.archivio-item.corrente{ background: color-mix(in srgb, var(--stamp-red) 10%, transparent); box-shadow: inset 3px 0 0 var(--stamp-red); padding-left:8px; }
+.archivio-item .g{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
+.archivio-item h4{font-family:'Anton',sans-serif;font-size:18.5px;margin:2px 0;}
 
-.empty{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);text-align:center;padding:30px 10px;}
-.errore-msg{font-family:'Oswald',sans-serif;font-size:12px;color:var(--stamp-red);margin-top:8px;}
+.empty{font-family:'Oswald',sans-serif;font-size:14.5px;color:var(--ink-soft);text-align:center;padding:30px 10px;}
+.errore-msg{font-family:'Oswald',sans-serif;font-size:13.5px;color:var(--stamp-red);margin-top:8px;}
 
 .skeleton-line{
   height:14px;
@@ -603,13 +640,15 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 
 .albo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .albo-cat{border:1px solid var(--ink-soft);padding:11px;background: rgba(255,255,255,0.3);}
-.albo-cat h5{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--gold);margin:0 0 6px;}
-.albo-cat div{font-family:'Oswald',sans-serif;font-size:12px;margin-bottom:3px;font-variant-numeric:tabular-nums;}
+.albo-cat h5{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;color:var(--gold);margin:0 0 6px;}
+.albo-cat div{font-family:'Oswald',sans-serif;font-size:13.5px;margin-bottom:3px;font-variant-numeric:tabular-nums;}
 
+/* La barra in basso cresce della safe area su iPhone: senza sommarla, il toast
+   e il FAB finivano sopra (o sotto) la nav nella PWA installata. */
 .toast{
-  position:fixed;bottom:calc(var(--nav-h) + 14px);left:50%;transform:translateX(-50%) translateY(8px);
+  position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);left:50%;transform:translateX(-50%) translateY(8px);
   background:var(--ink);color:var(--paper);
-  padding:9px 20px;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.05em;
+  padding:9px 20px;font-family:'Oswald',sans-serif;font-size:13.5px;letter-spacing:.05em;
   opacity:0;transition:opacity .25s var(--ease-tap), transform .25s var(--ease-tap);
   pointer-events:none;z-index:100;
   box-shadow: var(--shadow-hard-sm);
@@ -622,16 +661,16 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .auth-toggle .tab{flex:1;}
 .tabs{display:flex;gap:2px;border-bottom:2px solid var(--rule);flex-wrap:wrap;}
 .tab{
-  flex:1;min-width:70px;font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+  flex:1;min-width:70px;font-family:'Oswald',sans-serif;font-size:13.5px;text-transform:uppercase;letter-spacing:.06em;
   text-align:center;padding:10px 4px;cursor:pointer;background:var(--paper-dark);color:var(--ink-soft);
   border:1px solid var(--rule);border-bottom:none;
   transition: background .15s var(--ease-tap), color .15s var(--ease-tap);
 }
-.tab:hover{ background: #eec2d3; }
+.tab:hover{ background: var(--paper); }
 .tab.active{background:var(--ink);color:var(--paper);font-weight:600;box-shadow: inset 0 -3px 0 var(--stamp-red);}
 
 .fab{
-  position:absolute;right:14px;bottom:calc(var(--nav-h) + 14px);
+  position:absolute;right:14px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);
   width:54px;height:54px;background:var(--stamp-red);color:#fff;border:2px solid var(--rule);
   display:flex;align-items:center;justify-content:center;box-shadow: var(--shadow-hard-sm);cursor:pointer;
   transition: transform .12s var(--ease-tap);z-index:9;
@@ -650,7 +689,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 }
 .nav-item{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  color:rgba(241,205,218,0.78);background:none;border:none;font-family:'Oswald',sans-serif;font-size:9px;
+  color:var(--nav-testo);background:none;border:none;font-family:'Oswald',sans-serif;font-size:11px;
   text-transform:uppercase;letter-spacing:.04em;cursor:pointer;transition: color .15s;position:relative;z-index:1;
   -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
 }
@@ -658,8 +697,8 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   width:50px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;
   filter: drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink));
 }
-.nav-item.attivo{color:var(--gold);}
-.nav-item.attivo svg{stroke:var(--gold);}
+.nav-item.attivo{color:var(--gold-chiaro);}
+.nav-item.attivo svg{stroke:var(--gold-chiaro);}
 
 .sheet-overlay{
   position:absolute;inset:0;background:rgba(36,27,30,0.5);opacity:0;pointer-events:none;
@@ -674,22 +713,22 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .sheet.aperto{transform:translateY(0);}
 .sheet .maniglia{width:38px;height:4px;background:var(--ink-soft);opacity:.4;border-radius:3px;margin:10px auto 2px;flex:0 0 auto;}
 .sheet-header{display:flex;justify-content:space-between;align-items:baseline;padding:4px 18px 10px;border-bottom:2px solid var(--rule);flex:0 0 auto;}
-.sheet-header h3{font-family:'Anton',sans-serif;font-size:19px;margin:0;}
-.sheet-header .sotto{font-family:'Oswald',sans-serif;font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-top:2px;}
-.sheet-header .chiudi-sheet{background:none;border:none;font-size:20px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:2px 4px;}
+.sheet-header h3{font-family:'Anton',sans-serif;font-size:21px;margin:0;}
+.sheet-header .sotto{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-top:2px;}
+.sheet-header .chiudi-sheet{background:none;border:none;font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:2px 4px;}
 .sheet-body{overflow-y:auto;padding:4px 18px 24px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0));}
 .match-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px dashed var(--ink-soft);font-family:'Oswald',sans-serif;}
 .match-row:last-child{border-bottom:none;}
 /* min-width:0 è la riga che tiene i nomi dentro il riquadro: senza, un flex item
    non scende sotto la larghezza del suo contenuto, e i nomi lunghi (in trasferta
    soprattutto) uscivano dal bordo della card invece di accorciarsi. */
-.match-row .sq{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
+.match-row .sq{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;font-size:13.5px;text-transform:uppercase;letter-spacing:.03em;}
 .match-row .sq .stemma-mini{flex:0 0 auto;}
 .match-row .sq > span:not(.stemma-mini){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .match-row .sq.casa{justify-content:flex-end;text-align:right;}
 .match-row .sq.trasferta{justify-content:flex-start;text-align:left;}
-.match-row .stemma-mini{font-size:20px;}
-.match-row .vs-mini{font-family:'Anton',sans-serif;color:var(--gold);font-size:11px;padding:0 6px;flex:0 0 auto;}
+.match-row .stemma-mini{font-size:22px;}
+.match-row .vs-mini{font-family:'Anton',sans-serif;color:var(--gold);font-size:12.5px;padding:0 6px;flex:0 0 auto;}
 .match-row .punteggio{font-variant-numeric:tabular-nums;font-weight:600;}
 
 .sheet.grande{max-height:92%;}
@@ -708,13 +747,13 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
 }
 .splash-kicker{
-  font-family:'Oswald',sans-serif; letter-spacing:.18em; font-size:11px; text-transform:uppercase;
+  font-family:'Oswald',sans-serif; letter-spacing:.18em; font-size:12.5px; text-transform:uppercase;
   color:var(--ink-soft);
   opacity:0; animation: splash-sale .6s var(--ease-tap) .75s forwards;
 }
 .splash-titolo{
   margin:0; display:flex; flex-direction:column; line-height:.95;
-  font-family:'Anton',sans-serif; font-size:clamp(34px,10vw,54px); letter-spacing:.5px;
+  font-family:'Anton',sans-serif; font-size: clamp(36px,10vw,56px); letter-spacing:.5px;
   text-shadow: 2px 2px 0 rgba(36,27,30,0.12);
 }
 .splash-titolo span{

@@ -35,10 +35,15 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
   const status = err.status || err.statusCode || 500;
 
   // I dettagli degli errori interni (Mongo, Cloudinary...) restano nei log di
-  // Vercel: al client arriva solo un messaggio generico.
+  // Vercel: al client arriva solo un messaggio generico. Fanno eccezione gli
+  // errori marcati `esposto`, costruiti a mano da noi per dire cosa è andato
+  // storto in un servizio esterno (es. l'upload immagini): lì il messaggio
+  // generico costringeva a indovinare, ed è per questo che un 500 sull'upload
+  // era impossibile da diagnosticare dal telefono.
   if (status >= 500) {
     console.error(err);
-    return res.status(status).json({ errore: 'Errore interno del server' });
+    const messaggio = err.esposto ? err.message : 'Errore interno del server';
+    return res.status(status).json({ errore: messaggio });
   }
 
   res.status(status).json({ errore: err.message });

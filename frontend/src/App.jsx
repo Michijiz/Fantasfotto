@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { TemaProvider } from './context/TemaContext';
 import AppShell from './components/layout/AppShell';
 import Splash from './components/ui/Splash';
 import Login from './pages/Login';
@@ -42,7 +43,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Gate />
+        <TemaProvider>
+          <Gate />
+        </TemaProvider>
       </AuthProvider>
     </BrowserRouter>
   );

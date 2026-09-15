@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTema } from '../context/TemaContext';
 import { api } from '../api/client';
 import Masthead from '../components/ui/Masthead';
+import SelettoreTema from '../components/ui/SelettoreTema';
 
 export default function Login() {
   const { utente, login, registrati } = useAuth();
+  const { temaId, cambiaTema } = useTema();
   const [tab, setTab] = useState('login');
   const [squadre, setSquadre] = useState([]);
   const [caricandoSquadre, setCaricandoSquadre] = useState(true);
@@ -59,7 +62,8 @@ export default function Login() {
         nomeVisualizzato: regNome,
         pin: regPin,
         squadraId: regSquadra,
-        codiceInvito: regCodice
+        codiceInvito: regCodice,
+        tema: temaId
       });
     } catch (err) {
       setErrore(err.message);
@@ -111,6 +115,12 @@ export default function Login() {
               {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
             </select>
           )}
+          {/* La squadra di Serie A tifata decide i colori dell'app: la si sceglie
+              qui e l'anteprima è immediata, il tema cambia mentre si tocca. */}
+          <label>Per chi tifi in Serie A</label>
+          <p className="tema-nota">Decide i colori della tua Gazzetta. Si cambia quando vuoi dal menù.</p>
+          <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
+
           <label>Codice invito della Lega</label>
           <input type="text" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
           <button className="primary" type="submit" disabled={caricando || caricandoSquadre}>Iscriviti</button>

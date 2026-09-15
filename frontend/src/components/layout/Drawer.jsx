@@ -1,32 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTema } from '../../context/TemaContext';
+import { sfondoTema } from '../../temi';
+import Sheet from '../ui/Sheet';
+import SelettoreTema from '../ui/SelettoreTema';
 
 // Menu profilo a scomparsa da sinistra, aperto dall'hamburger nell'header.
-// Ospita anche il selettore temi: solo un'anteprima visiva per ora (cambia dal
-// vivo l'accento --stamp-red), non salva nulla — vedi spec "Temi colore".
-const TEMI = [
-  { colore: '#c8102e', nome: 'Rosso stampa' },
-  { colore: '#2f6fb0', nome: 'Blu' },
-  { colore: '#2f9e57', nome: 'Verde' },
-  { colore: '#7a3fae', nome: 'Viola' },
-  { colore: '#b8892f', nome: 'Oro' }
-];
-
+// Il bollino accanto al nome mostra i colori della squadra scelta come tema e
+// apre il foglio con tutte le squadre.
 export default function Drawer({ aperto, onChiudi }) {
   const { utente, logout } = useAuth();
+  const { temaId, tema, cambiaTema } = useTema();
   const navigate = useNavigate();
-  const [temaPopoverAperto, setTemaPopoverAperto] = useState(false);
-  const [temaSelezionato, setTemaSelezionato] = useState(TEMI[0].colore);
+  const [sceltaAperta, setSceltaAperta] = useState(false);
 
   const vai = (path) => {
     onChiudi();
     navigate(path);
-  };
-
-  const sceglieTema = (colore) => {
-    setTemaSelezionato(colore);
-    document.documentElement.style.setProperty('--stamp-red', colore);
   };
 
   return (
@@ -40,25 +31,12 @@ export default function Drawer({ aperto, onChiudi }) {
           </div>
           <button
             className="tema-dot"
-            title="Cambia tema colore"
-            aria-label="Cambia tema colore"
-            onClick={() => setTemaPopoverAperto((v) => !v)}
+            title={`Tema: ${tema.nome}`}
+            aria-label={`Cambia tema colore (ora: ${tema.nome})`}
+            onClick={() => setSceltaAperta(true)}
           >
-            <span className="pallina" />
+            <span className="pallina" style={{ background: sfondoTema(tema.colori) }} />
           </button>
-        </div>
-
-        <div className={`tema-popover${temaPopoverAperto ? ' aperto' : ''}`}>
-          {TEMI.map((t) => (
-            <button
-              key={t.colore}
-              className={`tema-opzione${temaSelezionato === t.colore ? ' selezionata' : ''}`}
-              style={{ '--tema': t.colore }}
-              title={t.nome}
-              aria-label={t.nome}
-              onClick={() => sceglieTema(t.colore)}
-            />
-          ))}
         </div>
 
         <button className="drawer-link" onClick={() => vai('/profilo')}>Il mio profilo</button>
@@ -66,6 +44,20 @@ export default function Drawer({ aperto, onChiudi }) {
         <button className="drawer-link" onClick={() => vai('/regolamento')}>Regolamento e FAQ</button>
         <button className="drawer-link esci" onClick={logout}>Esci</button>
       </div>
+
+      <Sheet
+        aperto={sceltaAperta}
+        onChiudi={() => setSceltaAperta(false)}
+        titolo="Colori della Gazzetta"
+        sottotitolo={`Ora: ${tema.nome}`}
+        grande
+      >
+        <p className="tema-nota">
+          Scegli la squadra che tifi: cambiano carta, inchiostro e accenti di tutta
+          l&apos;app. Resta salvato sul tuo profilo, non solo su questo telefono.
+        </p>
+        <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
+      </Sheet>
     </>
   );
 }
