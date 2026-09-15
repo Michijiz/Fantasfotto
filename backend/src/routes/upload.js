@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const asyncHandler = require('../utils/asyncHandler');
 const { verificaToken } = require('../middleware/auth');
-const { caricaBuffer, configurato, variabiliMancanti } = require('../services/cloudinary');
+const { caricaBuffer, configurato, variabiliMancanti, diagnosi, ping } = require('../services/cloudinary');
 
 // Le funzioni Vercel rifiutano body oltre 4,5 MB prima ancora di arrivare qui:
 // il limite resta sotto quella soglia così l'errore è sempre leggibile.
@@ -42,9 +42,16 @@ const router = express.Router();
 // Diagnostica: dice se le credenziali Cloudinary sono presenti sull'ambiente,
 // senza mai esporne il valore. Serve a capire in un colpo solo se un upload
 // fallito è un problema di configurazione o di file.
-router.get('/stato', verificaToken, (req, res) => {
-  res.json({ configurato: configurato(), variabiliMancanti: variabiliMancanti() });
-});
+router.get('/stato', verificaToken, asyncHandler(async (req, res) => {
+  res.json({
+    configurato: configurato(),
+    variabiliMancanti: variabiliMancanti(),
+    // lunghezze e spazi/virgolette di troppo, mai i valori
+    variabili: diagnosi(),
+    // interroga Cloudinary: distingue "credenziali sbagliate" da "file rifiutato"
+    cloudinary: await ping()
+  });
+}));
 
 router.post('/', verificaToken, leggiFile, asyncHandler(async (req, res) => {
   if (!configurato()) {
