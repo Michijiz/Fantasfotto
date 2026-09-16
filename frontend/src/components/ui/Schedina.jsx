@@ -199,7 +199,7 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
 
       {!chiusa && partecipanti.length > 0 && (
         <>
-          <h3 className="sotto-titolo">Chi ha già consegnato ({partecipanti.length})</h3>
+          <h3 className="sotto-titolo">L&apos;angolo dei gufi ({partecipanti.length})</h3>
           <div className="gufi-lista">
             {partecipanti.map((p, i) => (
               <div className="gufo-riga" key={p.utente?._id || i}>
