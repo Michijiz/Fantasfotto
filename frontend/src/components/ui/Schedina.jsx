@@ -75,12 +75,41 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
   const [scelte, setScelte] = useState({});
   const [inviando, setInviando] = useState(false);
   const inviandoRef = useRef(false);
+  const [partecipanti, setPartecipanti] = useState([]);
 
   useEffect(() => {
     const iniziali = {};
     for (const p of miaSchedina?.pronostici || []) iniziali[String(p.accoppiamento)] = p.esito;
     setScelte(iniziali);
   }, [miaSchedina]);
+
+  // Finché si gioca si vede solo chi ha già consegnato, non cosa ha giocato:
+  // lo scontrino resta segreto fino al fischio d'inizio. Un poll leggero (in
+  // pausa a tab nascosta) tiene la lista aggiornata senza bombardare il backend.
+  useEffect(() => {
+    if (!giornata || chiusa) {
+      setPartecipanti([]);
+      return undefined;
+    }
+
+    let attivo = true;
+    const carica = () => {
+      if (document.visibilityState !== 'visible') return;
+      api.get(`/api/schedine/giornata/${giornata.numero}`)
+        .then((dati) => { if (attivo) setPartecipanti(dati.partecipanti || []); })
+        .catch(() => { if (attivo) setPartecipanti([]); });
+    };
+
+    carica();
+    const intervallo = setInterval(carica, 30000);
+    document.addEventListener('visibilitychange', carica);
+
+    return () => {
+      attivo = false;
+      clearInterval(intervallo);
+      document.removeEventListener('visibilitychange', carica);
+    };
+  }, [giornata, chiusa, miaSchedina]);
 
   const scontri = useMemo(() => giornata?.accoppiamenti || [], [giornata]);
 
@@ -165,6 +194,20 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
           {!completa && (
             <p className="nota-form">Serve un pronostico su tutti gli scontri: la multipla è unica.</p>
           )}
+        </>
+      )}
+
+      {!chiusa && partecipanti.length > 0 && (
+        <>
+          <h3 className="sotto-titolo">Chi ha già consegnato ({partecipanti.length})</h3>
+          <div className="gufi-lista">
+            {partecipanti.map((p, i) => (
+              <div className="gufo-riga" key={p.utente?._id || i}>
+                <Stemma src={p.squadra?.stemma} size={22} />
+                <span className="chi">{p.squadra?.nome || p.utente?.nomeVisualizzato}</span>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>

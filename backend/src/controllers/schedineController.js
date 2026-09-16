@@ -149,8 +149,9 @@ async function risolviSchedine(giornataNumero) {
   return vinte;
 }
 
-// Tutte le schedine di una giornata. Finché si può ancora giocare si vede solo
-// quante ne sono state consegnate: nessuno sbircia i pronostici altrui.
+// Tutte le schedine di una giornata. Finché si può ancora giocare si vede chi ha
+// consegnato (nome e squadra), ma non i pronostici: lo scontrino resta segreto
+// fino alla chiusura, così nessuno copia.
 const perGiornata = async (req, res) => {
   const numero = Number(req.params.numero);
   const grezza = await Giornata.findOne({ numero }).lean();
@@ -164,7 +165,8 @@ const perGiornata = async (req, res) => {
     .lean();
 
   if (!chiusa(grezza)) {
-    return res.json({ chiusa: false, quante: schedine.length, schedine: [] });
+    const partecipanti = schedine.map((s) => ({ utente: s.utente, squadra: s.squadra }));
+    return res.json({ chiusa: false, quante: schedine.length, partecipanti, schedine: [] });
   }
   res.json({ chiusa: true, quante: schedine.length, schedine });
 };
