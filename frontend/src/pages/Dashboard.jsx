@@ -101,8 +101,8 @@ export default function Dashboard() {
             <b>{schedina.miaSchedina ? 'Schedina consegnata' : 'Non hai ancora gufato'}</b>
             <span>
               {schedina.miaSchedina
-                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2).replace('.', ',')} · chi azzecca tutto è Re dei Gufi`
-                : `${schedina.giornata.accoppiamenti.length} scontri da pronosticare`}
+                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2)}`
+                : ''}
             </span>
           </div>
           <span className="freccia">→</span>
