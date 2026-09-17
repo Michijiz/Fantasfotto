@@ -7,7 +7,7 @@ export default function Masthead({ sub, className = '' }) {
   return (
     <div className={`masthead${className ? ` ${className}` : ''}`}>
       <div className="kicker">Organo ufficiale (non richiesto) della Lega</div>
-      <h1>La Gazzetta dello Sfottò</h1>
+      <h1><span className="testata-1">La Gazzetta</span> <span className="testata-2">dello Sfottò</span></h1>
       {sub && <div className="sub">{sub}</div>}
     </div>
   );
