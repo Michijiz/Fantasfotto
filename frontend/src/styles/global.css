@@ -242,7 +242,7 @@ body{
    l'altezza della testata aperta, misurata da AppHeader in --header-h. */
 .contenuto{
   position:absolute;inset:0;overflow-y:auto;
-  padding:calc(var(--header-h, 170px) + 6px) 16px calc(var(--nav-h) + 22px);
+  padding:calc(var(--header-h, 170px) + 6px) 16px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 22px);
   overscroll-behavior-y: contain;
 }
 
@@ -678,12 +678,22 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .fab:active{ transform: translate(2px,2px); box-shadow:none; }
 .fab svg{width:24px;height:24px;}
 
+/* L'altezza include la safe area IN PIÙ rispetto a --nav-h (non dentro): con
+   height:var(--nav-h) e basta, su iPhone con home indicator la padding-bottom
+   della safe area mangiava spazio al contenuto della barra invece di aggiungersi
+   sotto, e le voci si schiacciavano verso l'alto. */
 .bottom-nav{
-  position:absolute;left:0;right:0;bottom:0;height:var(--nav-h);background:var(--ink);
+  position:absolute;left:0;right:0;bottom:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));background:var(--ink);
   display:flex;border-top:5px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0);z-index:8;
 }
+/* top/bottom invece di height: la pillola si ancora al padding-box di .bottom-nav
+   (che include la safe area), mentre le voci occupano il content-box (che la
+   esclude); con un'altezza fissa calcolata sul 100% la pillola sbordava sotto le
+   voci di quanto valeva la safe area. Con bottom la si aggancia allo stesso bordo
+   inferiore "vero" delle voci. */
 .pillola{
-  position:absolute;top:10px;left:0;height:calc(100% - 20px);width:20%;
+  position:absolute;top:10px;left:0;bottom:calc(10px + env(safe-area-inset-bottom, 0px));width:20%;
   background:rgba(255,255,255,.09);border-radius:16px;
   transition: transform .3s var(--ease-tap);z-index:0;
 }
