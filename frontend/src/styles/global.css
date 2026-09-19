@@ -41,12 +41,17 @@ button, .nav-item, .squadra-riga, .archivio-item, .calendario-preview,
   *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-/* overflow:hidden qui, non solo overscroll-behavior: se per un istante il
-   contenuto supera il viewport (barra degli indirizzi che si apre/chiude,
-   tastiera, dvh momentaneamente diverso da vh) senza questo l'intera pagina
-   diventa scorribile e si vede il bordo/sfondo fuori dalla PWA. Lo scroll
-   "vero" vive solo dentro .contenuto, che gestisce il proprio overscroll. */
-html, body, #root{ height:100%; overflow:hidden; }
+/* dvh e non %: height:100% sulla catena html/body/#root si appoggia al viewport
+   "grande" (come se la barra degli indirizzi fosse sempre ritratta), mentre
+   #appScreen più sotto usa 100dvh, il viewport davvero visibile in quel momento.
+   Quando i due non coincidono #appScreen risultava più basso del suo stesso
+   contenitore: sotto la barra di navigazione restava una striscia di sfondo
+   nudo, come se la barra fosse "staccata" dal fondo dello schermo.
+   overflow:hidden: se per un istante il contenuto supera comunque il viewport
+   (tastiera, transizione della barra) senza questo l'intera pagina diventa
+   scorribile e si vede il bordo/sfondo fuori dalla PWA. Lo scroll "vero" vive
+   solo dentro .contenuto, che gestisce il proprio overscroll. */
+html, body, #root{ height:100dvh; overflow:hidden; }
 
 html, body{ overscroll-behavior-y: contain; }
 
