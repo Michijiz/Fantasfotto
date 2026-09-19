@@ -30,6 +30,7 @@ export function DataProvider({ children }) {
   const [risultatiVoti, setRisultatiVoti] = useState({ conteggi: {}, mioVoto: {} });
   const [categorieVoto, setCategorieVoto] = useState([]);
   const [schedina, setSchedina] = useState(SCHEDINA_VUOTA);
+  const [albo, setAlbo] = useState([]);
 
   const ricaricaSquadre = useCallback(async () => {
     const { squadre } = await api.get('/api/squadre');
@@ -88,6 +89,11 @@ export function DataProvider({ children }) {
     }
   }, []);
 
+  const ricaricaAlbo = useCallback(async () => {
+    const { albo } = await api.get('/api/albo');
+    setAlbo(albo);
+  }, []);
+
   const ricaricaTutto = useCallback(() => {
     ricaricaSquadre();
     ricaricaCategorieVoto();
@@ -98,10 +104,11 @@ export function DataProvider({ children }) {
       ricaricaProssimaGiornata();
       ricaricaGiornate();
       ricaricaSchedina();
+      ricaricaAlbo();
     }
   }, [
     utente, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
-    ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina
+    ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina, ricaricaAlbo
   ]);
 
   useEffect(() => {
@@ -117,10 +124,10 @@ export function DataProvider({ children }) {
   return (
     <DataContext.Provider value={{
       squadre, tabellone, ultimaEdizione, edizioni, prossimaGiornata, giornate, risultatiVoti,
-      categorieVoto, schedina,
+      categorieVoto, schedina, albo,
       ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaEdizioni,
       ricaricaProssimaGiornata, ricaricaGiornate, ricaricaRisultatiVoti, ricaricaCategorieVoto,
-      ricaricaSchedina, ricaricaTutto
+      ricaricaSchedina, ricaricaAlbo, ricaricaTutto
     }}>
       {children}
     </DataContext.Provider>

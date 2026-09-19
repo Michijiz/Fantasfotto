@@ -59,6 +59,29 @@
   .riga-classifica .meta{font-size:11.5px;gap:0 6px;}
 }
 
+/* ---------- Albo d'oro ---------- */
+.albo-lista{font-family:'Oswald',sans-serif;}
+
+.riga-albo{
+  display:flex;align-items:center;gap:9px;
+  padding:11px 2px;border-bottom:1px solid rgba(36,27,30,.15);
+}
+.riga-albo:last-child{border-bottom:none;}
+.riga-albo.cliccabile{cursor:pointer;}
+.riga-albo .trofeo{flex:0 0 auto;font-size:20px;line-height:1;}
+.riga-albo .stemma-riga{flex:0 0 auto;font-size:24px;line-height:1;}
+.riga-albo .dati{flex:1 1 auto;min-width:0;}
+.riga-albo .nome{
+  font-size:16px;font-weight:600;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.riga-albo .meta{
+  display:flex;flex-wrap:wrap;gap:0 8px;margin-top:2px;
+  font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+}
+.riga-albo .meta .fp::before,
+.riga-albo .meta .note::before{content:'·';margin-right:8px;opacity:.5;}
+
 /* ---------- Gestione calendario (admin) ---------- */
 .giornata-testa{
   display:flex;justify-content:space-between;align-items:baseline;gap:10px;

@@ -136,11 +136,7 @@ export default function Regolamento() {
     <>
       <div className="card">
         <h2 className="section-title">Regolamento</h2>
-        <p className="faq-intro">
-          Le regole della lega per la stagione 2026/27. Voti e bonus arrivano da Leghe Fantacalcio,
-          qui la Gazzetta trasforma i punteggi in gol, risultati e classifica.
-        </p>
-
+       
         <Voce id="rosa" titolo="Rosa e formazione" apertaAllInizio={sezione === 'rosa'}>
           <p>La rosa è di 25 calciatori: 3 portieri, 8 difensori, 8 centrocampisti e 6 attaccanti.</p>
           <p>Si schiera un modulo tra questi:</p>
@@ -258,40 +254,12 @@ export default function Regolamento() {
 
       <CalcolatriceGol />
 
-      <div className="card">
-        <h2 className="section-title">Domande frequenti</h2>
+    
 
-        <Voce id="chi-calcola" titolo="Chi calcola bonus e modificatore?" apertaAllInizio={sezione === 'chi-calcola'}>
-          <p>
-            Leghe Fantacalcio. Alla Gazzetta arriva il totale fantapunti di ogni squadra, già
-            comprensivo di voti, bonus, malus e modificatore. Da lì la Gazzetta calcola gol,
-            risultato dello scontro e classifica.
-          </p>
-        </Voce>
+       
 
-        <Voce id="quando" titolo="Quando si aggiorna la classifica?" apertaAllInizio={sezione === 'quando'}>
-          <p>
-            Quando il direttore di turno pubblica l'edizione con i punteggi della giornata. Da quel
-            momento la giornata risulta conclusa e i risultati compaiono anche nel calendario.
-          </p>
-        </Voce>
-
-        <Voce id="diversa" titolo="La classifica non coincide con Leghe" apertaAllInizio={sezione === 'diversa'}>
-          <p>
-            Di solito manca il punteggio di una squadra, oppure l'ultima giornata non è ancora stata
-            pubblicata. Controlla nel calendario: uno scontro senza risultato mostra VS al posto
-            dei gol. Se i numeri sono tutti al loro posto e la classifica è ancora diversa, avvisa
-            il direttore.
-          </p>
-        </Voce>
-
-        <Voce id="coppa-app" titolo="La Coppa è nella Gazzetta?" apertaAllInizio={sezione === 'coppa-app'}>
-          <p>
-            Non ancora. Per ora la Gazzetta segue solo il campionato; gironi e tabellone della Coppa
-            restano su Leghe Fantacalcio.
-          </p>
-        </Voce>
-      </div>
+      
+      
     </>
   );
 }

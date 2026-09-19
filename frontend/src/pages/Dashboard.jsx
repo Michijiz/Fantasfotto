@@ -4,6 +4,7 @@ import { useDati } from '../context/DataContext';
 import Article from '../components/ui/Article';
 import Sheet from '../components/ui/Sheet';
 import Stemma from '../components/ui/Stemma';
+import LegaOverview from '../components/ui/LegaOverview';
 
 // Calcola "Xg Xh" tra ora e la data della prossima giornata. Torna null se la
 // giornata non ha ancora una data (l'admin non l'ha impostata) o è già passata.
@@ -22,6 +23,7 @@ export default function Dashboard() {
     ultimaEdizione, prossimaGiornata, tabellone, squadre, risultatiVoti, categorieVoto, schedina
   } = useDati();
   const [sheetAperta, setSheetAperta] = useState(false);
+  const [legaAperta, setLegaAperta] = useState(false);
   const navigate = useNavigate();
 
   // utente.squadra a volte è un id (dopo login), a volte l'oggetto squadra
@@ -53,7 +55,12 @@ export default function Dashboard() {
     <>
       {miaSquadra && (
         <div className="card">
-          <div className="squadra-card-riga">
+          <div
+            className="squadra-card-riga"
+            onClick={() => setLegaAperta(true)}
+            role="button"
+            tabIndex={0}
+          >
             <Stemma src={miaSquadra.stemma} size={46} className="stemma" />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="squadra-nome">{miaSquadra.nome}</div>
@@ -94,8 +101,8 @@ export default function Dashboard() {
             <b>{schedina.miaSchedina ? 'Schedina consegnata' : 'Non hai ancora gufato'}</b>
             <span>
               {schedina.miaSchedina
-                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2).replace('.', ',')} · chi azzecca tutto è Re dei Gufi`
-                : `${schedina.giornata.accoppiamenti.length} scontri da pronosticare`}
+                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2)}`
+                : ''}
             </span>
           </div>
           <span className="freccia">→</span>
@@ -145,6 +152,16 @@ export default function Dashboard() {
           ))}
         </Sheet>
       )}
+
+      <Sheet
+        aperto={legaAperta}
+        onChiudi={() => setLegaAperta(false)}
+        titolo="Lega"
+        sottotitolo="Classifica e calendario"
+        grande
+      >
+        {legaAperta && <LegaOverview utente={utente} />}
+      </Sheet>
     </>
   );
 }

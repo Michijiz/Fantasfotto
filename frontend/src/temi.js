@@ -392,6 +392,10 @@ export function applicaTema(id) {
   for (const [chiave, valore] of Object.entries(tema.vars)) {
     root.style.setProperty(chiave, valore);
   }
+  // Colori sociali veri (non ricalcolati per il contrasto): usati per la
+  // testata a due tinte, es. Juventus "La Gazzetta" bianco / "dello Sfottò" nero.
+  root.style.setProperty('--testata-1', tema.colori[0]);
+  root.style.setProperty('--testata-2', tema.colori[1] || tema.colori[0]);
   root.dataset.tema = tema.id;
 
   // Barra di sistema di iOS/Android in tinta con la nav dell'app.

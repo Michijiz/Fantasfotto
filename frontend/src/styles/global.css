@@ -214,11 +214,15 @@ body{
   font-family:'Anton', sans-serif;font-size: clamp(32px, 8vw, 52px);letter-spacing:.5px;margin:5px 0 6px;line-height:0.95;
   text-shadow: 1px 1px 0 rgba(36,27,30,0.08);
   transition: font-size .32s var(--ease-tap);
-  /* Testata "stampata": pieno quasi bianco invece che color carta — con il pieno
-     alla stessa tinta dello sfondo restava un contorno vuoto, illeggibile. */
-  color:#fffdfd; -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;
+  /* Testata "stampata": il contorno scuro tiene leggibile qualunque tinta di
+     riempimento, comprese le maglie chiare (es. il bianco della Juventus). */
+  -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;
   text-shadow: 2px 2px 0 rgba(36,27,30,0.22);
 }
+/* Testata a due tinte: ogni metà del nome prende un colore sociale della
+   squadra scelta (vedi --testata-1/2 in temi.js), es. Juventus bianco/nero. */
+.masthead h1 .testata-1{ color: var(--testata-1, #fffdfd); }
+.masthead h1 .testata-2{ color: var(--testata-2, #fffdfd); }
 .masthead .sub{
   font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:.06em;color:var(--ink-soft);
   display:flex;justify-content:space-between;border-top:1px solid var(--ink-soft);padding-top:7px;margin-top:7px;
@@ -499,7 +503,7 @@ button.link:hover{ color: var(--ink); }
 .teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
 
 /* ===== card squadra in Dashboard: stemma + nome + stat-strip + prossimo scontro ===== */
-.squadra-card-riga{display:flex;align-items:center;gap:12px;}
+.squadra-card-riga{display:flex;align-items:center;gap:12px;cursor:pointer;}
 .squadra-card-riga .stemma{width:46px;height:46px;flex:0 0 auto;font-size:36px;line-height:1;}
 .squadra-nome{
   font-family:'Anton',sans-serif;font-size:19px;
@@ -765,12 +769,16 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   margin:0; display:flex; flex-direction:column; line-height:.95;
   font-family:'Anton',sans-serif; font-size: clamp(36px,10vw,56px); letter-spacing:.5px;
   text-shadow: 2px 2px 0 rgba(36,27,30,0.12);
+  /* Stesso contorno del masthead: senza, le maglie chiare (bianco/giallo)
+     sparirebbero sulla carta chiara. */
+  -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;
 }
 .splash-titolo span{
   opacity:0; transform: scale(1.2);
   animation: splash-timbro .65s var(--ease-tap) forwards;
 }
-.splash-titolo span:last-child{ color: var(--stamp-red); animation-delay: .28s; }
+.splash-titolo span:first-child{ color: var(--testata-1, var(--ink)); }
+.splash-titolo span:last-child{ color: var(--testata-2, var(--stamp-red)); animation-delay: .28s; }
 .splash-rigo{
   width:0; height:3px; background: var(--stamp-red);
   animation: splash-riga .5s var(--ease-tap) .55s forwards;
