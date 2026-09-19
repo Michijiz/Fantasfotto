@@ -704,15 +704,29 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   background:rgba(255,255,255,.09);border-radius:16px;
   transition: transform .3s var(--ease-tap);z-index:0;
 }
+/* min-width:0 + align-items:stretch sono ciò che permette alla voce di restringersi
+   davvero sotto la sua larghezza naturale sui telefoni stretti: prima l'icona a
+   50px fissi più un'etichetta lunga ("Dashboard", "Gazzetta"...) non riuscivano a
+   restringersi sotto quella larghezza, le 5 colonne smettevano di essere uguali e
+   sbordavano fuori dalla barra — da cui anche la pillola, che invece assume
+   colonne tutte uguali al 20%, finiva disallineata. */
 .nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;
   color:var(--nav-testo);background:none;border:none;font-family:'Oswald',sans-serif;font-size:11px;
   text-transform:uppercase;letter-spacing:.04em;cursor:pointer;transition: color .15s;position:relative;z-index:1;
   -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
+  padding:0 2px;
 }
 .nav-item svg{
-  width:50px;height:30px;stroke:currentColor;fill:none;stroke-width:1.8;
+  width:28px;height:28px;flex:0 0 auto;margin:0 auto;stroke:currentColor;fill:none;stroke-width:1.8;
   filter: drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink));
+}
+/* Etichetta in un elemento vero (non testo nudo): serve per poterla troncare con
+   l'ellissi invece di lasciarla andare a capo o sbordare quando la colonna, su
+   schermi stretti, è più corta della parola. */
+.nav-item .etichetta{
+  display:block;width:100%;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .nav-item.attivo{color:var(--gold-chiaro);}
 .nav-item.attivo svg{stroke:var(--gold-chiaro);}

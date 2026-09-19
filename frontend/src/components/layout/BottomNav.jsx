@@ -56,7 +56,7 @@ export default function BottomNav() {
           <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round">
             {voce.icona}
           </svg>
-          {voce.label}
+          <span className="etichetta">{voce.label}</span>
         </NavLink>
       ))}
     </nav>
