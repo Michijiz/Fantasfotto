@@ -41,10 +41,13 @@ button, .nav-item, .squadra-riga, .archivio-item, .calendario-preview,
   *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-html, body, #root{ height:100%; }
+/* overflow:hidden qui, non solo overscroll-behavior: se per un istante il
+   contenuto supera il viewport (barra degli indirizzi che si apre/chiude,
+   tastiera, dvh momentaneamente diverso da vh) senza questo l'intera pagina
+   diventa scorribile e si vede il bordo/sfondo fuori dalla PWA. Lo scroll
+   "vero" vive solo dentro .contenuto, che gestisce il proprio overscroll. */
+html, body, #root{ height:100%; overflow:hidden; }
 
-/* Evita il rimbalzo/pull-to-refresh nativo del browser sopra la shell:
-   lo scroll "vero" vive dentro .contenuto, che gestisce il proprio overscroll. */
 html, body{ overscroll-behavior-y: contain; }
 
 body{
