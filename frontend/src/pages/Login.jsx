@@ -5,6 +5,7 @@ import { useTema } from '../context/TemaContext';
 import { api } from '../api/client';
 import Masthead from '../components/ui/Masthead';
 import SelettoreTema from '../components/ui/SelettoreTema';
+import { RUOLI_ISCRIZIONE } from '../ruoli';
 
 export default function Login() {
   const { utente, login, registrati } = useAuth();
@@ -23,6 +24,8 @@ export default function Login() {
   const [regPin, setRegPin] = useState('');
   const [regSquadra, setRegSquadra] = useState('');
   const [regCodice, setRegCodice] = useState('');
+  const [regRuolo, setRegRuolo] = useState('giocatore');
+  const [regCodiceRedazione, setRegCodiceRedazione] = useState('');
 
   useEffect(() => {
     api.get('/api/squadre')
@@ -63,7 +66,9 @@ export default function Login() {
         pin: regPin,
         squadraId: regSquadra,
         codiceInvito: regCodice,
-        tema: temaId
+        tema: temaId,
+        ruolo: regRuolo,
+        codiceRedazione: regRuolo === 'redattore' ? regCodiceRedazione : undefined
       });
     } catch (err) {
       setErrore(err.message);
@@ -115,6 +120,37 @@ export default function Login() {
               {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
             </select>
           )}
+          {/* Il ruolo decide cosa si può fare in redazione: il giocatore legge,
+              gioca la schedina e vota; il redattore in più compila la giornata e
+              manda in stampa l'edizione. */}
+          <label>Cosa vieni a fare</label>
+          <div className="ruolo-scelta">
+            {RUOLI_ISCRIZIONE.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                className={`ruolo-carta${regRuolo === r.id ? ' scelto' : ''}`}
+                onClick={() => setRegRuolo(r.id)}
+                aria-pressed={regRuolo === r.id}
+              >
+                <span className="nome">{r.nome}</span>
+                <span className="descrizione">{r.descrizione}</span>
+              </button>
+            ))}
+          </div>
+          {regRuolo === 'redattore' && (
+            <>
+              <label>Codice della redazione</label>
+              <p className="tema-nota">Solo se la tua lega ne ha impostato uno. Altrimenti lascia vuoto.</p>
+              <input
+                type="text"
+                value={regCodiceRedazione}
+                onChange={(e) => setRegCodiceRedazione(e.target.value)}
+                placeholder="facoltativo"
+              />
+            </>
+          )}
+
           {/* La squadra di Serie A tifata decide i colori dell'app: la si sceglie
               qui e l'anteprima è immediata, il tema cambia mentre si tocca. */}
           <label>Per chi tifi in Serie A</label>

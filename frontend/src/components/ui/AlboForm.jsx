@@ -3,6 +3,8 @@ import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import BottoneElimina from './BottoneElimina';
+import { useAuth } from '../../context/AuthContext';
+import { puoCancellare } from '../../ruoli';
 
 const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 
@@ -11,6 +13,7 @@ const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 // (passa `voce` per la modifica).
 export default function AlboForm({ voce = null, onFatto }) {
   const { squadre, ricaricaTutto } = useDati();
+  const { utente } = useAuth();
   const mostraToast = useToast();
   const inviandoRef = useRef(false);
 
@@ -109,7 +112,7 @@ export default function AlboForm({ voce = null, onFatto }) {
       </button>
       {errore && <div className="errore-msg">{errore}</div>}
 
-      {modifica && (
+      {modifica && puoCancellare(utente) && (
         <div className="zona-pericolo">
           <BottoneElimina onConferma={elimina} etichetta="Elimina questa voce" />
         </div>

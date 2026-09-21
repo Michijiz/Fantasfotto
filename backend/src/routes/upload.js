@@ -14,6 +14,15 @@ const upload = multer({
   limits: { fileSize: MAX_BYTES },
   fileFilter: (req, file, cb) => {
     if (file.mimetype && file.mimetype.startsWith('image/')) return cb(null, true);
+
+    // Alcuni selettori di file Android consegnano la foto con mimetype vuoto o
+    // `application/octet-stream`: il controllo sul solo mimetype la rifiutava
+    // come "non immagine". Se il nome ha un'estensione da immagine si passa: a
+    // decidere davvero sarà Cloudinary, che il contenuto lo guarda sul serio.
+    const estensione = /\.(jpe?g|png|gif|webp|avif|heic|heif|bmp|tiff?)$/i.test(file.originalname || '');
+    const genericoPlausibile = !file.mimetype || file.mimetype === 'application/octet-stream';
+    if (estensione && genericoPlausibile) return cb(null, true);
+
     const err = new Error('Puoi caricare solo immagini');
     err.status = 400;
     cb(err);

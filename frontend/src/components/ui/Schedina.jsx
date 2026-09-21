@@ -29,12 +29,12 @@ function Scontri({ scontri, scelte, onScegli, soloLettura, quotePronostici }) {
           <div className="schedina-scontro" key={id}>
             <div className="squadre">
               <span className="sq">
-                <Stemma src={a.squadraCasa?.stemma} size={18} />
+                <Stemma src={a.squadraCasa?.stemma} nome={a.squadraCasa?.nome} size={18} />
                 <span className="nome">{a.squadraCasa?.nome}</span>
               </span>
               <span className="trattino">—</span>
               <span className="sq">
-                <Stemma src={a.squadraTrasferta?.stemma} size={18} />
+                <Stemma src={a.squadraTrasferta?.stemma} nome={a.squadraTrasferta?.nome} size={18} />
                 <span className="nome">{a.squadraTrasferta?.nome}</span>
               </span>
             </div>
@@ -203,7 +203,7 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
           <div className="gufi-lista">
             {partecipanti.map((p, i) => (
               <div className="gufo-riga" key={p.utente?._id || i}>
-                <Stemma src={p.squadra?.stemma} size={22} />
+                <Stemma src={p.squadra?.stemma} nome={p.squadra?.nome} size={22} />
                 <span className="chi">{p.squadra?.nome || p.utente?.nomeVisualizzato}</span>
               </div>
             ))}
@@ -269,7 +269,7 @@ function SchedinaEsito({ giornata, miaSchedina }) {
           <div className="gufi-lista">
             {altre.map((s) => (
               <div className={`gufo-riga ${s.esito}`} key={s._id}>
-                <Stemma src={s.squadra?.stemma} size={22} />
+                <Stemma src={s.squadra?.stemma} nome={s.squadra?.nome} size={22} />
                 <span className="chi">{s.squadra?.nome || s.utente?.nomeVisualizzato}</span>
                 <span className="quota">{formattaQuota(s.quotaTotale)}</span>
                 <span className="esito">{ETICHETTA_ESITO[s.esito]}</span>

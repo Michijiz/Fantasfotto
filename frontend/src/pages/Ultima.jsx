@@ -7,6 +7,7 @@ import Article from '../components/ui/Article';
 import Sheet from '../components/ui/Sheet';
 import EdizioneForm from '../components/ui/EdizioneForm';
 import BottoneElimina from '../components/ui/BottoneElimina';
+import { puoRedigere, puoCancellare } from '../ruoli';
 
 export default function Ultima() {
   const { utente } = useOutletContext();
@@ -16,7 +17,8 @@ export default function Ultima() {
   const [mostraArchivio, setMostraArchivio] = useState(false);
   const [inModifica, setInModifica] = useState(false);
 
-  const sonoAdmin = utente.ruolo === 'admin';
+  const sonoRedazione = puoRedigere(utente);
+  const possoCancellare = puoCancellare(utente);
 
   // L'edizione mostrata si ricava dalla lista aggiornata, non da uno snapshot preso
   // al momento del click: dopo una correzione si vede subito il testo nuovo.
@@ -38,14 +40,16 @@ export default function Ultima() {
       <div className="card">
         <Article edizione={edizioneMostrata} />
 
-        {sonoAdmin && edizioneMostrata && (
+        {sonoRedazione && edizioneMostrata && (
           <div className="azioni-admin">
             <button className="ghost" onClick={() => setInModifica(true)}>Modifica</button>
-            <BottoneElimina
-              onConferma={elimina}
-              etichetta="Elimina"
-              conferma="Tocca di nuovo per eliminare"
-            />
+            {possoCancellare && (
+              <BottoneElimina
+                onConferma={elimina}
+                etichetta="Elimina"
+                conferma="Tocca di nuovo per eliminare"
+              />
+            )}
           </div>
         )}
       </div>

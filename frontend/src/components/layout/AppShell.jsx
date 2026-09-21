@@ -1,7 +1,8 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DataProvider } from '../../context/DataContext';
+import { puoRedigere } from '../../ruoli';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import InstallBanner from './InstallBanner';
@@ -23,6 +24,15 @@ function ShellInterno({ utente }) {
     scrollRef.current?.scrollTo(0, 0);
   }, [pathname]);
 
+  // Segnala al CSS che la bottom nav è a schermo: serve alla fascia scura dietro
+  // al fondo della finestra (body.con-bottom-nav::after in global.css), che copre
+  // l'eventuale striscia di carta sotto la barra. Sulla schermata di accesso, che
+  // la nav non ce l'ha, quella fascia non deve esistere.
+  useEffect(() => {
+    document.body.classList.add('con-bottom-nav');
+    return () => document.body.classList.remove('con-bottom-nav');
+  }, []);
+
   return (
     <div id="appScreen">
       <InstallBanner />
@@ -37,7 +47,7 @@ function ShellInterno({ utente }) {
 
       <Drawer aperto={drawerAperto} onChiudi={() => setDrawerAperto(false)} />
 
-      {utente.ruolo === 'admin' && (
+      {puoRedigere(utente) && (
         <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Nuova edizione">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />

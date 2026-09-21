@@ -5,6 +5,7 @@ import Stemma from '../components/ui/Stemma';
 import Sheet from '../components/ui/Sheet';
 import AlboForm from '../components/ui/AlboForm';
 import { formattaFantapunti } from '../utils/regolamento';
+import { puoRedigere } from '../ruoli';
 import '../styles/regolamento.css';
 
 // Albo d'oro della lega: chi ha vinto in ogni stagione. La classifica e il
@@ -14,14 +15,14 @@ export default function Lega() {
   const { utente } = useOutletContext();
   const { albo } = useDati();
   const [voceDaModificare, setVoceDaModificare] = useState(null);
-  const sonoAdmin = utente.ruolo === 'admin';
+  const sonoRedazione = puoRedigere(utente);
 
   return (
     <>
       <div className="card">
         <h2 className="section-title">Albo d&apos;oro</h2>
 
-        {sonoAdmin && (
+        {sonoRedazione && (
           <button className="ghost blocco" onClick={() => setVoceDaModificare({})}>
             + Nuovo vincitore
           </button>
@@ -34,13 +35,13 @@ export default function Lega() {
             {albo.map((v) => (
               <div
                 key={v._id}
-                className={`riga-albo${sonoAdmin ? ' cliccabile' : ''}`}
-                onClick={sonoAdmin ? () => setVoceDaModificare(v) : undefined}
-                role={sonoAdmin ? 'button' : undefined}
-                tabIndex={sonoAdmin ? 0 : undefined}
+                className={`riga-albo${sonoRedazione ? ' cliccabile' : ''}`}
+                onClick={sonoRedazione ? () => setVoceDaModificare(v) : undefined}
+                role={sonoRedazione ? 'button' : undefined}
+                tabIndex={sonoRedazione ? 0 : undefined}
               >
                 <span className="trofeo">🏆</span>
-                <Stemma src={v.squadra?.stemma} size={26} className="stemma-riga" />
+                <Stemma src={v.squadra?.stemma} nome={v.squadra?.nome} size={26} className="stemma-riga" />
                 <div className="dati">
                   <div className="nome">{v.squadra?.nome}</div>
                   <div className="meta">
@@ -55,7 +56,7 @@ export default function Lega() {
         )}
       </div>
 
-      {sonoAdmin && (
+      {sonoRedazione && (
         <Sheet
           aperto={Boolean(voceDaModificare)}
           onChiudi={() => setVoceDaModificare(null)}

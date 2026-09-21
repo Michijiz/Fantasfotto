@@ -5,6 +5,7 @@ import Stemma from './Stemma';
 import Sheet from './Sheet';
 import GiornataForm from './GiornataForm';
 import { formattaFantapunti } from '../../utils/regolamento';
+import { puoRedigere } from '../../ruoli';
 import '../../styles/regolamento.css';
 
 // Classifica + calendario della lega, con lo stesso contenuto che prima stava
@@ -16,7 +17,7 @@ export default function LegaOverview({ utente }) {
   const [giornataDaModificare, setGiornataDaModificare] = useState(null);
   const navigate = useNavigate();
   const miaSquadraId = typeof utente.squadra === 'object' ? utente.squadra?._id : utente.squadra;
-  const sonoAdmin = utente.ruolo === 'admin';
+  const sonoRedazione = puoRedigere(utente);
 
   const scontriGiocati = tabellone.reduce((tot, s) => tot + (s.giocate || 0), 0);
   const ciSonoFantapunti = tabellone.some((s) => (s.puntiTotali || 0) > 0);
@@ -56,7 +57,7 @@ export default function LegaOverview({ utente }) {
                 {tabellone.map((s, i) => (
                   <div key={s._id} className={`riga-classifica${s._id === miaSquadraId ? ' mia' : ''}`}>
                     <span className="posto">{i + 1}</span>
-                    <Stemma src={s.stemma} size={26} className="stemma-riga" />
+                    <Stemma src={s.stemma} nome={s.nome} size={26} className="stemma-riga" />
                     <div className="dati">
                       <div className="nome">{s.nome}</div>
                       <div className="meta">
@@ -94,7 +95,7 @@ export default function LegaOverview({ utente }) {
             <button className="vedi-tutto" onClick={() => apriRegolamento('gol')}>Da punti a gol</button>
           </h2>
 
-          {sonoAdmin && (
+          {sonoRedazione && (
             <button
               className="ghost blocco"
               onClick={() => setGiornataDaModificare({ numero: prossimoNumero })}
@@ -113,7 +114,7 @@ export default function LegaOverview({ utente }) {
                     Giornata {g.numero}{g.serieANumero ? ` · ${g.serieANumero}ª Serie A` : ''}
                     {g.conclusa ? ' · conclusa' : ''}
                   </span>
-                  {sonoAdmin && (
+                  {sonoRedazione && (
                     <button className="link" onClick={() => setGiornataDaModificare(g)}>
                       Modifica
                     </button>
@@ -132,7 +133,7 @@ export default function LegaOverview({ utente }) {
                     <div className="match-row" key={a._id}>
                       <div className={`sq casa${vinceCasa ? ' vince' : ''}`}>
                         <span className="nome">{a.squadraCasa?.nome}</span>
-                        <Stemma src={a.squadraCasa?.stemma} size={20} className="stemma-mini" />
+                        <Stemma src={a.squadraCasa?.stemma} nome={a.squadraCasa?.nome} size={20} className="stemma-mini" />
                       </div>
                       {haRisultato ? (
                         <span className="risultato">
@@ -145,7 +146,7 @@ export default function LegaOverview({ utente }) {
                         <span className="vs-mini">VS</span>
                       )}
                       <div className={`sq trasferta${vinceTrasferta ? ' vince' : ''}`}>
-                        <Stemma src={a.squadraTrasferta?.stemma} size={20} className="stemma-mini" />
+                        <Stemma src={a.squadraTrasferta?.stemma} nome={a.squadraTrasferta?.nome} size={20} className="stemma-mini" />
                         <span className="nome">{a.squadraTrasferta?.nome}</span>
                       </div>
                     </div>

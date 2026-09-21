@@ -61,7 +61,7 @@ export default function Dashboard() {
             role="button"
             tabIndex={0}
           >
-            <Stemma src={miaSquadra.stemma} size={46} className="stemma" />
+            <Stemma src={miaSquadra.stemma} nome={miaSquadra.nome} size={46} className="stemma" />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="squadra-nome">{miaSquadra.nome}</div>
               <div className="squadra-owner">{utente.nomeVisualizzato}</div>
@@ -78,7 +78,7 @@ export default function Dashboard() {
           {mioMatch && (
             <div className="match-preview" onClick={() => setSheetAperta(true)} role="button" tabIndex={0}>
               <div className="sq">
-                <Stemma src={mioMatch.squadraCasa.stemma} size={30} className="stemma" />
+                <Stemma src={mioMatch.squadraCasa.stemma} nome={mioMatch.squadraCasa.nome} size={30} className="stemma" />
                 <span>{mioMatch.squadraCasa.nome}</span>
               </div>
               <div className="match-mid">
@@ -86,7 +86,7 @@ export default function Dashboard() {
                 <span className="vs">VS</span>
               </div>
               <div className="sq">
-                <Stemma src={mioMatch.squadraTrasferta.stemma} size={30} className="stemma" />
+                <Stemma src={mioMatch.squadraTrasferta.stemma} nome={mioMatch.squadraTrasferta.nome} size={30} className="stemma" />
                 <span>{mioMatch.squadraTrasferta.nome}</span>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function Dashboard() {
             {inTesta.map(({ cat, squadra, count }) => (
               <div className="flash" key={cat}>
                 <div className="flash-cat">{etichettaCat(cat)}</div>
-                <div className="flash-nome"><Stemma src={squadra.stemma} size={15} /> {squadra.nome} ({count})</div>
+                <div className="flash-nome"><Stemma src={squadra.stemma} nome={squadra.nome} size={15} /> {squadra.nome} ({count})</div>
               </div>
             ))}
           </div>
@@ -141,11 +141,11 @@ export default function Dashboard() {
             <div className="match-row" key={a._id}>
               <div className="sq casa">
                 <span>{a.squadraCasa.nome}</span>
-                <Stemma src={a.squadraCasa.stemma} size={20} className="stemma-mini" />
+                <Stemma src={a.squadraCasa.stemma} nome={a.squadraCasa.nome} size={20} className="stemma-mini" />
               </div>
               <span className="vs-mini">VS</span>
               <div className="sq trasferta">
-                <Stemma src={a.squadraTrasferta.stemma} size={20} className="stemma-mini" />
+                <Stemma src={a.squadraTrasferta.stemma} nome={a.squadraTrasferta.nome} size={20} className="stemma-mini" />
                 <span>{a.squadraTrasferta.nome}</span>
               </div>
             </div>

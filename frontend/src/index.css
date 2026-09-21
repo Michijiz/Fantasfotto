@@ -1,5 +1,5 @@
 /* Reset minimo: il vero tema vive in ./styles/global.css */
 * { box-sizing: border-box; }
 body { margin: 0; }
-#root { min-height: 100dvh; }
+#root { min-height: var(--app-h, 100dvh); }
 button { font-family: inherit; }

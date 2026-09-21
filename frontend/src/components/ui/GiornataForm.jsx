@@ -4,6 +4,8 @@ import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import { fantapuntiInGol } from '../../utils/regolamento';
 import BottoneElimina from './BottoneElimina';
+import { useAuth } from '../../context/AuthContext';
+import { puoCancellare } from '../../ruoli';
 
 const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 
@@ -13,9 +15,10 @@ const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 // c'era modo di rimetterci mano.
 export default function GiornataForm({ giornata, onFatto }) {
   const { squadre, ricaricaTutto } = useDati();
+  const { utente } = useAuth();
   const mostraToast = useToast();
   const inviandoRef = useRef(false);
-  // Se l'admin tocca la spunta "conclusa" decide lui: smettiamo di spuntarla noi.
+  // Se chi compila tocca la spunta "conclusa" decide lui: smettiamo di spuntarla noi.
   const spuntaToccata = useRef(false);
 
   const [numero, setNumero] = useState(String(giornata?.numero ?? ''));
@@ -222,7 +225,7 @@ export default function GiornataForm({ giornata, onFatto }) {
       <button className="primary" type="submit" disabled={salvando}>Salva la giornata</button>
       {errore && <div className="errore-msg">{errore}</div>}
 
-      {giornata?._id && (
+      {giornata?._id && puoCancellare(utente) && (
         <div className="zona-pericolo">
           <BottoneElimina
             onConferma={elimina}

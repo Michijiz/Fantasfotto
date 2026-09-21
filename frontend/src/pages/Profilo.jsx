@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import ImageUpload from '../components/ui/ImageUpload';
 import Stemma from '../components/ui/Stemma';
+import { etichettaRuolo } from '../ruoli';
 
 export default function Profilo() {
   const { utente } = useAuth();
@@ -55,7 +56,7 @@ export default function Profilo() {
       <div className="card">
         <h2 className="section-title">Il tuo profilo</h2>
         <div className="profilo-nome">{utente.nomeVisualizzato}</div>
-        <span className="profilo-badge">{utente.ruolo === 'admin' ? 'Direttore di turno' : 'Abbonato'}</span>
+        <span className="profilo-badge">{etichettaRuolo(utente)}</span>
       </div>
 
       <div className="card">
@@ -69,7 +70,7 @@ export default function Profilo() {
         ) : !modifica ? (
           <div>
             <div style={{ textAlign: 'center', margin: '10px 0' }}>
-              <Stemma src={miaSquadra.stemma} size={64} />
+              <Stemma src={miaSquadra.stemma} nome={miaSquadra.nome} size={64} />
               <div className="profilo-nome" style={{ fontSize: 18 }}>{miaSquadra.nome}</div>
             </div>
             {miaSquadra.foto && <div className="article-img"><img src={miaSquadra.foto} alt={miaSquadra.nome} /></div>}

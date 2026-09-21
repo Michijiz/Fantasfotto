@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTema } from '../../context/TemaContext';
 import { sfondoTema } from '../../temi';
+import { etichettaRuolo } from '../../ruoli';
 import Sheet from '../ui/Sheet';
 import SelettoreTema from '../ui/SelettoreTema';
 
@@ -27,7 +28,7 @@ export default function Drawer({ aperto, onChiudi }) {
         <div className="drawer-intestazione">
           <div>
             <div className="chi">{utente?.nomeVisualizzato}</div>
-            <div className="ruolo">{utente?.ruolo === 'admin' ? 'Direttore di turno' : 'Giocatore'}</div>
+            <div className="ruolo">{etichettaRuolo(utente)}</div>
           </div>
           <button
             className="tema-dot"

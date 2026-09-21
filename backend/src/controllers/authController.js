@@ -39,6 +39,25 @@ const temaValido = (v) => /^[a-z][a-z0-9-]{1,23}$/.test(v);
 // esplodere bcrypt con un 500. Normalizziamo tutto a stringa.
 const testo = (v) => (v == null ? '' : String(v).trim());
 
+// Ruoli chiedibili in fase di iscrizione. 'admin' non è nell'elenco apposta: si
+// assegna a mano sul database, non lo si sceglie da un menù a tendina.
+const RUOLI_ISCRIZIONE = ['giocatore', 'redattore'];
+
+// Se CODICE_REDAZIONE è configurato, chi si iscrive come redattore deve saperlo:
+// senza, "redattore" sarebbe una voce che chiunque può spuntare per riscrivere i
+// punteggi altrui. Se la variabile non c'è, la scelta resta libera — in una lega
+// di amici va benissimo e non blocca nessuno.
+function verificaRuolo(ruoloRichiesto, codiceRedazione) {
+  const ruolo = RUOLI_ISCRIZIONE.includes(ruoloRichiesto) ? ruoloRichiesto : 'giocatore';
+  if (ruolo !== 'redattore') return { ruolo };
+
+  const atteso = testo(process.env.CODICE_REDAZIONE);
+  if (atteso && codiceRedazione !== atteso) {
+    return { errore: 'Codice della redazione non valido' };
+  }
+  return { ruolo };
+}
+
 const registrati = async (req, res) => {
   const username = testo(req.body.username).toLowerCase();
   const nomeVisualizzato = testo(req.body.nomeVisualizzato);
@@ -46,6 +65,8 @@ const registrati = async (req, res) => {
   const squadraId = testo(req.body.squadraId);
   const codiceInvito = testo(req.body.codiceInvito);
   const temaRichiesto = testo(req.body.tema).toLowerCase();
+  const ruoloRichiesto = testo(req.body.ruolo).toLowerCase();
+  const codiceRedazione = testo(req.body.codiceRedazione);
 
   if (!username || !nomeVisualizzato || !pin || !squadraId || !codiceInvito) {
     return res.status(400).json({ errore: 'Compila tutti i campi' });
@@ -57,6 +78,9 @@ const registrati = async (req, res) => {
     return res.status(400).json({ errore: 'Il PIN deve avere 4-6 cifre' });
   }
 
+  const { ruolo, errore } = verificaRuolo(ruoloRichiesto, codiceRedazione);
+  if (errore) return res.status(403).json({ errore });
+
   const squadra = await Squadra.findById(squadraId);
   if (!squadra) {
     return res.status(400).json({ errore: 'Squadra non valida' });
@@ -67,6 +91,7 @@ const registrati = async (req, res) => {
     username,
     nomeVisualizzato,
     pinHash,
+    ruolo,
     squadra: squadra._id,
     tema: temaValido(temaRichiesto) ? temaRichiesto : TEMA_DEFAULT
   });

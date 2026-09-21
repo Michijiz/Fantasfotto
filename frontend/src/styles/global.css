@@ -30,7 +30,7 @@
    (article, p, h1-h4 di prosa) resta fuori da questa regola e rimane selezionabile. */
 button, .nav-item, .squadra-riga, .archivio-item, .calendario-preview,
 .voto-btn, .tab, .fab, .chip, .hamburger, .drawer a, .tema-dot, .tema-opzione,
-.match-preview{
+.tema-carta, .ruolo-carta, .match-preview{
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -41,17 +41,18 @@ button, .nav-item, .squadra-riga, .archivio-item, .calendario-preview,
   *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-/* dvh e non %: height:100% sulla catena html/body/#root si appoggia al viewport
-   "grande" (come se la barra degli indirizzi fosse sempre ritratta), mentre
-   #appScreen più sotto usa 100dvh, il viewport davvero visibile in quel momento.
-   Quando i due non coincidono #appScreen risultava più basso del suo stesso
-   contenitore: sotto la barra di navigazione restava una striscia di sfondo
-   nudo, come se la barra fosse "staccata" dal fondo dello schermo.
+/* --app-h è l'altezza vera della finestra, misurata in JS (src/utils/altezzaApp.js);
+   100dvh resta come ripiego per il primo paint. Il solo dvh non bastava: il
+   browser lo aggiorna a scatti mentre la barra degli indirizzi si ritrae, e in
+   quegli istanti #appScreen — alto esattamente quanto questa variabile, con la
+   bottom nav appoggiata al suo fondo — risultava più corto dell'area dipinta.
+   Sotto la nav spuntava una striscia di carta chiara, come se la barra fosse
+   "staccata" dal fondo dello schermo.
    overflow:hidden: se per un istante il contenuto supera comunque il viewport
    (tastiera, transizione della barra) senza questo l'intera pagina diventa
    scorribile e si vede il bordo/sfondo fuori dalla PWA. Lo scroll "vero" vive
-   solo dentro .contenuto, che gestisce il proprio overscroll. */
-html, body, #root{ height:100dvh; overflow:hidden; }
+   solo dentro .contenuto e, sulla schermata di accesso, dentro .auth-screen. */
+html, body, #root{ height: var(--app-h, 100dvh); overflow:hidden; }
 
 html, body{ overscroll-behavior-y: contain; }
 
@@ -80,7 +81,7 @@ body{
 
 #appScreen{
   position:relative;
-  height:100dvh;
+  height: var(--app-h, 100dvh);
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -212,6 +213,35 @@ body{
   font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.5;color:var(--ink-soft);
   margin:0 0 10px;
 }
+
+/* Scelta del ruolo in fase di iscrizione: due tessere impilate, non un menù a
+   tendina — la differenza tra giocatore e redattore va letta, non indovinata dal
+   nome della voce. Una colonna sola: a 360px due affiancate lascerebbero alla
+   descrizione una riga da tre parole. */
+.ruolo-scelta{
+  display:grid;grid-template-columns:1fr;gap:10px;
+  padding-top:4px;margin-bottom:12px;
+}
+.ruolo-carta{
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  padding:12px 13px;cursor:pointer;text-align:left;
+  background:var(--paper-input);border:1px solid var(--ink-soft);
+  font:inherit;color:var(--ink);
+  transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);
+}
+.ruolo-carta:active{transform:translate(1px,1px);}
+.ruolo-carta .nome{
+  font-family:'Oswald',sans-serif;font-size:14.5px;text-transform:uppercase;letter-spacing:.05em;
+  line-height:1.15;
+}
+.ruolo-carta .descrizione{
+  font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.45;color:var(--ink-soft);
+}
+.ruolo-carta.scelto{
+  border-color:var(--stamp-red);
+  box-shadow: inset 0 0 0 2px var(--stamp-red), var(--shadow-hard-sm);
+}
+.ruolo-carta.scelto .descrizione{color:var(--ink);}
 
 .masthead{position:relative;text-align:center;padding:10px 16px 12px;transition: padding .32s var(--ease-tap);}
 .masthead .kicker{
@@ -667,7 +697,17 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
-.auth-screen{max-width:420px;margin:40px auto;padding:0 16px;}
+/* La schermata di accesso vive fuori da #appScreen e quindi fuori da .contenuto,
+   l'unico contenitore che scorre. Con html/body a overflow:hidden il modulo di
+   iscrizione — che con la griglia dei temi e la scelta del ruolo supera i 1500px —
+   restava tagliato: il bottone "Iscriviti" era fuori schermo e irraggiungibile.
+   Qui lo scroll ce l'ha la schermata stessa. */
+.auth-screen{
+  max-width:420px;margin:0 auto;
+  height: var(--app-h, 100dvh);
+  overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+  padding:40px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+}
 .masthead-auth{ padding:0 0 12px; border-bottom:5px solid var(--rule); margin-bottom:20px; }
 .auth-toggle{display:flex;gap:2px;margin-bottom:16px;}
 .auth-toggle .tab{flex:1;}
@@ -680,6 +720,18 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 }
 .tab:hover{ background: var(--paper); }
 .tab.active{background:var(--ink);color:var(--paper);font-weight:600;box-shadow: inset 0 -3px 0 var(--stamp-red);}
+
+/* Cintura e bretelle per la striscia in fondo: se per un frame l'altezza
+   misurata e quella dipinta non coincidono, sotto la bottom nav si vedeva la
+   carta chiara del body. Questa fascia, fissata al fondo della finestra e dietro
+   al contenuto, ha il colore della nav: nel caso peggiore la striscia c'è ma non
+   si distingue. Solo con la shell montata (AppShell aggiunge la classe): sulla
+   schermata di accesso, che la nav non ce l'ha, sarebbe una banda scura a caso. */
+body.con-bottom-nav::after{
+  content:'';position:fixed;left:0;right:0;bottom:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  background:var(--ink);z-index:-1;pointer-events:none;
+}
 
 .fab{
   position:absolute;right:14px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);

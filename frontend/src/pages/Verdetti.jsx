@@ -50,7 +50,7 @@ export default function Verdetti() {
               <span className="titolo">{cat.etichetta}</span>
               <span className="sommario">
                 {testa
-                  ? <><Stemma src={testa.squadra.stemma} size={15} /> {testa.squadra.nome} ({testa.count})</>
+                  ? <><Stemma src={testa.squadra.stemma} nome={testa.squadra.nome} size={15} /> {testa.squadra.nome} ({testa.count})</>
                   : 'nessun voto'}
               </span>
             </summary>
@@ -64,7 +64,7 @@ export default function Verdetti() {
                     className={`voto-btn${mioVoto === s._id ? ' mio-voto' : ''}`}
                     onClick={() => vota(cat.id, s._id)}
                   >
-                    <Stemma src={s.stemma} size={16} />
+                    <Stemma src={s.stemma} nome={s.nome} size={16} />
                     <span className="nome">{s.nome}</span>
                     <span className="count">{count}</span>
                   </button>
