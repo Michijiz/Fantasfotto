@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
@@ -8,6 +8,10 @@ import { useAuth } from '../../context/AuthContext';
 import { puoCancellare } from '../../ruoli';
 
 const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
+
+let contatoreRighe = 0;
+const rigaId = () => `riga-${++contatoreRighe}`;
+const rigaVuota = () => ({ id: rigaId(), casa: '', trasferta: '' });
 
 // Tutto quello che riguarda una giornata sta qui: chi gioca contro chi e quanti
 // fantapunti ha fatto ognuno. Un posto solo per scrivere i numeri e un posto solo
@@ -27,14 +31,16 @@ export default function GiornataForm({ giornata, onFatto }) {
     giornata?.data ? new Date(giornata.data).toISOString().slice(0, 16) : ''
   );
   const [conclusa, setConclusa] = useState(Boolean(giornata?.conclusa));
+  // Ogni riga porta un id suo: usare l'indice come chiave React faceva sì che,
+  // togliendo la riga in mezzo, le chiavi scalassero e React riciclasse i nodi —
+  // con il fuoco e la tendina aperta che saltavano sulla riga sbagliata.
   const [scontri, setScontri] = useState(() => {
     const esistenti = (giornata?.accoppiamenti || []).map((a) => ({
+      id: rigaId(),
       casa: idDi(a.squadraCasa),
       trasferta: idDi(a.squadraTrasferta)
     }));
-    if (esistenti.length) return esistenti;
-    const quante = Math.max(1, Math.floor((squadre.length || 2) / 2));
-    return Array.from({ length: quante }, () => ({ casa: '', trasferta: '' }));
+    return esistenti.length ? esistenti : [rigaVuota()];
   });
   const [punteggi, setPunteggi] = useState(() => {
     const iniziali = {};
@@ -44,10 +50,29 @@ export default function GiornataForm({ giornata, onFatto }) {
   const [errore, setErrore] = useState('');
   const [salvando, setSalvando] = useState(false);
 
+  // Una giornata nuova parte con tante righe quante sono le partite possibili, ma
+  // l'elenco squadre può non essere ancora arrivato quando il foglio si apre: si
+  // completa qui, e solo finché nessuno ha toccato le righe.
+  const righeAutomatiche = useRef(!giornata?.accoppiamenti?.length);
+  useEffect(() => {
+    if (!righeAutomatiche.current || squadre.length < 4) return;
+    const quante = Math.floor(squadre.length / 2);
+    setScontri((righe) => {
+      const vuote = righe.every((r) => !r.casa && !r.trasferta);
+      if (!vuote || righe.length >= quante) return righe;
+      return [...righe, ...Array.from({ length: quante - righe.length }, rigaVuota)];
+    });
+  }, [squadre.length]);
+
+  // Si contano solo le righe complete, cioè quelle che verrebbero davvero inviate:
+  // una riga lasciata a metà (squadra di casa scelta, avversaria ancora vuota)
+  // faceva scattare l'errore "una squadra compare in due scontri" su un doppione
+  // che non sarebbe mai partito.
   const impegnate = useMemo(() => {
     const conteggio = {};
     for (const s of scontri) {
-      for (const id of [s.casa, s.trasferta]) if (id) conteggio[id] = (conteggio[id] || 0) + 1;
+      if (!s.casa || !s.trasferta) continue;
+      for (const id of [s.casa, s.trasferta]) conteggio[id] = (conteggio[id] || 0) + 1;
     }
     return conteggio;
   }, [scontri]);
@@ -57,6 +82,7 @@ export default function GiornataForm({ giornata, onFatto }) {
 
   const aggiornaScontro = (i, lato) => (e) => {
     const valore = e.target.value;
+    righeAutomatiche.current = false;
     setScontri((s) => s.map((riga, j) => (j === i ? { ...riga, [lato]: valore } : riga)));
   };
 
@@ -164,19 +190,19 @@ export default function GiornataForm({ giornata, onFatto }) {
 
       <h2 className="section-title" style={{ marginTop: 18 }}>Scontri</h2>
       {scontri.map((s, i) => (
-        <div className="scontro-riga" key={i}>
+        <div className="scontro-riga" key={s.id}>
           <select value={s.casa} onChange={aggiornaScontro(i, 'casa')}>{opzioni(s.casa)}</select>
           <span className="vs-mini">VS</span>
           <select value={s.trasferta} onChange={aggiornaScontro(i, 'trasferta')}>{opzioni(s.trasferta)}</select>
           <button
             type="button"
             className="togli"
-            onClick={() => setScontri((v) => v.filter((_, j) => j !== i))}
+            onClick={() => { righeAutomatiche.current = false; setScontri((v) => v.filter((r) => r.id !== s.id)); }}
             title="Togli lo scontro"
           >✕</button>
         </div>
       ))}
-      <button type="button" className="ghost blocco" onClick={() => setScontri((s) => [...s, { casa: '', trasferta: '' }])}>
+      <button type="button" className="ghost blocco" onClick={() => { righeAutomatiche.current = false; setScontri((s) => [...s, rigaVuota()]); }}>
         + Aggiungi scontro
       </button>
 

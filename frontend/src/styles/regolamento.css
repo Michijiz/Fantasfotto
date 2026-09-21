@@ -128,8 +128,6 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 .match-row .sq.vince .nome{font-weight:700;}
 
 /* ---------- Regolamento ---------- */
-.faq-intro{font-size:15px;line-height:1.65;margin:0 0 6px;color:var(--ink);}
-
 .faq-voce{border-bottom:1px dashed var(--ink-soft);scroll-margin-top:12px;}
 .faq-voce:last-child{border-bottom:none;}
 .faq-voce summary{

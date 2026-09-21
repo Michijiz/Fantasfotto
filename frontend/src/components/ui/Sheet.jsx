@@ -1,3 +1,4 @@
+import { useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 // Pannello che sale dal basso (bottom sheet), usato per "tutti gli scontri della
@@ -11,6 +12,16 @@ import { createPortal } from 'react-dom';
 // invece di restare fuori campo. Gli sheet di AppShell funzionavano solo perché
 // erano già figli diretti di #appScreen.
 export default function Sheet({ aperto, onChiudi, titolo, sottotitolo, grande = false, children }) {
+  // L'ancora si cerca DOPO il primo paint, non durante il render: al primo giro
+  // #appScreen non è ancora nel DOM, quindi risolverla in render dava null e il
+  // contenuto nasceva in linea per poi spostarsi nel portale al render successivo
+  // — cioè si smontava e si rimontava, perdendo lo stato dei campi che contiene.
+  const [ancora, setAncora] = useState(null);
+  // Lo stato scritto dentro l'effetto è proprio il punto: il nodo del portale
+  // esiste solo dopo il primo commit, quindi prima non c'è niente da leggere.
+  // oxlint-disable-next-line react/set-state-in-effect
+  useLayoutEffect(() => { setAncora(document.getElementById('appScreen')); }, []);
+
   const contenuto = (
     <>
       <div className={`sheet-overlay${aperto ? ' aperto' : ''}`} onClick={onChiudi} />
@@ -28,8 +39,7 @@ export default function Sheet({ aperto, onChiudi, titolo, sottotitolo, grande = 
     </>
   );
 
-  // Al primo render sul server o prima che la shell esista il nodo può mancare:
-  // in quel caso si rende in linea, come faceva prima.
-  const ancora = typeof document === 'undefined' ? null : document.getElementById('appScreen');
-  return ancora ? createPortal(contenuto, ancora) : contenuto;
+  // Finché l'ancora non c'è non si rende niente: un frame senza lo sheet chiuso
+  // non si vede, mentre montarlo nel posto sbagliato sì.
+  return ancora ? createPortal(contenuto, ancora) : null;
 }

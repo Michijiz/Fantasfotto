@@ -24,6 +24,11 @@ export function TemaProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [utente?.tema]);
 
+  // TemaProvider sta sopra le rotte e non si smonta al logout: senza azzerare il
+  // ref, chi accede dopo su quello stesso telefono e sceglie lo stesso tema del
+  // precedente non lo salva mai sul proprio profilo.
+  useEffect(() => { ultimoSalvato.current = null; }, [utente?.id]);
+
   const cambiaTema = useCallback(async (id) => {
     const tema = temaPerId(id);
     setTemaId(tema.id);

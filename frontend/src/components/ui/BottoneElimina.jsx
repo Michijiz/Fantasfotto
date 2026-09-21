@@ -15,7 +15,14 @@ export default function BottoneElimina({
   const timer = useRef(null);
   const vivo = useRef(true);
 
-  useEffect(() => () => { vivo.current = false; clearTimeout(timer.current); }, []);
+  // `vivo` va rimesso a true a ogni montaggio, non solo alla prima volta: sotto
+  // StrictMode (e a ogni rimontaggio del sottoalbero) React monta, smonta e
+  // rimonta. Con la sola cleanup il flag restava false per sempre e il bottone,
+  // dopo un'eliminazione, rimaneva bloccato su "Elimino..." e disabilitato.
+  useEffect(() => {
+    vivo.current = true;
+    return () => { vivo.current = false; clearTimeout(timer.current); };
+  }, []);
 
   const click = async () => {
     if (inCorso) return;

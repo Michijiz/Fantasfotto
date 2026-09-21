@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 
 const ToastContext = createContext(null);
 
@@ -13,6 +13,10 @@ export function ToastProvider({ children }) {
     setVisibile(true);
     timerRef.current = setTimeout(() => setVisibile(false), 2400);
   }, []);
+
+  // ToastProvider si smonta quando l'app torna allo splash (App.jsx): senza questo
+  // il timer pendente chiamava setVisibile su un componente ormai morto.
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   return (
     <ToastContext.Provider value={mostraToast}>

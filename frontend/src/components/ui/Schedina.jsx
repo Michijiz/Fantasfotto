@@ -86,18 +86,26 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
   // Finché si gioca si vede solo chi ha già consegnato, non cosa ha giocato:
   // lo scontrino resta segreto fino al fischio d'inizio. Un poll leggero (in
   // pausa a tab nascosta) tiene la lista aggiornata senza bombardare il backend.
+  const numeroGiornata = giornata?.numero;
+
   useEffect(() => {
-    if (!giornata || chiusa) {
+    if (!numeroGiornata || chiusa) {
       setPartecipanti([]);
       return undefined;
     }
 
     let attivo = true;
+    let inCorso = false;
     const carica = () => {
-      if (document.visibilityState !== 'visible') return;
-      api.get(`/api/schedine/giornata/${giornata.numero}`)
+      // Una richiesta per volta: l'intervallo e il ritorno sulla scheda possono
+      // scattare a un soffio di distanza, e due risposte concorrenti arrivavano
+      // in ordine qualsiasi — vinceva la più vecchia.
+      if (inCorso || document.visibilityState !== 'visible') return;
+      inCorso = true;
+      api.get(`/api/schedine/giornata/${numeroGiornata}`)
         .then((dati) => { if (attivo) setPartecipanti(dati.partecipanti || []); })
-        .catch(() => { if (attivo) setPartecipanti([]); });
+        .catch(() => { if (attivo) setPartecipanti([]); })
+        .finally(() => { inCorso = false; });
     };
 
     carica();
@@ -109,7 +117,11 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
       clearInterval(intervallo);
       document.removeEventListener('visibilitychange', carica);
     };
-  }, [giornata, chiusa, miaSchedina]);
+    // Si dipende dal numero della giornata, non dall'oggetto: `giornata` è nuovo
+    // a ogni ricarica e il poll ripartiva da zero ogni volta. `miaSchedina` non
+    // compare dentro l'effetto: era una dipendenza morta che, dopo ogni consegna,
+    // buttava via intervallo e listener per ricrearli identici.
+  }, [numeroGiornata, chiusa]);
 
   const scontri = useMemo(() => giornata?.accoppiamenti || [], [giornata]);
 
@@ -201,8 +213,8 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
         <>
           <h3 className="sotto-titolo">L&apos;angolo dei gufi ({partecipanti.length})</h3>
           <div className="gufi-lista">
-            {partecipanti.map((p, i) => (
-              <div className="gufo-riga" key={p.utente?._id || i}>
+            {partecipanti.map((p) => (
+              <div className="gufo-riga" key={p.utente?._id || p.squadra?._id}>
                 <Stemma src={p.squadra?.stemma} nome={p.squadra?.nome} size={22} />
                 <span className="chi">{p.squadra?.nome || p.utente?.nomeVisualizzato}</span>
               </div>
@@ -219,12 +231,19 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
 function SchedinaEsito({ giornata, miaSchedina }) {
   const [altre, setAltre] = useState([]);
 
+  const numeroGiornata = giornata?.numero;
+
   useEffect(() => {
-    if (!giornata) return;
-    api.get(`/api/schedine/giornata/${giornata.numero}`)
-      .then((dati) => setAltre(dati.schedine || []))
-      .catch(() => setAltre([]));
-  }, [giornata]);
+    if (!numeroGiornata) return undefined;
+    // Stessa guardia del poll qui sopra: senza, la risposta di una giornata
+    // precedente poteva arrivare dopo ed elencare le schedine sbagliate sotto
+    // il titolo giusto.
+    let attivo = true;
+    api.get(`/api/schedine/giornata/${numeroGiornata}`)
+      .then((dati) => { if (attivo) setAltre(dati.schedine || []); })
+      .catch(() => { if (attivo) setAltre([]); });
+    return () => { attivo = false; };
+  }, [numeroGiornata]);
 
   if (!giornata) return null;
   if (!miaSchedina && altre.length === 0) return null;

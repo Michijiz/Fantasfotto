@@ -6,7 +6,8 @@
 // decide solo cosa *mostrare*, non cosa è permesso. Un bottone nascosto non è una
 // protezione.
 
-export const RUOLI = {
+// Tabella interna: fuori da qui si usano RUOLI_ISCRIZIONE e le tre funzioni.
+const RUOLI = {
   giocatore: {
     id: 'giocatore',
     nome: 'Giocatore',

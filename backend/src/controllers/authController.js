@@ -23,7 +23,6 @@ function pubblico(user) {
     username: user.username,
     nomeVisualizzato: user.nomeVisualizzato,
     ruolo: user.ruolo,
-    avatar: user.avatar,
     squadra: user.squadra,
     tema: user.tema || TEMA_DEFAULT
   };

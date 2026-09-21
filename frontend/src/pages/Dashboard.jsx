@@ -34,9 +34,13 @@ export default function Dashboard() {
   const posizione = tabellone.findIndex((s) => s._id === miaSquadraId);
   const miePunti = tabellone.find((s) => s._id === miaSquadraId)?.punti;
 
-  const accoppiamenti = prossimaGiornata?.accoppiamenti || [];
+  // Optional chaining anche qui: se una squadra è stata cancellata dal database
+  // mongoose lascia il riferimento a null, e senza il `?.` la Home andava in
+  // pagina bianca. Tutti gli altri consumatori degli stessi dati erano già difesi.
+  const accoppiamenti = (prossimaGiornata?.accoppiamenti || [])
+    .filter((a) => a.squadraCasa && a.squadraTrasferta);
   const mioMatch = accoppiamenti.find(
-    (a) => a.squadraCasa._id === miaSquadraId || a.squadraTrasferta._id === miaSquadraId
+    (a) => a.squadraCasa?._id === miaSquadraId || a.squadraTrasferta?._id === miaSquadraId
   ) || accoppiamenti[0];
   const countdown = formattaCountdown(prossimaGiornata?.data);
 
@@ -99,11 +103,9 @@ export default function Dashboard() {
           <div className="invito-testo">
             <div className="invito-occhiello">Schedina · Giornata {schedina.giornata.numero}</div>
             <b>{schedina.miaSchedina ? 'Schedina consegnata' : 'Non hai ancora gufato'}</b>
-            <span>
-              {schedina.miaSchedina
-                ? `Quota ${Number(schedina.miaSchedina.quotaTotale).toFixed(2)}`
-                : ''}
-            </span>
+            {schedina.miaSchedina && (
+              <span>Quota {Number(schedina.miaSchedina.quotaTotale).toFixed(2)}</span>
+            )}
           </div>
           <span className="freccia">→</span>
         </button>
@@ -137,7 +139,7 @@ export default function Dashboard() {
           titolo={`Giornata ${prossimaGiornata.numero}`}
           sottotitolo="Tutti gli scontri"
         >
-          {prossimaGiornata.accoppiamenti.map((a) => (
+          {accoppiamenti.map((a) => (
             <div className="match-row" key={a._id}>
               <div className="sq casa">
                 <span>{a.squadraCasa.nome}</span>

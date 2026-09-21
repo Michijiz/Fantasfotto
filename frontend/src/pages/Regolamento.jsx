@@ -253,13 +253,6 @@ export default function Regolamento() {
       </div>
 
       <CalcolatriceGol />
-
-    
-
-       
-
-      
-      
     </>
   );
 }

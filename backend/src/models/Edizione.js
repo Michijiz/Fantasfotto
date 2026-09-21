@@ -21,7 +21,6 @@ const edizioneSchema = new mongoose.Schema({
     // tutta la schedina di quella giornata. Vuoto se non ha vinto nessuno.
     reDeiGufi: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' }]
   },
-  votazioniChiuse: { type: Boolean, default: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

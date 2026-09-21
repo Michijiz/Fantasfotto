@@ -28,8 +28,8 @@
 /* Feedback tattile coerente su tutto ciò che si tocca: niente zoom da doppio tap,
    niente menu "copia/condividi" di iOS sui controlli — il testo degli articoli
    (article, p, h1-h4 di prosa) resta fuori da questa regola e rimane selezionabile. */
-button, .nav-item, .squadra-riga, .archivio-item, .calendario-preview,
-.voto-btn, .tab, .fab, .chip, .hamburger, .drawer a, .tema-dot, .tema-opzione,
+button, .nav-item, .squadra-riga, .archivio-item,
+.voto-btn, .tab, .fab, .chip, .hamburger, .drawer a, .tema-dot,
 .tema-carta, .ruolo-carta, .match-preview{
   touch-action: manipulation;
   -webkit-touch-callout: none;
@@ -76,8 +76,6 @@ body{
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
-
-.wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px;}
 
 #appScreen{
   position:relative;
@@ -511,10 +509,6 @@ button.link:hover{ color: var(--ink); }
 
 .article-img{width:calc(100% + 36px);margin:14px -18px 0;}
 .article-img img, .article-img svg{display:block;width:100%;height:auto;object-fit:cover;border-top:3px solid var(--rule);border-bottom:3px solid var(--rule);}
-.article-img .didascalia{
-  font-family:'Libre Baskerville',serif;font-style:italic;font-size:13.5px;color:var(--ink-soft);
-  padding:7px 18px 16px;border-bottom:1px solid var(--ink-soft);margin-bottom:14px;
-}
 
 .stat-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
 .stat{
@@ -581,22 +575,6 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .countdown{
   background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:11.5px;
   padding:3px 10px;border-radius:100px;letter-spacing:.04em;
-}
-
-.calendario-preview{cursor:pointer;transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);}
-.calendario-preview:active{ transform: translate(2px,2px); box-shadow:none; }
-.derby{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;}
-.derby .squadra{flex:1;text-align:center;}
-.derby .stemma{font-size:36px;display:block;margin-bottom:5px;line-height:1;}
-.derby .nome-squadra{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;}
-.derby .vs{
-  font-family:'Anton',sans-serif;color:var(--stamp-red);border:3px solid var(--stamp-red);
-  padding:5px 10px;transform:rotate(-8deg);font-size:14.5px;background:var(--paper);
-  box-shadow:2px 2px 0 rgba(36,27,30,.9);flex:0 0 auto;
-}
-.derby-meta{
-  font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;
-  text-align:center;margin-top:12px;border-top:1px solid var(--ink-soft);padding-top:8px;
 }
 
 /* La classifica non è più una tabella: le regole stanno in styles/regolamento.css
@@ -673,17 +651,10 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   animation: pulsa 1.4s ease infinite;
 }
 .skeleton-line.w-60{ width:60%; }
-.skeleton-line.w-80{ width:80%; }
-.skeleton-line.w-40{ width:40%; height:22px; margin-bottom:16px; }
 @keyframes pulsa{
   0%{ background-position: 100% 50%; }
   100%{ background-position: 0 50%; }
 }
-
-.albo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.albo-cat{border:1px solid var(--ink-soft);padding:11px;background: rgba(255,255,255,0.3);}
-.albo-cat h5{font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;color:var(--gold);margin:0 0 6px;}
-.albo-cat div{font-family:'Oswald',sans-serif;font-size:13.5px;margin-bottom:3px;font-variant-numeric:tabular-nums;}
 
 /* La barra in basso cresce della safe area su iPhone: senza sommarla, il toast
    e il FAB finivano sopra (o sotto) la nav nella PWA installata. */

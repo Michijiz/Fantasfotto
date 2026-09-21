@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext';
 const DataContext = createContext(null);
 
 const SCHEDINA_VUOTA = { giornata: null, miaSchedina: null, chiusa: true, motivo: null, precedente: null };
+const VOTI_VUOTI = { conteggi: {}, mioVoto: {} };
 
 // Le categorie di voto arrivano dal backend già con etichetta e descrizione. Una
 // vecchia versione dell'API mandava solo gli id come stringhe: normalizziamo qui
@@ -21,13 +22,14 @@ function normalizzaCategorie(elenco) {
 
 export function DataProvider({ children }) {
   const { utente } = useAuth();
+  const utenteId = utente?.id || null;
   const [squadre, setSquadre] = useState([]);
   const [tabellone, setTabellone] = useState([]);
   const [ultimaEdizione, setUltimaEdizione] = useState(null);
   const [edizioni, setEdizioni] = useState([]);
   const [prossimaGiornata, setProssimaGiornata] = useState(null);
   const [giornate, setGiornate] = useState([]);
-  const [risultatiVoti, setRisultatiVoti] = useState({ conteggi: {}, mioVoto: {} });
+  const [risultatiVoti, setRisultatiVoti] = useState(VOTI_VUOTI);
   const [categorieVoto, setCategorieVoto] = useState([]);
   const [schedina, setSchedina] = useState(SCHEDINA_VUOTA);
   const [albo, setAlbo] = useState([]);
@@ -68,7 +70,10 @@ export function DataProvider({ children }) {
   }, []);
 
   const ricaricaRisultatiVoti = useCallback(async (edizioneId) => {
-    if (!edizioneId) return;
+    if (!edizioneId) {
+      setRisultatiVoti(VOTI_VUOTI);
+      return;
+    }
     const dati = await api.get(`/api/voti/${edizioneId}`);
     setRisultatiVoti(dati);
   }, []);
@@ -94,40 +99,56 @@ export function DataProvider({ children }) {
     setAlbo(albo);
   }, []);
 
+  // Restituisce una promessa che si risolve quando TUTTE le ricariche sono finite:
+  // i form fanno `await ricaricaTutto()` prima di chiudersi e di mostrare il toast,
+  // e prima restituiva undefined — il messaggio "salvato" compariva mentre in
+  // classifica c'erano ancora i numeri vecchi.
+  // allSettled e non all: una rotta che fallisce (albo vuoto, rete ballerina) non
+  // deve impedire alle altre di aggiornare la pagina.
   const ricaricaTutto = useCallback(() => {
-    ricaricaSquadre();
-    ricaricaCategorieVoto();
-    if (utente) {
-      ricaricaTabellone();
-      ricaricaUltimaEdizione();
-      ricaricaEdizioni();
-      ricaricaProssimaGiornata();
-      ricaricaGiornate();
-      ricaricaSchedina();
-      ricaricaAlbo();
+    const lavori = [ricaricaSquadre(), ricaricaCategorieVoto()];
+    if (utenteId) {
+      lavori.push(
+        ricaricaTabellone(),
+        ricaricaUltimaEdizione(),
+        ricaricaEdizioni(),
+        ricaricaProssimaGiornata(),
+        ricaricaGiornate(),
+        ricaricaSchedina(),
+        ricaricaAlbo()
+      );
     }
+    return Promise.allSettled(lavori);
   }, [
-    utente, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
+    utenteId, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
     ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina, ricaricaAlbo
   ]);
 
+  // Dipendere dall'id e non dall'oggetto: `utente` è un oggetto nuovo a ogni
+  // risposta del server (anche solo per un cambio di tema), e con `[utente]`
+  // ogni cambio colore rilanciava nove richieste e sovrascriveva la schedina
+  // che si stava compilando con quella già salvata.
   useEffect(() => {
     ricaricaTutto();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [utente]);
+  }, [utenteId]);
 
+  // Stesso motivo: si guarda l'id dell'edizione, non l'oggetto. E quando l'ultima
+  // edizione viene cancellata i conteggi vanno azzerati, altrimenti la Dashboard
+  // continua a mostrare i verdetti di un'edizione che non esiste più.
   useEffect(() => {
-    if (ultimaEdizione) ricaricaRisultatiVoti(ultimaEdizione._id);
+    ricaricaRisultatiVoti(ultimaEdizione?._id).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ultimaEdizione]);
+  }, [ultimaEdizione?._id]);
 
   return (
     <DataContext.Provider value={{
       squadre, tabellone, ultimaEdizione, edizioni, prossimaGiornata, giornate, risultatiVoti,
       categorieVoto, schedina, albo,
-      ricaricaSquadre, ricaricaTabellone, ricaricaUltimaEdizione, ricaricaEdizioni,
-      ricaricaProssimaGiornata, ricaricaGiornate, ricaricaRisultatiVoti, ricaricaCategorieVoto,
-      ricaricaSchedina, ricaricaAlbo, ricaricaTutto
+      // Solo le ricariche mirate che qualcuno usa davvero: Profilo (squadre),
+      // Schedina (schedina), Verdetti (risultatiVoti). Tutto il resto passa da
+      // ricaricaTutto — le altre sette erano superficie pubblica mai chiamata.
+      ricaricaSquadre, ricaricaSchedina, ricaricaRisultatiVoti, ricaricaTutto
     }}>
       {children}
     </DataContext.Provider>

@@ -11,14 +11,11 @@ const lista = async (req, res) => {
   res.json({ edizioni });
 };
 
+// "Ultima" vuol dire la giornata più avanti, non il pezzo scritto per ultimo:
+// pubblicando in ritardo l'edizione della 3ª dopo quella della 5ª, in Dashboard
+// compariva la 3ª come ultima uscita. A parità di numero vince la più recente.
 const ultima = async (req, res) => {
-  const edizione = await Edizione.findOne().sort('-createdAt').populate(POPOLA_STATS);
-  res.json({ edizione });
-};
-
-const dettaglio = async (req, res) => {
-  const edizione = await Edizione.findById(req.params.id).populate(POPOLA_STATS);
-  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
+  const edizione = await Edizione.findOne().sort({ giornataNumero: -1, createdAt: -1 }).populate(POPOLA_STATS);
   res.json({ edizione });
 };
 
@@ -108,4 +105,4 @@ const elimina = async (req, res) => {
   res.json({ ok: true });
 };
 
-module.exports = { lista, ultima, dettaglio, crea, aggiorna, elimina };
+module.exports = { lista, ultima, crea, aggiorna, elimina };

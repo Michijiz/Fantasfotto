@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema({
   // Si sceglie in fase di iscrizione; 'admin' non si può chiedere da lì, si
   // assegna a mano sul database.
   ruolo: { type: String, enum: ['admin', 'redattore', 'giocatore'], default: 'giocatore' },
-  avatar: { type: String, default: '' }, // emoji o iniziali
   squadra: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
 
   // Tema colore dell'app: l'id di una squadra di Serie A (o 'palermo', il tema

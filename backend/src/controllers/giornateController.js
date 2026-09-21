@@ -30,20 +30,6 @@ const prossima = async (req, res) => {
   res.json({ giornata: arricchisciGiornata(giornata) });
 };
 
-const crea = async (req, res) => {
-  const { numero, serieANumero, data, accoppiamenti } = req.body;
-  if (!numero) return res.status(400).json({ errore: 'Numero giornata richiesto' });
-
-  const giornata = await Giornata.create({
-    numero,
-    serieANumero,
-    data,
-    accoppiamenti: accoppiamenti || [],
-    createdBy: req.utente.id
-  });
-  res.status(201).json({ giornata });
-};
-
 // Salvataggio di una giornata per numero invece che per id: è l'unico modo pratico
 // di lavorare dall'admin, perché una Giornata può essere già nata da sola. Qui
 // stanno insieme le due cose che riguardano la stessa giornata — chi gioca contro
@@ -110,19 +96,6 @@ const salva = async (req, res) => {
   res.json({ giornata });
 };
 
-const aggiorna = async (req, res) => {
-  const { accoppiamenti, punteggi, conclusa } = req.body;
-  const aggiornamenti = {};
-  if (accoppiamenti !== undefined) aggiornamenti.accoppiamenti = accoppiamenti;
-  if (punteggi !== undefined) aggiornamenti.punteggi = punteggi;
-  if (conclusa !== undefined) aggiornamenti.conclusa = conclusa;
-
-  const giornata = await Giornata.findByIdAndUpdate(req.params.id, aggiornamenti, { new: true });
-  if (!giornata) return res.status(404).json({ errore: 'Giornata non trovata' });
-  await risolviSchedine(giornata.numero);
-  res.json({ giornata });
-};
-
 // Elimina la giornata e le schedine che la riguardavano: lasciarle orfane
 // significherebbe mostrare pronostici su scontri che non esistono più.
 // Le edizioni NON vengono toccate: l'articolo è un pezzo di giornale, resta in
@@ -137,4 +110,8 @@ const elimina = async (req, res) => {
   res.json({ ok: true, numero: giornata.numero });
 };
 
-module.exports = { lista, prossima, crea, salva, aggiorna, elimina };
+// `salva` è l'unica via di scrittura: fa da creazione e da correzione (upsert per
+// numero) ed è l'unica che controlla i doppioni e la scala dei punteggi. Le vecchie
+// POST / e PATCH /:id non le usava nessuna schermata e scrivevano senza quei
+// controlli: una rotta che nessuno chiama ma che accetta numeri fuori scala.
+module.exports = { lista, prossima, salva, elimina };

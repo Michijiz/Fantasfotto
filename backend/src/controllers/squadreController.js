@@ -13,12 +13,6 @@ const lista = async (req, res) => {
 // bottone che crea record a caso è un bottone che prima o poi viene premuto per
 // sbaglio). Per aggiungerle si usa `npm run seed -- "Nome Squadra"` sul backend.
 
-const dettaglio = async (req, res) => {
-  const squadra = await Squadra.findById(req.params.id);
-  if (!squadra) return res.status(404).json({ errore: 'Squadra non trovata' });
-  res.json({ squadra });
-};
-
 // Classifica di campionato sulle giornate concluse, secondo il regolamento:
 // fantapunti → gol (soglia 66, poi un gol ogni 4), V/N/P da 3/1/0, ordinamento
 // per punti, punti totali, gol fatti, differenza reti, gol subiti, avulsa.
@@ -69,4 +63,4 @@ const aggiornaMiaSquadra = async (req, res) => {
   res.json({ squadra });
 };
 
-module.exports = { lista, dettaglio, classifica, aggiornaMiaSquadra };
+module.exports = { lista, classifica, aggiornaMiaSquadra };

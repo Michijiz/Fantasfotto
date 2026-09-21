@@ -2,7 +2,7 @@ const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const { verificaToken } = require('../middleware/auth');
 const {
-  lista, dettaglio, classifica, aggiornaMiaSquadra
+  lista, classifica, aggiornaMiaSquadra
 } = require('../controllers/squadreController');
 
 const router = express.Router();
@@ -11,7 +11,6 @@ const router = express.Router();
 // quindi non richiede autenticazione.
 router.get('/', asyncHandler(lista));
 router.get('/classifica', verificaToken, asyncHandler(classifica));
-router.get('/:id', verificaToken, asyncHandler(dettaglio));
 router.patch('/mia', verificaToken, asyncHandler(aggiornaMiaSquadra));
 
 // Nessun POST: le squadre non si creano dall'app (vedi squadreController).

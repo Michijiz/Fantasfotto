@@ -116,6 +116,8 @@ const salva = async (req, res) => {
   const quotaTotale = Math.round(daSalvare.reduce((tot, p) => tot * p.quota, 1) * 100) / 100;
 
   const utente = await User.findById(req.utente.id).lean();
+  if (!utente) return res.status(401).json({ errore: 'Utente non trovato' });
+
   const schedina = await Schedina.findOneAndUpdate(
     { utente: req.utente.id, giornataNumero },
     {
@@ -171,13 +173,4 @@ const perGiornata = async (req, res) => {
   res.json({ chiusa: true, quante: schedine.length, schedine });
 };
 
-// Le mie schedine passate, per la strisciata "come è andata finora".
-const mie = async (req, res) => {
-  const schedine = await Schedina.find({ utente: req.utente.id })
-    .sort('-giornataNumero')
-    .limit(12)
-    .lean();
-  res.json({ schedine });
-};
-
-module.exports = { apertura, salva, perGiornata, mie, risolviSchedine };
+module.exports = { apertura, salva, perGiornata, risolviSchedine };

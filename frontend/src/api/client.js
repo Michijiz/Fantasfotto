@@ -15,6 +15,18 @@ export function tokenCorrente() {
   return token;
 }
 
+// Il token dura 90 giorni, ma può scadere o diventare non valido prima (cambio
+// del segreto sul server). Senza questo, l'utente restava "dentro" con un token
+// morto: lo splash passava, ogni chiamata rispondeva 401 e la Home si mostrava
+// vuota, senza un modo di capire che bastava rifare l'accesso. Qui il token si
+// butta e si avvisa AuthContext, che riporta alla schermata di accesso.
+export const EVENTO_SESSIONE_SCADUTA = 'gazzetta:sessione-scaduta';
+
+function sessioneScaduta() {
+  impostaToken(null);
+  window.dispatchEvent(new Event(EVENTO_SESSIONE_SCADUTA));
+}
+
 // Quando la risposta non è il nostro JSON (pagina d'errore di Vercel, timeout,
 // body troppo grande) serve comunque un messaggio comprensibile.
 function messaggioPerStato(status) {
@@ -25,6 +37,7 @@ function messaggioPerStato(status) {
 }
 
 async function richiesta(path, { method = 'GET', body, isFormData = false } = {}) {
+  const avevaToken = Boolean(token);
   const headers = {};
   if (!isFormData) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -51,6 +64,9 @@ async function richiesta(path, { method = 'GET', body, isFormData = false } = {}
   }
 
   if (!res.ok) {
+    // Solo se una sessione c'era davvero: il 401 del login sbagliato è un'altra
+    // cosa e non deve far partire un "sei stato disconnesso".
+    if (res.status === 401 && avevaToken) sessioneScaduta();
     throw new Error(dati.errore || messaggioPerStato(res.status));
   }
   return dati;

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { api, impostaToken, tokenCorrente } from '../api/client';
+import { api, impostaToken, tokenCorrente, EVENTO_SESSIONE_SCADUTA } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -15,6 +15,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const inizio = Date.now();
+    let annullato = false;
+    let timer = null;
 
     const carica = async () => {
       let utenteTrovato = null;
@@ -31,13 +33,18 @@ export function AuthProvider({ children }) {
       const trascorso = Date.now() - inizio;
       const attesa = Math.max(0, SPLASH_DURATA_MINIMA - trascorso);
 
-      setTimeout(() => {
+      timer = setTimeout(() => {
+        if (annullato) return;
         setUtente(utenteTrovato);
         setCaricamento(false);
       }, attesa);
     };
 
     carica();
+
+    // Sotto StrictMode l'effetto gira due volte: senza cleanup restavano in piedi
+    // due timer, entrambi pronti a scrivere lo stato.
+    return () => { annullato = true; clearTimeout(timer); };
   }, []);
 
   const login = useCallback(async (username, pin) => {
@@ -50,6 +57,14 @@ export function AuthProvider({ children }) {
     const { token, utente } = await api.post('/api/auth/registrati', dati);
     impostaToken(token);
     setUtente(utente);
+  }, []);
+
+  // Il client butta il token appena il server risponde 401 su una sessione che
+  // c'era: qui si chiude il cerchio riportando l'app alla schermata di accesso.
+  useEffect(() => {
+    const scaduta = () => setUtente(null);
+    window.addEventListener(EVENTO_SESSIONE_SCADUTA, scaduta);
+    return () => window.removeEventListener(EVENTO_SESSIONE_SCADUTA, scaduta);
   }, []);
 
   const logout = useCallback(() => {

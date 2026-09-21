@@ -1,4 +1,5 @@
 const Voto = require('../models/Voto');
+const Edizione = require('../models/Edizione');
 
 // Categorie di voto disponibili per edizione. Tenute qui (non in DB) perché
 // cambiano raramente e servono sia al form di voto che ai conteggi. Le etichette
@@ -32,6 +33,11 @@ const vota = async (req, res) => {
   if (!CATEGORIE.includes(categoria)) {
     return res.status(400).json({ errore: 'Categoria non valida' });
   }
+
+  // Senza questo si potevano registrare voti su un'edizione qualsiasi (anche
+  // inesistente): righe che nessuna schermata mostra più e che restano lì.
+  const esiste = await Edizione.exists({ _id: edizioneId });
+  if (!esiste) return res.status(404).json({ errore: 'Edizione non trovata' });
 
   const voto = await Voto.findOneAndUpdate(
     { edizione: edizioneId, categoria, votante: req.utente.id },
@@ -68,4 +74,4 @@ const risultati = async (req, res) => {
   res.json({ conteggi, mioVoto });
 };
 
-module.exports = { CATEGORIE, CATEGORIE_DEF, categorie, vota, risultati };
+module.exports = { categorie, vota, risultati };
