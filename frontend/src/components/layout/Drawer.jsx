@@ -10,11 +10,10 @@ import Sheet from '../ui/Sheet';
 import SelettoreTema from '../ui/SelettoreTema';
 import '../../styles/drawer.css';
 
-// Menu profilo aperto dall'hamburger nell'header. Pannello in vetro come la
-// bottom nav, con la grammatica della Gazzetta (angoli vivi, cornice, ombra
-// dura: vedi drawer.css). Dal Glass Sidebar di AI Canvas vengono le mattonelle
-// icona e le voci che entrano a cascata; è a scomparsa e non a colonna fissa,
-// che su telefono ruberebbe larghezza agli articoli.
+// Menu profilo aperto dall'hamburger nell'header. Pannello in vetro della stessa
+// famiglia della bottom nav (vedi drawer.css). Dal Glass Sidebar di AI Canvas
+// vengono le mattonelle icona e le voci che entrano a cascata; è a scomparsa e
+// non a colonna fissa, che su telefono ruberebbe larghezza agli articoli.
 // "Le squadre della lega" non c'è più: è già nella bottom nav.
 
 const MOLLA_PANNELLO = { type: 'spring', stiffness: 320, damping: 30 };
@@ -114,7 +113,7 @@ export default function Drawer({ aperto, onChiudi }) {
                     aria-current={v.attiva ? 'page' : undefined}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0, transition: { duration: 0.2, ease: 'easeOut', delay: 0.12 + i * 0.04 } }}
-                    whileTap={{ x: 1, y: 1 }}
+                    whileTap={{ scale: 0.97 }}
                   >
                     <span className="mattonella">{v.mattonella}</span>
                     <span className="testi">

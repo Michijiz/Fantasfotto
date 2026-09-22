@@ -3,10 +3,8 @@
 // - le voci sono NavLink veri (rotte della Gazzetta), non stato locale;
 // - i colori vengono dal tema della squadra (--ink, --nav-testo, --gold-chiaro)
 //   invece che da una tinta fissa per voce, così segue il cambio di tema;
-// - la barra fluttua sopra il contenuto, che le scorre sotto sfocato;
-// - forma e stato attivo seguono la grammatica della Gazzetta (global.css):
-//   riquadro a spigoli vivi, ombra dura, filo rosso sotto la voce attiva;
-//   pressione come il resto dell'app (spostamento di 1px, non rimpicciolimento).
+// - la barra fluttua sopra il contenuto, che le scorre sotto sfocato.
+// È il riferimento di stile di tutta l'app ("Grammatica visiva" in global.css).
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, MotionConfig } from 'framer-motion';
 import { House, Newspaper, Trophy, SoccerBall, Shield } from '@phosphor-icons/react';
@@ -50,7 +48,7 @@ export default function BottomNav() {
                 className="nav-icona"
                 animate={{ scale: attivo ? 1.12 : 1, y: attivo ? -1 : 0 }}
                 transition={MOLLA_ICONA}
-                whileTap={{ x: 1, y: 1 }}
+                whileTap={{ scale: 0.85 }}
               >
                 <Icona size={24} weight={attivo ? 'fill' : 'regular'} />
               </motion.span>

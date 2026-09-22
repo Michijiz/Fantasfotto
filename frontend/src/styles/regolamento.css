@@ -12,7 +12,7 @@
 .classifica-intestazione{
   display:flex;justify-content:space-between;align-items:baseline;
   font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
-  border-bottom:2px solid var(--rule);padding:0 2px 5px;
+  border-bottom:1px solid var(--filo-lieve);padding:0 2px 5px;
 }
 
 .riga-classifica{
@@ -20,10 +20,10 @@
   padding:9px 2px;border-bottom:1px solid var(--filo-lieve);
 }
 .riga-classifica:last-child{border-bottom:none;}
-.riga-classifica:nth-child(even){background:color-mix(in srgb, var(--ink) 3%, transparent);}
-/* Filo rosso sulla propria riga con box-shadow e non con un bordo: un bordo
-   aggiunge larghezza e disallineerebbe quella riga rispetto alle altre. */
-.riga-classifica.mia{background:color-mix(in srgb, var(--stamp-red) 10%, transparent);box-shadow:inset 3px 0 0 var(--stamp-red);}
+.riga-classifica:nth-child(even){background:transparent;}
+/* La propria squadra: riga evidenziata e arrotondata (stile vetro). Il margine
+   negativo allarga lo sfondo senza spostare il contenuto rispetto alle altre righe. */
+.riga-classifica.mia{background:color-mix(in srgb, var(--stamp-red) 11%, transparent);border-radius:var(--r-sm);border-bottom-color:transparent;margin:0 -6px;padding-left:8px;padding-right:8px;}
 
 .riga-classifica .posto{
   flex:0 0 auto;width:17px;text-align:center;
@@ -87,7 +87,7 @@
   display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);
   text-transform:uppercase;letter-spacing:.04em;
-  border-top:1px solid var(--ink-soft);padding-top:8px;margin-bottom:2px;
+  border-top:1px solid var(--filo-lieve);padding-top:8px;margin-bottom:2px;
 }
 
 .scontro-riga{
@@ -129,7 +129,7 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 .match-row .sq.vince .nome{font-weight:700;}
 
 /* ---------- Regolamento ---------- */
-.faq-voce{border-bottom:1px dashed var(--ink-soft);scroll-margin-top:12px;}
+.faq-voce{border-bottom:1px solid var(--filo-lieve);scroll-margin-top:12px;}
 .faq-voce:last-child{border-bottom:none;}
 .faq-voce summary{
   list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;
@@ -162,9 +162,9 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 
 .faq-moduli{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px;}
 .faq-chip{
-  border:1px solid var(--ink);background:var(--paper-input);padding:4px 9px;
+  border:1px solid color-mix(in srgb, var(--ink) 18%, transparent);background:var(--superficie-piena);padding:4px 11px;border-radius:var(--r-pill);
   font-family:'Oswald',sans-serif;font-size:13.5px;font-variant-numeric:tabular-nums;
-  box-shadow:var(--shadow-hard-xs);
+  box-shadow:var(--ombra-bassa);
 }
 
 .faq-criteri{margin:4px 0 12px;padding-left:22px;font-family:'Oswald',sans-serif;font-size:14.5px;}
@@ -179,8 +179,8 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 .calcolatrice-input label{margin-top:0;}
 .calcolatrice-esito{
   flex:0 0 auto;display:flex;align-items:baseline;gap:6px;
-  border:2px solid var(--rule);background:var(--paper);padding:2px 14px 4px;
-  box-shadow:var(--shadow-hard-sm);
+  border:1px solid var(--filo-luce);background:var(--superficie-piena);padding:4px 16px 6px;border-radius:var(--r-md);
+  box-shadow:var(--ombra-media);
 }
 .calcolatrice-esito .numero{
   font-family:'Anton',sans-serif;font-size:42px;line-height:1;font-variant-numeric:tabular-nums;

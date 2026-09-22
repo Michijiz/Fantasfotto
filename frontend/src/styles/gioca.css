@@ -5,7 +5,7 @@
 /* ---------- Schedina ---------- */
 .schedina .bollo-esito{
   font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-  padding:3px 9px;border:1.5px solid var(--ink-soft);color:var(--ink-soft);
+  padding:3px 10px;border:1.5px solid var(--ink-soft);color:var(--ink-soft);border-radius:var(--r-pill);
   white-space:nowrap;align-self:center;
   -webkit-text-stroke:0;
 }
@@ -16,7 +16,7 @@
 .schedina-lista{margin-top:4px;}
 
 .schedina-scontro{
-  padding:10px 0;border-bottom:1px dashed var(--ink-soft);
+  padding:10px 0;border-bottom:1px solid var(--filo-lieve);
 }
 .schedina-scontro:last-child{border-bottom:none;}
 
@@ -37,14 +37,15 @@
 .schedina-scontro .segno{
   flex:1 1 0;min-width:0;padding:6px 4px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:1px;
-  border:1px solid var(--ink);background:var(--paper-input);color:var(--ink);
+  border:1px solid color-mix(in srgb, var(--ink) 18%, transparent);background:var(--superficie-piena);color:var(--ink);
+  border-radius:var(--r-sm);
   font-family:'Oswald',sans-serif;
-  box-shadow:var(--shadow-tocco);
+  box-shadow:var(--ombra-bassa);
   transition:transform .08s var(--ease-tap), background .12s, box-shadow .12s;
 }
 .schedina-scontro .segno b{font-family:'Anton',sans-serif;font-size:15.5px;line-height:1;}
 .schedina-scontro .segno span{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
-.schedina-scontro .segno:active{transform:translate(1px,1px);box-shadow:none;}
+.schedina-scontro .segno:active{transform:scale(.95);}
 .schedina-scontro .segno.scelto{background:var(--stamp-red);border-color:var(--stamp-red);color:#fff;}
 .schedina-scontro .segno.scelto span{color:rgba(255,255,255,.85);}
 /* A giornata finita il segno uscito resta marcato anche se non l'avevi preso. */
@@ -54,7 +55,7 @@
 
 .schedina-totale{
   display:flex;justify-content:space-between;align-items:baseline;
-  margin-top:14px;padding-top:10px;border-top:2px solid var(--rule);
+  margin-top:14px;padding-top:10px;border-top:1px solid var(--filo-lieve);
   font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;
   color:var(--ink-soft);
 }
@@ -66,21 +67,21 @@
 
 h3.sotto-titolo{
   font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--gold);margin:18px 0 4px;padding-top:12px;border-top:1px solid var(--ink-soft);
+  color:var(--gold);margin:18px 0 4px;padding-top:12px;border-top:1px solid var(--filo-lieve);
 }
 
 /* ---------- Chi ha gufato cosa ---------- */
 .gufi-lista{font-family:'Oswald',sans-serif;}
 .gufo-riga{
   display:flex;align-items:center;gap:9px;padding:9px 2px;
-  border-bottom:1px dashed var(--ink-soft);font-size:13.5px;
+  border-bottom:1px solid var(--filo-lieve);font-size:13.5px;
 }
 .gufo-riga:last-child{border-bottom:none;}
 .gufo-riga .chi{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gufo-riga .quota{flex:0 0 auto;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
 .gufo-riga .esito{
   flex:0 0 auto;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
-  padding:2px 7px;border:1px solid var(--ink-soft);color:var(--ink-soft);
+  padding:2px 8px;border:1px solid var(--ink-soft);color:var(--ink-soft);border-radius:var(--r-pill);
 }
 .gufo-riga.vinta .esito{border-color:var(--verde);color:var(--verde);}
 .gufo-riga.persa .esito{border-color:var(--stamp-red);color:var(--stamp-red);}
@@ -88,7 +89,7 @@ h3.sotto-titolo{
 /* ---------- Verdetti a fisarmonica ----------
    Le categorie sono parecchie: aperte tutte insieme la pagina diventava un muro.
    Chiuse mostrano già chi è in testa, che è l'informazione che si cerca. */
-details.verdetto{border-bottom:1px dashed var(--ink-soft);margin-bottom:0;}
+details.verdetto{border-bottom:1px solid var(--filo-lieve);margin-bottom:0;}
 details.verdetto:last-of-type{border-bottom:none;}
 details.verdetto > summary{
   list-style:none;cursor:pointer;
