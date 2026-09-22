@@ -719,7 +719,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   width:min(440px, calc(100% - 20px));height:64px;
   display:flex;align-items:stretch;padding:5px;
   border-radius:999px;
-  background:color-mix(in srgb, var(--ink) 76%, transparent);
+  background:color-mix(in srgb, var(--ink) 45%, transparent);
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 8px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
   -webkit-backdrop-filter:blur(20px) saturate(1.7);
