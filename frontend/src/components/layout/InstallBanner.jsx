@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { X } from '@phosphor-icons/react';
 
 export default function InstallBanner() {
   const [promptEvent, setPromptEvent] = useState(null);
@@ -30,7 +31,7 @@ export default function InstallBanner() {
     <div className="install-banner">
       <span>Installa La Gazzetta sulla home — anche offline</span>
       <button className="installa" onClick={installa}>Installa</button>
-      <button className="chiudi" onClick={chiudi}>✕</button>
+      <button className="chiudi" onClick={chiudi} aria-label="Chiudi"><X size={16} /></button>
     </div>
   );
 }

@@ -29,9 +29,9 @@ export default function LegaOverview({ utente }) {
 
   return (
     <>
-      <div className="tabs" style={{ marginBottom: 14 }}>
-        <div className={`tab${tab === 'classifica' ? ' active' : ''}`} onClick={() => setTab('classifica')}>Classifica</div>
-        <div className={`tab${tab === 'calendario' ? ' active' : ''}`} onClick={() => setTab('calendario')}>Calendario</div>
+      <div className="tabs" role="tablist" style={{ marginBottom: 14 }}>
+        <button type="button" role="tab" aria-selected={tab === 'classifica'} className={`tab${tab === 'classifica' ? ' active' : ''}`} onClick={() => setTab('classifica')}>Classifica</button>
+        <button type="button" role="tab" aria-selected={tab === 'calendario'} className={`tab${tab === 'calendario' ? ' active' : ''}`} onClick={() => setTab('calendario')}>Calendario</button>
       </div>
 
       {tab === 'classifica' ? (

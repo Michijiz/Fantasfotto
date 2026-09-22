@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { X } from '@phosphor-icons/react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
@@ -199,7 +200,8 @@ export default function GiornataForm({ giornata, onFatto }) {
             className="togli"
             onClick={() => { righeAutomatiche.current = false; setScontri((v) => v.filter((r) => r.id !== s.id)); }}
             title="Togli lo scontro"
-          >✕</button>
+            aria-label="Togli lo scontro"
+          ><X size={16} /></button>
         </div>
       ))}
       <button type="button" className="ghost blocco" onClick={() => { righeAutomatiche.current = false; setScontri((s) => [...s, rigaVuota()]); }}>

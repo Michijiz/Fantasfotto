@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Plus } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { DataProvider } from '../../context/DataContext';
 import { puoRedigere } from '../../ruoli';
@@ -39,10 +40,8 @@ function ShellInterno({ utente }) {
       <Drawer aperto={drawerAperto} onChiudi={() => setDrawerAperto(false)} />
 
       {puoRedigere(utente) && (
-        <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Nuova edizione">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
+        <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Nuova edizione" aria-label="Nuova edizione">
+          <Plus size={26} weight="bold" />
         </button>
       )}
 

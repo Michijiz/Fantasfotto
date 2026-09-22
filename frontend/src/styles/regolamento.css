@@ -17,10 +17,10 @@
 
 .riga-classifica{
   display:flex;align-items:center;gap:9px;
-  padding:9px 2px;border-bottom:1px solid rgba(36,27,30,.15);
+  padding:9px 2px;border-bottom:1px solid var(--filo-lieve);
 }
 .riga-classifica:last-child{border-bottom:none;}
-.riga-classifica:nth-child(even){background:rgba(0,0,0,.03);}
+.riga-classifica:nth-child(even){background:color-mix(in srgb, var(--ink) 3%, transparent);}
 /* Filo rosso sulla propria riga con box-shadow e non con un bordo: un bordo
    aggiunge larghezza e disallineerebbe quella riga rispetto alle altre. */
 .riga-classifica.mia{background:color-mix(in srgb, var(--stamp-red) 10%, transparent);box-shadow:inset 3px 0 0 var(--stamp-red);}
@@ -64,7 +64,7 @@
 
 .riga-albo{
   display:flex;align-items:center;gap:9px;
-  padding:11px 2px;border-bottom:1px solid rgba(36,27,30,.15);
+  padding:11px 2px;border-bottom:1px solid var(--filo-lieve);
 }
 .riga-albo:last-child{border-bottom:none;}
 .riga-albo.cliccabile{cursor:pointer;}
@@ -93,13 +93,14 @@
 .scontro-riga{
   display:flex;align-items:center;gap:6px;margin-bottom:8px;
 }
-.scontro-riga select{flex:1 1 0;min-width:0;font-size:14px;padding:7px 6px;}
+/* padding destro: spazio per la freccia disegnata della tendina (global.css). */
+.scontro-riga select{flex:1 1 0;min-width:0;font-size:14px;padding:7px 26px 7px 6px;}
 .scontro-riga .vs-mini{
   flex:0 0 auto;font-family:'Anton',sans-serif;color:var(--gold);font-size:12.5px;
 }
 .scontro-riga .togli{
   flex:0 0 auto;background:none;border:none;color:var(--ink-soft);cursor:pointer;
-  font-size:15.5px;line-height:1;padding:4px 2px;
+  display:flex;align-items:center;padding:6px 2px;
 }
 
 button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
@@ -155,7 +156,7 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 .faq-sottotitolo:first-child{margin-top:0;}
 
 .faq-tabella{width:100%;border-collapse:collapse;font-family:'Oswald',sans-serif;font-size:14px;margin:4px 0 12px;}
-.faq-tabella td{padding:7px 2px;border-bottom:1px solid rgba(36,27,30,.15);vertical-align:baseline;}
+.faq-tabella td{padding:7px 2px;border-bottom:1px solid var(--filo-lieve);vertical-align:baseline;}
 .faq-tabella tr:last-child td{border-bottom:none;}
 .faq-tabella td.val{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600;padding-left:12px;}
 
@@ -163,7 +164,7 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 .faq-chip{
   border:1px solid var(--ink);background:var(--paper-input);padding:4px 9px;
   font-family:'Oswald',sans-serif;font-size:13.5px;font-variant-numeric:tabular-nums;
-  box-shadow:2px 2px 0 rgba(36,27,30,.9);
+  box-shadow:var(--shadow-hard-xs);
 }
 
 .faq-criteri{margin:4px 0 12px;padding-left:22px;font-family:'Oswald',sans-serif;font-size:14.5px;}

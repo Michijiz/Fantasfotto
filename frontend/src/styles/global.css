@@ -1,4 +1,21 @@
-/* I colori vivono tutti qui: il tema scelto dall'utente (src/temi.js) riscrive
+/* ===== Grammatica visiva della Gazzetta =====
+   Ogni elemento nuovo deve rispettarla, così l'app resta un giornale:
+   - Angoli vivi ovunque (--radius: 0). Il cerchio è riservato ai bollini delle
+     squadre (stemmi, bollino del tema): è la "maglia", non un ornamento.
+   - Ombre dure spostate, mai sfumate: --shadow-hard / -sm / -xs / --shadow-tocco.
+   - Cornici: 2px --rule per i riquadri (card, nav, drawer, FAB, toast);
+     1px --ink-soft per i controlli; tratteggio 1px per i divisori di lista.
+   - Stato "sei qui": filo rosso di 3px (--stamp-red). Sotto, nelle liste
+     orizzontali (tab, bottom nav); a sinistra, in quelle verticali (archivio,
+     classifica, drawer).
+   - Stato "scelto" (tessere, temi, ruolo): bordo interno rosso 2px + ombra dura.
+   - Tipografia: Anton per titoli e nomi, Oswald maiuscolo per etichette e
+     comandi, Libre Baskerville per il testo che si legge.
+   - Materiali: carta per il contenuto; vetro tinto d'inchiostro (--vetro) solo
+     per la cornice che galleggia sopra il contenuto (nav, drawer, toast).
+   - Icone: Phosphor (@phosphor-icons/react), peso regular; fill per l'attivo.
+
+   I colori vivono tutti qui: il tema scelto dall'utente (src/temi.js) riscrive
    queste variabili su :root, quindi qualunque regola che usi un colore letterale
    invece di una var() resterebbe indietro quando si cambia squadra. */
 :root{
@@ -14,8 +31,26 @@
   --nav-testo: #f1cdda;
   --verde: #2f7a4a; /* esito positivo: non dipende dal tema */
 
-  --shadow-hard: 6px 6px 0 rgba(36,27,30,0.9);
-  --shadow-hard-sm: 4px 4px 0 rgba(36,27,30,0.9);
+  /* Ombre e fili derivati dall'inchiostro del tema: prima erano rgba(36,27,30,…)
+     fissi (il vecchio inchiostro marrone), che col Palermo nero o l'Atalanta
+     restavano indietro rispetto al resto. */
+  --ombra: color-mix(in srgb, var(--ink) 90%, transparent);
+  --ombra-lieve: color-mix(in srgb, var(--ink) 14%, transparent);
+  --filo-lieve: color-mix(in srgb, var(--ink) 15%, transparent);
+  --velo: color-mix(in srgb, var(--ink) 45%, transparent); /* dietro sheet e drawer */
+  --shadow-hard: 6px 6px 0 var(--ombra);
+  --shadow-hard-sm: 4px 4px 0 var(--ombra);
+  --shadow-hard-xs: 2px 2px 0 var(--ombra);
+  --shadow-tocco: 1px 1px 0 var(--ombra-lieve); /* controlli piccoli: bottoni voto, segni, chip */
+
+  /* ===== Vetro (bottom nav, drawer, toast) =====
+     Unica manopola per la trasparenza di TUTTI gli elementi in vetro: più bassa
+     la percentuale, più trasparente. Sotto il 45% le scritte si confondono con
+     il testo degli articoli che scorre sotto. */
+  --vetro-tinta: 76%;
+  --vetro: color-mix(in srgb, var(--ink) var(--vetro-tinta), transparent);
+  --vetro-sfocatura: blur(20px) saturate(1.7);
+  --vetro-filo: rgba(255,255,255,.16); /* divisori tratteggiati dentro il vetro */
   --paper-highlight: rgba(255,255,255,0.65);
   --radius: 0;
   --ease-tap: cubic-bezier(.2,.8,.2,1);
@@ -29,7 +64,7 @@
    niente menu "copia/condividi" di iOS sui controlli — il testo degli articoli
    (article, p, h1-h4 di prosa) resta fuori da questa regola e rimane selezionabile. */
 button, .nav-item, .squadra-riga, .archivio-item,
-.voto-btn, .tab, .fab, .chip, .hamburger, .drawer a, .tema-dot,
+.voto-btn, .tab, .fab, .chip, .hamburger, .drawer-voce, .chiudi-sheet,
 .tema-carta, .ruolo-carta, .match-preview{
   touch-action: manipulation;
   -webkit-touch-callout: none;
@@ -63,7 +98,7 @@ body{
   background: var(--paper);
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0px, rgba(0,0,0,0.035) 1px, transparent 1px, transparent 2px);
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--ink) 3.5%, transparent) 0px, color-mix(in srgb, var(--ink) 3.5%, transparent) 1px, transparent 1px, transparent 2px);
   color:var(--ink);
   font-family:'Libre Baskerville', serif;
   -webkit-font-smoothing:antialiased;
@@ -111,7 +146,7 @@ body{
   background:var(--stamp-red);color:#fff;border:none;padding:6px 12px;
   font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;
 }
-.install-banner button.chiudi{background:none;border:none;color:var(--paper);opacity:.6;font-size:17.5px;cursor:pointer;padding:0 2px;}
+.install-banner button.chiudi{background:none;border:none;color:var(--paper);opacity:.7;cursor:pointer;padding:6px 2px;display:flex;}
 
 .app-header{
   position:absolute;top:0;left:0;right:0;z-index:5;
@@ -122,67 +157,24 @@ body{
 }
 .app-header .top-row{display:flex;justify-content:space-between;align-items:center;padding:4px 10px 0;}
 
-/* Area di tocco 44px (minimo consigliato su iOS); il cerchio disegnato resta 34px. */
+/* Area di tocco 44px (minimo consigliato su iOS); il riquadro disegnato resta 34px.
+   Riquadro e non cerchio: il cerchio è riservato ai bollini delle squadre. */
 .hamburger{
   position:relative;width:44px;height:44px;padding:0;border:none;background:none;
   display:flex;align-items:center;justify-content:center;color:var(--ink);cursor:pointer;
   transition: transform .15s var(--ease-tap);
 }
 .hamburger::before{
-  content:'';position:absolute;inset:5px;border:1.5px solid var(--ink);border-radius:50%;
+  content:'';position:absolute;inset:5px;border:1.5px solid var(--ink);box-shadow:var(--shadow-hard-xs);
+  transition:box-shadow .12s var(--ease-tap), transform .12s var(--ease-tap);
 }
-.hamburger:active{ transform:scale(.9); }
-.hamburger svg{width:17px;height:17px;position:relative;}
-
-/* ===== drawer profilo (menu hamburger) ===== */
-.scrim{
-  position:absolute;inset:0;background:rgba(20,12,14,.45);opacity:0;pointer-events:none;
-  transition:opacity .22s var(--ease-tap);z-index:9;
-}
-.scrim.aperto{opacity:1;pointer-events:auto;}
-.drawer{
-  position:absolute;top:0;bottom:0;left:0;width:250px;background:var(--paper-dark);
-  border-right:4px solid var(--rule);transform:translateX(-104%);transition:transform .28s var(--ease-tap);
-  z-index:10;padding:26px 18px;padding-top:calc(26px + env(safe-area-inset-top,0));
-  display:flex;flex-direction:column;gap:4px;
-}
-.drawer.aperto{transform:translateX(0);}
-/* Il filo nero su testo color carta funziona solo sui corpi grandi (testata,
-   titolo dell'articolo): sotto i ~24px il contorno si impasta e la scritta
-   diventa un'ombra chiara su fondo chiaro. Da qui in giù i titoli sono pieni. */
-.drawer .chi{
-  font-family:'Anton',sans-serif;font-size:18.5px;margin-bottom:2px;
-  color:var(--ink);
-}
-.drawer .ruolo{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:4px;}
-.drawer-intestazione{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-  padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--ink-soft);
-}
-.drawer a, .drawer button.drawer-link{
-  font-family:'Oswald',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.05em;
-  color:var(--ink);text-decoration:none;padding:11px 6px;border-bottom:1px dashed var(--ink-soft);
-  background:none;border-left:none;border-right:none;border-top:none;text-align:left;cursor:pointer;
-}
-.drawer a.esci, .drawer button.esci{color:var(--stamp-red);margin-top:auto;border-bottom:none;}
+.hamburger:active{ transform:translate(1px,1px); }
+.hamburger:active::before{ box-shadow:none; }
+.hamburger svg{position:relative;}
 
 /* ===== selettore tema =====
-   Il bollino nel drawer mostra i colori sociali della squadra scelta, divisi a
-   metà come una maglia: prima era un cerchietto arcobaleno che non diceva nulla
-   e apriva cinque campioni finti. Ora apre il foglio con tutte le squadre. */
-.tema-dot{
-  flex:0 0 auto;cursor:pointer;background:none;border:none;
-  margin-left:auto;padding:0 0 0 10px;border-left:1px dashed var(--ink-soft);
-  display:flex;align-items:center;gap:7px;border-radius:0;
-}
-.tema-dot .pallina{
-  width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);
-  background: var(--tema-sfondo, linear-gradient(135deg, var(--stamp-red) 0 50%, var(--ink) 50% 100%));
-  box-shadow: 1px 1px 0 rgba(36,27,30,.5);
-  transition: transform .15s var(--ease-tap);
-}
-.tema-dot:active .pallina{transform:scale(.88);}
-
+   Griglia delle squadre di Serie A (iscrizione e foglio "Colori della Gazzetta"):
+   ogni tessera ha il bollino con i colori sociali divisi a metà, come una maglia. */
 .tema-griglia{
   display:grid;grid-template-columns:repeat(auto-fill, minmax(92px, 1fr));gap:10px;
   padding-top:4px;
@@ -197,7 +189,7 @@ body{
 .tema-carta:active{transform:translate(1px,1px);}
 .tema-carta .dischetto{
   width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);
-  box-shadow:1px 1px 0 rgba(36,27,30,.5);
+  box-shadow:1px 1px 0 color-mix(in srgb, var(--ink) 50%, transparent);
 }
 .tema-carta .nome{
   font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
@@ -248,12 +240,11 @@ body{
 }
 .masthead h1{
   font-family:'Anton', sans-serif;font-size: clamp(32px, 8vw, 52px);letter-spacing:.5px;margin:5px 0 6px;line-height:0.95;
-  text-shadow: 1px 1px 0 rgba(36,27,30,0.08);
   transition: font-size .32s var(--ease-tap);
   /* Testata "stampata": il contorno scuro tiene leggibile qualunque tinta di
      riempimento, comprese le maglie chiare (es. il bianco della Juventus). */
   -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;
-  text-shadow: 2px 2px 0 rgba(36,27,30,0.22);
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 22%, transparent);
 }
 /* Testata a due tinte: ogni metà del nome prende un colore sociale della
    squadra scelta (vedi --testata-1/2 in temi.js), es. Juventus bianco/nero. */
@@ -318,10 +309,23 @@ h2.section-title .vedi-tutto{
 
 label{display:block;font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:10px 0 4px;}
 input[type=text],input[type=number],input[type=password],select,textarea{
+  -webkit-appearance:none;appearance:none;border-radius:0;
   width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:15.5px;
   border:1px solid var(--ink-soft);background:var(--paper-input);color:var(--ink);
   transition: border-color .15s, box-shadow .15s;
 }
+/* Freccia della tendina disegnata con due triangoli nel colore dell'inchiostro:
+   quella nativa cambia aspetto a ogni sistema e non segue il tema. */
+select{
+  padding-right:34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%;
+  background-size:5px 5px, 5px 5px;
+  background-repeat:no-repeat;
+}
+select:disabled{opacity:.6;}
 input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{
   border-color: var(--gold);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent);
@@ -332,6 +336,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,selec
 .img-preview{width:52px;height:52px;object-fit:cover;border:1px solid var(--ink-soft);}
 
 .campo-data{
+  -webkit-appearance:none;appearance:none;border-radius:0;
   width:100%;padding:9px 10px;font-family:'Libre Baskerville',serif;font-size:15.5px;
   border:1px solid var(--ink-soft);background:var(--paper-input);color:var(--ink);
 }
@@ -427,7 +432,7 @@ button.link:hover{ color: var(--ink); }
   border:3px solid var(--stamp-red);color:var(--stamp-red);background:var(--paper);
   font-family:'Anton',sans-serif;font-size:13.5px;letter-spacing:.1em;
   padding:4px 10px;transform:rotate(-2deg);
-  box-shadow:2px 2px 0 rgba(36,27,30,0.9);
+  box-shadow:var(--shadow-hard-xs);
   animation: timbra .4s var(--ease-tap);
 }
 .article .data-edizione{
@@ -464,7 +469,7 @@ button.link:hover{ color: var(--ink); }
   line-height:.75;
   margin:2px 10px 0 0;
   color: var(--stamp-red);
-  text-shadow: 2px 2px 0 rgba(36,27,30,0.9);
+  text-shadow: 2px 2px 0 var(--ombra);
 }
 /* Nel teaser il capolettera su un solo paragrafo corto sballava l'altezza riga. */
 .teaser .corpo p:first-child::first-letter{
@@ -574,7 +579,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .match-mid{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;padding:0 6px;}
 .countdown{
   background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:11.5px;
-  padding:3px 10px;border-radius:100px;letter-spacing:.04em;
+  padding:3px 10px;letter-spacing:.04em;
 }
 
 /* La classifica non è più una tabella: le regole stanno in styles/regolamento.css
@@ -595,12 +600,12 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   font-family:'Oswald',sans-serif;font-size:13.5px;padding:7px 11px;border:1px solid var(--ink);background:var(--paper-input);cursor:pointer;
   display:flex;align-items:center;gap:7px;
   transition: transform .08s var(--ease-tap), background .12s, box-shadow .12s;
-  box-shadow: 1px 1px 0 rgba(36,27,30,0.12);
+  box-shadow: var(--shadow-tocco);
 }
 .voto-btn:hover{background:var(--paper-dark);}
 .voto-btn:active{ transform: translate(1px,1px); box-shadow:none; }
 .voto-btn .count{
-  background:var(--ink);color:var(--paper);border-radius:50%;min-width:18px;height:18px;
+  background:var(--ink);color:var(--paper);min-width:18px;height:18px;padding:0 4px;
   display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-variant-numeric:tabular-nums;
 }
 .voto-btn.mio-voto{background:var(--stamp-red);color:#fff;border-color:var(--stamp-red);}
@@ -617,7 +622,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .chip{
   font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--ink);color:var(--paper);padding:5px 11px;
   display:flex;align-items:center;gap:6px;
-  box-shadow: 1px 1px 0 rgba(36,27,30,0.15);
+  box-shadow: var(--shadow-tocco);
 }
 .chip.admin{background:var(--gold);}
 .chip button{background:none;border:none;color:var(--paper);cursor:pointer;font-weight:bold;}
@@ -625,7 +630,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .profilo-badge{
   display:inline-block;font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--gold);color:var(--paper);
   padding:3px 9px;letter-spacing:.05em;text-transform:uppercase;
-  box-shadow: 1px 1px 0 rgba(36,27,30,0.15);
+  box-shadow: var(--shadow-tocco);
 }
 
 .archivio-item{
@@ -635,7 +640,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   transition: background .15s, padding-left .15s;
   background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;
 }
-.archivio-item:hover{ background: rgba(0,0,0,0.035); padding-left:8px; }
+.archivio-item:hover{ background: color-mix(in srgb, var(--ink) 3.5%, transparent); padding-left:8px; }
 .archivio-item.corrente{ background: color-mix(in srgb, var(--stamp-red) 10%, transparent); box-shadow: inset 3px 0 0 var(--stamp-red); padding-left:8px; }
 .archivio-item .g{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
 .archivio-item h4{font-family:'Anton',sans-serif;font-size:18.5px;margin:2px 0;}
@@ -646,7 +651,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .skeleton-line{
   height:14px;
   margin-bottom:10px;
-  background: linear-gradient(90deg, rgba(36,27,30,0.08) 25%, rgba(36,27,30,0.16) 37%, rgba(36,27,30,0.08) 63%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 8%, transparent) 25%, color-mix(in srgb, var(--ink) 16%, transparent) 37%, color-mix(in srgb, var(--ink) 8%, transparent) 63%);
   background-size: 400% 100%;
   animation: pulsa 1.4s ease infinite;
 }
@@ -660,7 +665,9 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
    e il FAB finivano sopra (o sotto) la nav nella PWA installata. */
 .toast{
   position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);left:50%;transform:translateX(-50%) translateY(8px);
-  background:var(--ink);color:var(--paper);
+  /* Stesso vetro della bottom nav, su cui compare appoggiato. */
+  background:var(--vetro);color:var(--nav-testo);border:2px solid var(--rule);
+  -webkit-backdrop-filter:var(--vetro-sfocatura);backdrop-filter:var(--vetro-sfocatura);
   padding:9px 20px;font-family:'Oswald',sans-serif;font-size:13.5px;letter-spacing:.05em;
   opacity:0;transition:opacity .25s var(--ease-tap), transform .25s var(--ease-tap);
   pointer-events:none;z-index:100;
@@ -699,36 +706,33 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
   transition: transform .12s var(--ease-tap);z-index:9;
 }
 .fab:active{ transform: translate(2px,2px); box-shadow:none; }
-.fab svg{width:24px;height:24px;}
+.fab svg{display:block;}
 
-/* ===== Bottom nav "vetro" (components/layout/BottomNav.jsx) =====
-   Barra fluttuante: il contenuto le scorre sotto e il backdrop-filter lo sfoca.
-   La tinta è l'inchiostro del tema al 76%, così resta leggibile su qualunque
-   carta (rosa, azzurra…) e cambia insieme alla squadra scelta.
-   --nav-h (in :root) è l'ingombro verticale della barra: 64px di barra + 12px
-   di stacco dal fondo. FAB, toast e padding di .contenuto lo usano già, quindi
-   tutto resta sopra la barra senza altre modifiche.
-   Sotto la barra si vede la carta: non serve più la fascia scura di ripiego
-   (body.con-bottom-nav::after) che copriva la striscia sotto la vecchia nav piena. */
+/* ===== Bottom nav in vetro (components/layout/BottomNav.jsx) =====
+   "Vetro da edicola": il materiale è il vetro (il contenuto scorre sotto,
+   sfocato), la grammatica è quella della Gazzetta: angoli vivi, cornice 2px,
+   ombra dura, voce attiva col filo rosso sotto come le .tab.
+   --nav-h (in :root) è l'ingombro verticale: 64px di barra + 12px di stacco.
+   FAB, toast e padding di .contenuto lo usano già. */
 .bottom-nav-vetro{
   /* Centrata con left/right + margin auto, NON con translateX(-50%): la
      transform è gestita da framer-motion (entrata dal basso) e la sovrascrive. */
   position:absolute;z-index:8;
   left:0;right:0;margin:0 auto;
   bottom:max(12px, env(safe-area-inset-bottom, 0px));
-  width:min(440px, calc(100% - 20px));height:64px;
-  display:flex;align-items:stretch;padding:5px;
-  border-radius:999px;
-  background:color-mix(in srgb, var(--ink) 45%, transparent);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
-  -webkit-backdrop-filter:blur(20px) saturate(1.7);
-  backdrop-filter:blur(20px) saturate(1.7);
+  /* -28px e non -24px: lascia spazio all'ombra dura a destra. */
+  width:min(440px, calc(100% - 28px));height:64px;
+  display:flex;align-items:stretch;padding:4px;
+  background:var(--vetro);
+  border:2px solid var(--rule);
+  box-shadow:var(--shadow-hard-sm);
+  -webkit-backdrop-filter:var(--vetro-sfocatura);
+  backdrop-filter:var(--vetro-sfocatura);
 }
-/* Senza backdrop-filter (browser vecchi) la barra diventa piena: meglio che
-   leggere le etichette sopra il testo degli articoli. */
+/* Senza backdrop-filter (browser vecchi) il vetro diventa pieno: meglio che
+   leggere le etichette sopra il testo degli articoli. Vale per nav, drawer e toast. */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .bottom-nav-vetro{ background:var(--ink); }
+  .bottom-nav-vetro, .drawer-vetro, .toast{ background:var(--ink); }
 }
 
 /* min-width:0: le 5 colonne restano uguali anche sui telefoni stretti e le
@@ -744,13 +748,14 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 }
 .nav-item:hover{ color:var(--nav-testo); }
 .nav-item.attivo{ color:var(--gold-chiaro); }
-.nav-item:focus-visible{ outline:2px solid var(--gold-chiaro); outline-offset:-2px; border-radius:999px; }
+.nav-item:focus-visible{ outline:2px solid var(--gold-chiaro); outline-offset:-2px; }
 
-/* La pillola passa da una voce all'altra animata da framer-motion (layoutId). */
+/* Voce attiva: riquadro schiarito + filo rosso sotto (come .tab.active).
+   Scorre da una voce all'altra con framer-motion (layoutId). */
 .nav-pillola{
-  position:absolute;inset:0;border-radius:999px;z-index:0;
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.10);
+  position:absolute;inset:0;z-index:0;
+  background:rgba(255,255,255,.1);
+  box-shadow:inset 0 -3px 0 var(--stamp-red);
 }
 .nav-icona, .nav-item .etichetta{ position:relative;z-index:1; }
 .nav-icona{ display:flex; }
@@ -760,21 +765,26 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 }
 
 .sheet-overlay{
-  position:absolute;inset:0;background:rgba(36,27,30,0.5);opacity:0;pointer-events:none;
+  position:absolute;inset:0;background:var(--velo);opacity:0;pointer-events:none;
   transition:opacity .22s var(--ease-tap);z-index:20;
 }
 .sheet-overlay.aperto{opacity:1;pointer-events:auto;}
 .sheet{
   position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-top:3px solid var(--rule);
-  box-shadow:0 -8px 24px rgba(36,27,30,.35);transform:translateY(100%);transition:transform .3s var(--ease-tap);
+  box-shadow:0 -4px 0 var(--ombra);transform:translateY(100%);transition:transform .3s var(--ease-tap);
   z-index:21;max-height:78%;display:flex;flex-direction:column;
 }
 .sheet.aperto{transform:translateY(0);}
-.sheet .maniglia{width:38px;height:4px;background:var(--ink-soft);opacity:.4;border-radius:3px;margin:10px auto 2px;flex:0 0 auto;}
-.sheet-header{display:flex;justify-content:space-between;align-items:baseline;padding:4px 18px 10px;border-bottom:2px solid var(--rule);flex:0 0 auto;}
+.sheet .maniglia{width:38px;height:4px;background:var(--ink-soft);opacity:.4;margin:10px auto 2px;flex:0 0 auto;}
+.sheet-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 18px 10px;border-bottom:2px solid var(--rule);flex:0 0 auto;}
 .sheet-header h3{font-family:'Anton',sans-serif;font-size:21px;margin:0;}
 .sheet-header .sotto{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:block;margin-top:2px;}
-.sheet-header .chiudi-sheet{background:none;border:none;font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:2px 4px;}
+.sheet-header .chiudi-sheet{
+  flex:0 0 auto;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  background:var(--paper-input);border:1px solid var(--ink-soft);color:var(--ink);cursor:pointer;
+  box-shadow:var(--shadow-tocco);transition:transform .08s var(--ease-tap);
+}
+.sheet-header .chiudi-sheet:active{transform:translate(1px,1px);box-shadow:none;}
 .sheet-body{overflow-y:auto;padding:4px 18px 24px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0));}
 .match-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px dashed var(--ink-soft);font-family:'Oswald',sans-serif;}
 .match-row:last-child{border-bottom:none;}
@@ -813,7 +823,7 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .splash-titolo{
   margin:0; display:flex; flex-direction:column; line-height:.95;
   font-family:'Anton',sans-serif; font-size: clamp(36px,10vw,56px); letter-spacing:.5px;
-  text-shadow: 2px 2px 0 rgba(36,27,30,0.12);
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 12%, transparent);
   /* Stesso contorno del masthead: senza, le maglie chiare (bianco/giallo)
      sparirebbero sulla carta chiara. */
   -webkit-text-stroke:1.6px var(--ink); paint-order: stroke fill;

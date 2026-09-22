@@ -89,28 +89,30 @@ export default function Login() {
         }
       />
 
-      <div className="auth-toggle tabs">
-        <div className={`tab${tab === 'login' ? ' active' : ''}`} onClick={() => cambiaTab('login')}>Accedi</div>
-        <div className={`tab${tab === 'registrati' ? ' active' : ''}`} onClick={() => cambiaTab('registrati')}>Iscriviti alla Lega</div>
+      {/* Bottoni veri (non div): si raggiungono da tastiera e ricevono le regole
+          di tocco comuni a tutti i comandi (global.css). */}
+      <div className="auth-toggle tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'login'} className={`tab${tab === 'login' ? ' active' : ''}`} onClick={() => cambiaTab('login')}>Accedi</button>
+        <button type="button" role="tab" aria-selected={tab === 'registrati'} className={`tab${tab === 'registrati' ? ' active' : ''}`} onClick={() => cambiaTab('registrati')}>Iscriviti alla Lega</button>
       </div>
 
       {tab === 'login' ? (
         <form key="login" className="card tab-content" onSubmit={submitLogin}>
           <label>Username</label>
-          <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="il tuo username" />
+          <input type="text" autoComplete="username" autoCapitalize="none" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} placeholder="il tuo username" />
           <label>PIN</label>
-          <input type="password" inputMode="numeric" value={loginPin} onChange={(e) => setLoginPin(e.target.value)} placeholder="4-6 cifre" />
+          <input type="password" inputMode="numeric" autoComplete="current-password" value={loginPin} onChange={(e) => setLoginPin(e.target.value)} placeholder="4-6 cifre" />
           <button className="primary" type="submit" disabled={caricando}>Entra in redazione</button>
           {errore && <div className="errore-msg">{errore}</div>}
         </form>
       ) : (
         <form key="registrati" className="card tab-content" onSubmit={submitRegistrati}>
           <label>Username</label>
-          <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} placeholder="scegline uno" />
+          <input type="text" autoComplete="username" autoCapitalize="none" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} placeholder="scegline uno" />
           <label>Nome da mostrare</label>
           <input type="text" value={regNome} onChange={(e) => setRegNome(e.target.value)} placeholder="es. Michelangelo" />
           <label>PIN (4-6 cifre)</label>
-          <input type="password" inputMode="numeric" value={regPin} onChange={(e) => setRegPin(e.target.value)} placeholder="il tuo PIN segreto" />
+          <input type="password" inputMode="numeric" autoComplete="new-password" value={regPin} onChange={(e) => setRegPin(e.target.value)} placeholder="il tuo PIN segreto" />
           <label>Squadra</label>
           {caricandoSquadre ? (
             <div className="skeleton-line w-60" />

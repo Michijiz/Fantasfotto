@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from '@phosphor-icons/react';
 
 // Pannello che sale dal basso (bottom sheet), usato per "tutti gli scontri della
 // giornata", per il form "Nuova edizione" e per gli scontri di giornata dell'admin.
@@ -32,7 +33,9 @@ export default function Sheet({ aperto, onChiudi, titolo, sottotitolo, grande = 
             <h3>{titolo}</h3>
             {sottotitolo && <span className="sotto">{sottotitolo}</span>}
           </div>
-          <button className="chiudi-sheet" onClick={onChiudi}>✕</button>
+          <button className="chiudi-sheet" onClick={onChiudi} aria-label="Chiudi">
+            <X size={18} />
+          </button>
         </div>
         <div className="sheet-body">{children}</div>
       </div>

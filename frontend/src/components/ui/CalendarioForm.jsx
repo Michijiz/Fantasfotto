@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { X } from '@phosphor-icons/react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
@@ -131,7 +132,7 @@ export default function CalendarioForm({ giornata, onFatto }) {
           <select value={s.casa} onChange={aggiorna(i, 'casa')}>{opzioni(s.casa)}</select>
           <span className="vs-mini">VS</span>
           <select value={s.trasferta} onChange={aggiorna(i, 'trasferta')}>{opzioni(s.trasferta)}</select>
-          <button type="button" className="togli" onClick={() => togliRiga(i)} title="Togli lo scontro">✕</button>
+          <button type="button" className="togli" onClick={() => togliRiga(i)} title="Togli lo scontro" aria-label="Togli lo scontro"><X size={16} /></button>
         </div>
       ))}
 

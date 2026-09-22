@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { List } from '@phosphor-icons/react';
 import { useDati } from '../../context/DataContext';
 import Masthead from '../ui/Masthead';
 
@@ -63,9 +64,7 @@ export default function AppHeader({ scrollRef, onApriMenu }) {
     <div ref={headerRef} className={`app-header${compatto ? ' compatto' : ''}`}>
       <div className="top-row">
         <button className="hamburger" aria-label="Apri profilo" onClick={onApriMenu}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
+          <List size={18} weight="bold" />
         </button>
       </div>
       <Masthead
