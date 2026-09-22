@@ -10,6 +10,20 @@ const formattaQuota = (n) => (n == null ? '—' : Number(n).toFixed(2).replace('
 
 const ETICHETTA_ESITO = { attesa: 'In attesa', vinta: 'Vinta', persa: 'Persa' };
 
+// "In attesa" da solo sembra un guasto: uno non sa se deve fare qualcosa o no.
+// Il motivo è sempre lo stesso — mancano dei fantapunti — e si scrive per esteso
+// sotto al titolo. Nel bollo no: lì ci sta una parola, e una frase lunga manderebbe
+// l'intestazione su tre righe.
+function motivoAttesa(giornata) {
+  const scontri = giornata?.accoppiamenti || [];
+  const mancanti = scontri.filter((a) => a.golCasa == null || a.golTrasferta == null).length;
+  if (mancanti === 0) return null;
+  const quali = mancanti === scontri.length
+    ? 'Mancano ancora i fantapunti di questa giornata'
+    : `Manca il risultato di ${mancanti} scontr${mancanti === 1 ? 'o' : 'i'}`;
+  return `${quali}: la schedina si risolve da sola appena la redazione li inserisce.`;
+}
+
 // '1' | 'X' | '2' già uscito, oppure null se lo scontro non è ancora stato giocato.
 const esitoReale = (a) => {
   if (a.golCasa == null || a.golTrasferta == null) return null;
@@ -203,8 +217,13 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
           <button className="primary" onClick={consegna} disabled={!completa || inviando}>
             {miaSchedina ? 'Aggiorna la schedina' : 'Consegna la schedina'}
           </button>
-          {!completa && (
+          {!completa ? (
             <p className="nota-form">Serve un pronostico su tutti gli scontri: la multipla è unica.</p>
+          ) : (
+            <p className="nota-form">
+              Le quote di questa giornata sono uguali per tutti e non cambiano più:
+              consegnare presto o all&apos;ultimo non sposta nulla.
+            </p>
           )}
         </>
       )}
@@ -263,6 +282,10 @@ function SchedinaEsito({ giornata, miaSchedina }) {
           <span className={`bollo-esito ${miaSchedina.esito}`}>{ETICHETTA_ESITO[miaSchedina.esito]}</span>
         )}
       </h2>
+
+      {miaSchedina?.esito === 'attesa' && motivoAttesa(giornata) && (
+        <p className="nota-form">{motivoAttesa(giornata)}</p>
+      )}
 
       {miaSchedina ? (
         <>

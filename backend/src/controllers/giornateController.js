@@ -1,6 +1,6 @@
 const Giornata = require('../models/Giornata');
 const Schedina = require('../models/Schedina');
-const { arricchisciGiornata } = require('../utils/regolamento');
+const { arricchisciGiornata, chiaveCoppia } = require('../utils/regolamento');
 const { risolviSchedine } = require('./schedineController');
 
 // Le giornate in uscita hanno, per ogni accoppiamento, i campi calcolati
@@ -58,7 +58,28 @@ const salva = async (req, res) => {
         viste.add(id);
       }
     }
-    aggiornamenti.accoppiamenti = coppie;
+    // Gli scontri arrivano dal form come oggetti nudi, senza _id: facendone $set
+    // così com'erano, mongoose creava ogni volta sottodocumenti NUOVI, con id
+    // nuovi. Le schedine però puntano all'id dello scontro salvato al momento in
+    // cui sono state giocate: dopo il primo salvataggio dei punteggi quei
+    // riferimenti diventavano orfani e le schedine restavano "in attesa" per
+    // sempre. Qui l'id si riprende da quello che c'è già, riconoscendo lo scontro
+    // dalle due squadre. Se la coppia cambia (anche solo invertendo campo e
+    // trasferta) è un altro scontro e un id nuovo è giusto.
+    const esistente = await Giornata.findOne({ numero }).select('accoppiamenti').lean();
+    const perCoppia = new Map(
+      (esistente?.accoppiamenti || []).map((a) => [chiaveCoppia(a.squadraCasa, a.squadraTrasferta), a])
+    );
+
+    aggiornamenti.accoppiamenti = coppie.map((a) => {
+      const base = { squadraCasa: a.squadraCasa, squadraTrasferta: a.squadraTrasferta };
+      const vecchio = perCoppia.get(chiaveCoppia(a.squadraCasa, a.squadraTrasferta));
+      if (!vecchio) return base;
+      // Insieme all'id si porta dietro anche la quota già fissata: le quote di una
+      // giornata si aprono una volta sola, e un salvataggio dei punteggi non deve
+      // rimetterle in discussione sotto a chi ha già consegnato.
+      return { ...base, _id: vecchio._id, quote: vecchio.quote };
+    });
   }
 
   if (punteggi !== undefined) {

@@ -3,7 +3,8 @@ const Giornata = require('../models/Giornata');
 const Squadra = require('../models/Squadra');
 const User = require('../models/User');
 const {
-  arricchisciGiornata, arricchisciConQuote, calcolaClassifica, esitoSchedina
+  arricchisciGiornata, arricchisciConQuote, calcolaClassifica, esitoSchedina,
+  calcolaQuoteGiornata, quoteDaForma
 } = require('../utils/regolamento');
 
 const POPOLA_SQUADRE = [
@@ -24,6 +25,49 @@ async function tabelloneCorrente() {
     Giornata.find({ conclusa: true }).sort('numero').lean()
   ]);
   return calcolaClassifica(squadre, giornate);
+}
+
+// Apre il banco: fissa una volta sola le quote degli scontri di una giornata.
+// Da qui in poi il tabellone di quella giornata non cambia più, quindi due
+// schedine con gli stessi pronostici valgono uguale anche se consegnate a giorni
+// di distanza. Prima le quote si ricalcolavano a ogni consegna sulla classifica
+// di quell'istante: bastava che la redazione chiudesse la giornata precedente —
+// cosa che succede a metà settimana, a schedine già aperte — perché la stessa
+// identica multipla passasse da 9,67 a 4,62.
+//
+// Idempotente: se le quote ci sono già non tocca niente e non scrive. Tocca solo
+// gli scontri che ne sono sprovvisti, così uno scontro aggiunto dopo prende le
+// sue senza rifare quelle degli altri.
+// Torna true se ha scritto, così chi chiama sa se deve rileggere la giornata.
+async function assicuraQuote(numero) {
+  const giornata = await Giornata.findOne({ numero });
+  if (!giornata || giornata.accoppiamenti.length === 0) return false;
+
+  const scoperti = giornata.accoppiamenti.filter((a) => a.quote?.casa == null);
+  if (scoperti.length === 0) return false;
+
+  const tabellone = await tabelloneCorrente();
+  const calcolate = calcolaQuoteGiornata(giornata.toObject(), tabellone);
+
+  giornata.accoppiamenti.forEach((a, i) => {
+    if (a.quote?.casa != null) return;
+    a.quote = quoteDaForma(calcolate[i]);
+  });
+  if (!giornata.quoteFissateIl) giornata.quoteFissateIl = new Date();
+
+  await giornata.save();
+  return true;
+}
+
+// Le schedine si risolvono da sole appena i risultati ci sono: non serve che la
+// redazione riapra e risalvi la giornata perché smettano di dire "in attesa".
+// Gira all'apertura della pagina, costa una query quando non c'è niente da fare
+// e non scrive nulla se nessun esito è cambiato (risolviSchedine è idempotente).
+// Le cinque più recenti bastano: più indietro di così non c'è niente di aperto.
+async function risolviArretrate() {
+  const numeri = await Schedina.distinct('giornataNumero', { esito: 'attesa' });
+  const recenti = numeri.sort((a, b) => b - a).slice(0, 5);
+  for (const numero of recenti) await risolviSchedine(numero);
 }
 
 // Una schedina si può compilare finché la giornata non è conclusa e, se ha una
@@ -50,10 +94,14 @@ async function giornataPrecedente(utenteId) {
 }
 
 const apertura = async (req, res) => {
-  const [grezza, precedente] = await Promise.all([
-    giornataAperta(),
-    giornataPrecedente(req.utente.id)
-  ]);
+  await risolviArretrate();
+
+  let grezza = await giornataAperta();
+  // Il banco si apre alla prima richiesta della giornata: è il momento in cui
+  // qualcuno potrebbe giocarla, quindi è lì che le quote devono cristallizzarsi.
+  if (grezza && await assicuraQuote(grezza.numero)) grezza = await giornataAperta();
+
+  const precedente = await giornataPrecedente(req.utente.id);
 
   if (!grezza) {
     return res.json({
@@ -61,8 +109,8 @@ const apertura = async (req, res) => {
     });
   }
 
-  const tabellone = await tabelloneCorrente();
-  const giornata = arricchisciConQuote(arricchisciGiornata(grezza), tabellone);
+  // Niente tabellone: le quote stanno sugli scontri e non si ricalcolano più.
+  const giornata = arricchisciConQuote(arricchisciGiornata(grezza));
 
   const miaSchedina = await Schedina.findOne({
     utente: req.utente.id,
@@ -84,12 +132,17 @@ const salva = async (req, res) => {
     return res.status(400).json({ errore: 'Schedina vuota' });
   }
 
+  // Se per qualche motivo il banco non si fosse ancora aperto (schedina consegnata
+  // senza passare dalla pagina), lo si apre adesso. Le quote restano comunque
+  // quelle fissate una volta sola: qui non si ricalcola niente, ed è il motivo per
+  // cui il numero che vedi a schermo è lo stesso che ti viene salvato.
+  await assicuraQuote(giornataNumero);
+
   const grezza = await Giornata.findOne({ numero: giornataNumero }).populate(POPOLA_SQUADRE).lean();
   if (!grezza) return res.status(404).json({ errore: 'Giornata non trovata' });
   if (chiusa(grezza)) return res.status(400).json({ errore: 'Schedine chiuse per questa giornata' });
 
-  const tabellone = await tabelloneCorrente();
-  const giornata = arricchisciConQuote(arricchisciGiornata(grezza), tabellone);
+  const giornata = arricchisciConQuote(arricchisciGiornata(grezza));
   const perId = new Map(giornata.accoppiamenti.map((a) => [String(a._id), a]));
 
   // La multipla è su tutti gli scontri: una schedina parziale non si salva.

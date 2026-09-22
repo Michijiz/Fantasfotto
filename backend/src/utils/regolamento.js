@@ -37,6 +37,11 @@ function puntiPerGol(golFatti, golSubiti) {
 // Funziona sia con ref non popolati (ObjectId) sia con squadre popolate ({ _id, nome }).
 const idDi = (ref) => String(ref?._id ?? ref);
 
+// Identifica uno scontro per le due squadre, nell'ordine casa-trasferta. L'ordine
+// conta: invertire campo e trasferta è un altro scontro, perché cambia cosa
+// significano "1" e "2" su una schedina già giocata.
+const chiaveCoppia = (casa, trasferta) => `${idDi(casa)}>${idDi(trasferta)}`;
+
 const arrotonda = (n) => Math.round(n * 10) / 10;
 
 // Punteggi "per squadra" inseriti dal form Nuova Edizione, indicizzati per id.
@@ -247,19 +252,53 @@ function mappaPosizioni(tabellone) {
   return new Map(tabellone.map((r, i) => [String(r._id), i + 1]));
 }
 
-// Aggiunge a ogni accoppiamento di una giornata le quote 1/X/2 calcolate sulla
-// classifica passata. La giornata va già passata da arricchisciGiornata.
+// Tabellone senza favoriti: tutti gli scontri alla pari.
+const quoteAllaPari = () => ({ 1: QUOTE.base, X: QUOTE.basePareggio, 2: QUOTE.base });
+
+// La classifica ha qualcosa da dire solo dopo che si è giocato. Prima della prima
+// giornata conclusa sono tutti a zero su ogni criterio, quindi l'ordinamento
+// finisce per alfabeto e il "favorito" di ogni scontro diventa chi ha il nome che
+// viene prima: quote inventate. In quel caso non si fa finta di saperne qualcosa
+// e si dà lo stesso valore a 1 e a 2.
+function classificaFormata(tabellone) {
+  return (tabellone || []).some((r) => (r.giocate || 0) > 0);
+}
+
+// Le quote di una giornata, calcolate sulla classifica passata. Non le salva:
+// a fissarle è schedineController.assicuraQuote, una volta sola.
+function calcolaQuoteGiornata(giornata, tabellone) {
+  const formata = classificaFormata(tabellone);
+  const posizioni = mappaPosizioni(tabellone || []);
+  return (giornata?.accoppiamenti || []).map((a) => {
+    if (!formata) return quoteAllaPari();
+    const posCasa = posizioni.get(idDi(a.squadraCasa)) ?? 0;
+    const posTrasferta = posizioni.get(idDi(a.squadraTrasferta)) ?? 0;
+    const distacco = posCasa && posTrasferta ? posCasa - posTrasferta : 0;
+    return quotePerScontro(distacco);
+  });
+}
+
+// Sul database le quote stanno come { casa, pareggio, trasferta } — nomi veri,
+// invece di chiavi '1'/'X'/'2' che in mongoose sarebbero percorsi scomodi.
+// Verso il frontend viaggiano nella forma 1/X/2, che è quella dei pronostici.
+const quoteInForma = (q) => (q && q.casa != null
+  ? { 1: q.casa, X: q.pareggio, 2: q.trasferta }
+  : null);
+
+const quoteDaForma = (q) => ({ casa: q['1'], pareggio: q.X, trasferta: q['2'] });
+
+// Aggiunge a ogni accoppiamento le sue quote 1/X/2. Quelle fissate sullo scontro
+// hanno la precedenza e sono la norma; il calcolo al volo resta come rete per uno
+// scontro appena aggiunto, che le sue quote non le ha ancora.
 function arricchisciConQuote(giornata, tabellone) {
   if (!giornata) return giornata;
-  const posizioni = mappaPosizioni(tabellone || []);
+  const calcolate = calcolaQuoteGiornata(giornata, tabellone);
   return {
     ...giornata,
-    accoppiamenti: (giornata.accoppiamenti || []).map((a) => {
-      const posCasa = posizioni.get(idDi(a.squadraCasa)) ?? 0;
-      const posTrasferta = posizioni.get(idDi(a.squadraTrasferta)) ?? 0;
-      const distacco = posCasa && posTrasferta ? posCasa - posTrasferta : 0;
-      return { ...a, quote: quotePerScontro(distacco) };
-    })
+    accoppiamenti: (giornata.accoppiamenti || []).map((a, i) => ({
+      ...a,
+      quote: quoteInForma(a.quote) || calcolate[i]
+    }))
   };
 }
 
@@ -275,13 +314,22 @@ function esitoAccoppiamento(accoppiamento) {
 // Esito della multipla: 'vinta' solo se ogni pronostico è azzeccato, 'persa' se
 // almeno uno sbaglia, 'attesa' finché manca anche un solo risultato.
 function esitoSchedina(pronostici, giornataArricchita) {
-  const esiti = new Map(
-    (giornataArricchita?.accoppiamenti || []).map((a) => [String(a._id), esitoAccoppiamento(a)])
+  const accoppiamenti = giornataArricchita?.accoppiamenti || [];
+  const perId = new Map(accoppiamenti.map((a) => [String(a._id), esitoAccoppiamento(a)]));
+
+  // Ripiego sulle due squadre. Serve alle schedine giocate prima che il
+  // salvataggio della giornata smettesse di rigenerare gli id degli scontri: il
+  // loro `accoppiamento` punta a un id che non esiste più, e senza questo
+  // restavano "in attesa" per sempre anche con tutti i punteggi inseriti.
+  // Il pronostico si porta dietro le due squadre, quindi lo scontro si ritrova.
+  const perCoppia = new Map(
+    accoppiamenti.map((a) => [chiaveCoppia(a.squadraCasa, a.squadraTrasferta), esitoAccoppiamento(a)])
   );
 
   let completa = true;
   for (const p of pronostici || []) {
-    const reale = esiti.get(String(p.accoppiamento));
+    const reale = perId.get(String(p.accoppiamento))
+      ?? perCoppia.get(chiaveCoppia(p.squadraCasa, p.squadraTrasferta));
     if (reale == null) { completa = false; continue; }
     if (reale !== p.esito) return 'persa';
   }
@@ -291,12 +339,17 @@ function esitoSchedina(pronostici, giornataArricchita) {
 module.exports = {
   REGOLE,
   QUOTE,
+  chiaveCoppia,
   fantapuntiInGol,
   puntiPerGol,
   risolviAccoppiamento,
   arricchisciGiornata,
   calcolaClassifica,
   quotePerScontro,
+  classificaFormata,
+  calcolaQuoteGiornata,
+  quoteInForma,
+  quoteDaForma,
   arricchisciConQuote,
   esitoAccoppiamento,
   esitoSchedina
