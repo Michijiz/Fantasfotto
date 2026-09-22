@@ -19,7 +19,7 @@
   --paper-highlight: rgba(255,255,255,0.65);
   --radius: 0;
   --ease-tap: cubic-bezier(.2,.8,.2,1);
-  --nav-h: 88px;
+  --nav-h: 76px; /* barra vetro 64px + 12px di stacco dal fondo */
   --barra-compatta: 48px; /* altezza della testata compatta, sotto la safe area */
 }
 
@@ -692,18 +692,6 @@ button.card.schedina-invito:active{ transform: translate(2px,2px); box-shadow:no
 .tab:hover{ background: var(--paper); }
 .tab.active{background:var(--ink);color:var(--paper);font-weight:600;box-shadow: inset 0 -3px 0 var(--stamp-red);}
 
-/* Cintura e bretelle per la striscia in fondo: se per un frame l'altezza
-   misurata e quella dipinta non coincidono, sotto la bottom nav si vedeva la
-   carta chiara del body. Questa fascia, fissata al fondo della finestra e dietro
-   al contenuto, ha il colore della nav: nel caso peggiore la striscia c'è ma non
-   si distingue. Solo con la shell montata (AppShell aggiunge la classe): sulla
-   schermata di accesso, che la nav non ce l'ha, sarebbe una banda scura a caso. */
-body.con-bottom-nav::after{
-  content:'';position:fixed;left:0;right:0;bottom:0;
-  height:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  background:var(--ink);z-index:-1;pointer-events:none;
-}
-
 .fab{
   position:absolute;right:14px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px);
   width:54px;height:54px;background:var(--stamp-red);color:#fff;border:2px solid var(--rule);
@@ -713,51 +701,63 @@ body.con-bottom-nav::after{
 .fab:active{ transform: translate(2px,2px); box-shadow:none; }
 .fab svg{width:24px;height:24px;}
 
-/* L'altezza include la safe area IN PIÙ rispetto a --nav-h (non dentro): con
-   height:var(--nav-h) e basta, su iPhone con home indicator la padding-bottom
-   della safe area mangiava spazio al contenuto della barra invece di aggiungersi
-   sotto, e le voci si schiacciavano verso l'alto. */
-.bottom-nav{
-  position:absolute;left:0;right:0;bottom:0;
-  height:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));background:var(--ink);
-  display:flex;border-top:5px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0);z-index:8;
+/* ===== Bottom nav "vetro" (components/layout/BottomNav.jsx) =====
+   Barra fluttuante: il contenuto le scorre sotto e il backdrop-filter lo sfoca.
+   La tinta è l'inchiostro del tema al 76%, così resta leggibile su qualunque
+   carta (rosa, azzurra…) e cambia insieme alla squadra scelta.
+   --nav-h (in :root) è l'ingombro verticale della barra: 64px di barra + 12px
+   di stacco dal fondo. FAB, toast e padding di .contenuto lo usano già, quindi
+   tutto resta sopra la barra senza altre modifiche.
+   Sotto la barra si vede la carta: non serve più la fascia scura di ripiego
+   (body.con-bottom-nav::after) che copriva la striscia sotto la vecchia nav piena. */
+.bottom-nav-vetro{
+  /* Centrata con left/right + margin auto, NON con translateX(-50%): la
+     transform è gestita da framer-motion (entrata dal basso) e la sovrascrive. */
+  position:absolute;z-index:8;
+  left:0;right:0;margin:0 auto;
+  bottom:max(12px, env(safe-area-inset-bottom, 0px));
+  width:min(440px, calc(100% - 20px));height:64px;
+  display:flex;align-items:stretch;padding:5px;
+  border-radius:999px;
+  background:color-mix(in srgb, var(--ink) 76%, transparent);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 8px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7);
+  backdrop-filter:blur(20px) saturate(1.7);
 }
-/* top/bottom invece di height: la pillola si ancora al padding-box di .bottom-nav
-   (che include la safe area), mentre le voci occupano il content-box (che la
-   esclude); con un'altezza fissa calcolata sul 100% la pillola sbordava sotto le
-   voci di quanto valeva la safe area. Con bottom la si aggancia allo stesso bordo
-   inferiore "vero" delle voci. */
-.pillola{
-  position:absolute;top:10px;left:0;bottom:calc(10px + env(safe-area-inset-bottom, 0px));width:20%;
-  background:rgba(255,255,255,.09);border-radius:16px;
-  transition: transform .3s var(--ease-tap);z-index:0;
+/* Senza backdrop-filter (browser vecchi) la barra diventa piena: meglio che
+   leggere le etichette sopra il testo degli articoli. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .bottom-nav-vetro{ background:var(--ink); }
 }
-/* min-width:0 + align-items:stretch sono ciò che permette alla voce di restringersi
-   davvero sotto la sua larghezza naturale sui telefoni stretti: prima l'icona a
-   50px fissi più un'etichetta lunga ("Dashboard", "Gazzetta"...) non riuscivano a
-   restringersi sotto quella larghezza, le 5 colonne smettevano di essere uguali e
-   sbordavano fuori dalla barra — da cui anche la pillola, che invece assume
-   colonne tutte uguali al 20%, finiva disallineata. */
+
+/* min-width:0: le 5 colonne restano uguali anche sui telefoni stretti e le
+   etichette lunghe ("Dashboard") si troncano con l'ellissi invece di sbordare. */
 .nav-item{
-  flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;
-  color:var(--nav-testo);background:none;border:none;font-family:'Oswald',sans-serif;font-size:11px;
-  text-transform:uppercase;letter-spacing:.04em;cursor:pointer;transition: color .15s;position:relative;z-index:1;
-  -webkit-text-stroke:0.4px var(--ink); paint-order: stroke fill;
-  padding:0 2px;
+  position:relative;flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  color:color-mix(in srgb, var(--nav-testo) 62%, transparent);
+  text-decoration:none;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.02em;
+  transition:color .2s ease;
+  -webkit-tap-highlight-color:transparent;
 }
-.nav-item svg{
-  width:28px;height:28px;flex:0 0 auto;margin:0 auto;stroke:currentColor;fill:none;stroke-width:1.8;
-  filter: drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink)) drop-shadow(0 0 0.6px var(--ink));
+.nav-item:hover{ color:var(--nav-testo); }
+.nav-item.attivo{ color:var(--gold-chiaro); }
+.nav-item:focus-visible{ outline:2px solid var(--gold-chiaro); outline-offset:-2px; border-radius:999px; }
+
+/* La pillola passa da una voce all'altra animata da framer-motion (layoutId). */
+.nav-pillola{
+  position:absolute;inset:0;border-radius:999px;z-index:0;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.10);
 }
-/* Etichetta in un elemento vero (non testo nudo): serve per poterla troncare con
-   l'ellissi invece di lasciarla andare a capo o sbordare quando la colonna, su
-   schermi stretti, è più corta della parola. */
+.nav-icona, .nav-item .etichetta{ position:relative;z-index:1; }
+.nav-icona{ display:flex; }
 .nav-item .etichetta{
-  display:block;width:100%;text-align:center;
+  display:block;max-width:100%;padding:0 2px;text-align:center;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.nav-item.attivo{color:var(--gold-chiaro);}
-.nav-item.attivo svg{stroke:var(--gold-chiaro);}
 
 .sheet-overlay{
   position:absolute;inset:0;background:rgba(36,27,30,0.5);opacity:0;pointer-events:none;

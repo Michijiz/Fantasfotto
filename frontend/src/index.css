@@ -1,5 +1,65 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
 /* Reset minimo: il vero tema vive in ./styles/global.css */
 * { box-sizing: border-box; }
 body { margin: 0; }
-#root { min-height: var(--app-h, 100dvh); }
+#root { min-height: 100dvh; }
 button { font-family: inherit; }
+
+/* ===== Token shadcn =====
+   Servono ai componenti installati con la CLI (bg-primary, border-border…).
+   Sono agganciati alle variabili del tema della Gazzetta (src/temi.js), così
+   cambiano colore insieme alla squadra scelta dall'utente.
+   --radius NON va ridefinito qui: global.css lo fissa a 0 (estetica da
+   giornale) e quel valore vale anche per i componenti shadcn. I max(0px, …)
+   evitano raggi negativi quando --radius è 0.
+   Niente @layer base su body/html: tipografia e sfondo restano di global.css. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-input);
+  --card-foreground: var(--ink);
+  --popover: var(--paper-input);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-dark);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-dark);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--paper-dark);
+  --accent-foreground: var(--ink);
+  --destructive: var(--stamp-red);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--gold);
+}
+
+@theme inline {
+  --radius-sm: max(0px, calc(var(--radius) - 4px));
+  --radius-md: max(0px, calc(var(--radius) - 2px));
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}

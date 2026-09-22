@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DataProvider } from '../../context/DataContext';
@@ -23,15 +23,6 @@ function ShellInterno({ utente }) {
   useLayoutEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [pathname]);
-
-  // Segnala al CSS che la bottom nav è a schermo: serve alla fascia scura dietro
-  // al fondo della finestra (body.con-bottom-nav::after in global.css), che copre
-  // l'eventuale striscia di carta sotto la barra. Sulla schermata di accesso, che
-  // la nav non ce l'ha, quella fascia non deve esistere.
-  useEffect(() => {
-    document.body.classList.add('con-bottom-nav');
-    return () => document.body.classList.remove('con-bottom-nav');
-  }, []);
 
   return (
     <div id="appScreen">
