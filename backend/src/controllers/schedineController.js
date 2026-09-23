@@ -226,4 +226,14 @@ const perGiornata = async (req, res) => {
   res.json({ chiusa: true, quante: schedine.length, schedine });
 };
 
-module.exports = { apertura, salva, perGiornata, risolviSchedine };
+// Il bilancio personale per la pagina Profilo: quante schedine consegnate e
+// quante azzeccate per intero. Le giornate ancora aperte non contano come giocate.
+const mie = async (req, res) => {
+  const [giocate, vinte] = await Promise.all([
+    Schedina.countDocuments({ utente: req.utente.id, esito: { $ne: 'attesa' } }),
+    Schedina.countDocuments({ utente: req.utente.id, esito: 'vinta' })
+  ]);
+  res.json({ giocate, vinte });
+};
+
+module.exports = { apertura, salva, perGiornata, risolviSchedine, mie };

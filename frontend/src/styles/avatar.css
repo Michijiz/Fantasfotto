@@ -1,0 +1,27 @@
+/* ===== Selettore avatar (components/ui/SelettoreAvatar.jsx) =====
+   Usato anche in registrazione, quindi le regole valgono fuori dal Profilo. */
+.avatar-gruppo{
+  margin:12px 0 8px; font-family:'Oswald',sans-serif; font-size:12.5px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);
+}
+.avatar-griglia{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+.avatar-carta{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 4px 7px; border-radius:var(--r-md); cursor:pointer;
+  background:var(--superficie-piena); border:1px solid var(--filo-lieve);
+  box-shadow:var(--ombra-bassa); color:var(--ink);
+  transition:transform .1s var(--ease-tap), box-shadow .15s;
+}
+.avatar-carta img{ width:100%; aspect-ratio:1; object-fit:contain; object-position:center bottom; display:block; }
+.avatar-carta .nome{
+  font-family:'Oswald',sans-serif; font-size:11.5px; letter-spacing:.03em;
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.avatar-carta:active{ transform:scale(.96); }
+.avatar-carta.scelto{ box-shadow:0 0 0 3px var(--stamp-red), var(--ombra-media); background:var(--paper-dark); }
+
+/* Ripiego del componente Avatar quando l'immagine manca. */
+.avatar-iniziali{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:'Oswald',sans-serif; font-weight:600; color:var(--ink); line-height:1;
+}

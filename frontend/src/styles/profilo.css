@@ -1,0 +1,261 @@
+/* ===== Pagina Profilo (pages/Profilo.jsx) =====
+   Una pila di ritagli di giornale: stessa carta smerigliata delle .card, ma
+   elementi grandi (numeri in Anton a 56px, comandi alti 56px) perché la pagina
+   si scorre col pollice. Colori solo da var(): segue il tema della squadra. */
+
+.profilo{ display:flex; flex-direction:column; gap:18px; }
+
+.profilo-testatina{
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:8px 4px;
+  border-top:3px solid var(--ink); border-bottom:1px solid var(--ink);
+  font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.profilo-testatina span:last-child{ text-align:right; }
+
+.ritaglio{
+  background:var(--superficie);
+  border:1px solid var(--filo-luce);
+  border-radius:26px;
+  padding:20px;
+  box-shadow:var(--ombra-media);
+  display:flex; flex-direction:column; gap:16px;
+}
+
+.ritaglio-occhiello{ display:flex; align-items:center; gap:12px; }
+.ritaglio-occhiello span:first-child{
+  font-family:'Oswald',sans-serif; font-size:13px; font-weight:500;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--gold);
+}
+.ritaglio-occhiello .filo{ flex:1 1 auto; height:1px; background:var(--filo-lieve); }
+
+.ritaglio-vuoto{
+  font-family:'Libre Baskerville',serif; font-style:italic; font-size:16px;
+  color:var(--ink-soft); line-height:1.5;
+}
+
+/* --- Ritaglio d'apertura --- */
+.ritaglio-apertura{ padding:0; gap:0; overflow:hidden; }
+
+.profilo-foto{
+  position:relative; height:290px;
+  display:flex; align-items:flex-end; justify-content:center;
+  transition:background .25s ease;
+}
+.profilo-avatar{ display:block; width:250px; height:250px; }
+.profilo-timbro{
+  position:absolute; top:18px; left:18px; transform:rotate(-7deg);
+  padding:6px 13px; border:3px solid var(--gold); border-radius:12px;
+  background:color-mix(in srgb, var(--paper-input) 78%, transparent);
+  color:var(--gold);
+  font-family:'Oswald',sans-serif; font-weight:600; font-size:15px;
+  letter-spacing:.14em; text-transform:uppercase;
+}
+.profilo-matita{
+  position:absolute; top:14px; right:14px;
+  width:46px; height:46px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  background:color-mix(in srgb, var(--paper-input) 70%, transparent);
+  border:1px solid var(--filo-luce); color:var(--ink);
+  box-shadow:var(--ombra-bassa);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  transition:transform .1s var(--ease-tap);
+}
+.profilo-matita:active{ transform:scale(.92); }
+
+.profilo-didascalia{
+  padding:10px 20px; border-bottom:1px solid var(--filo-lieve);
+  font-size:13.5px; font-style:italic; line-height:1.5; color:var(--ink-soft);
+}
+
+.profilo-testi{ padding:20px 20px 24px; display:flex; flex-direction:column; gap:10px; }
+.profilo-occhiello{
+  font-family:'Oswald',sans-serif; font-size:13px; font-weight:500;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--gold);
+}
+.profilo-titolo{
+  margin:0; font-family:'Anton',sans-serif; font-weight:400;
+  font-size:52px; line-height:1; letter-spacing:.01em; text-transform:uppercase;
+  color:var(--ink); overflow-wrap:anywhere;
+}
+.profilo-titolo.lungo{ font-size:44px; }
+.profilo-titolo.lunghissimo{ font-size:36px; }
+.profilo-titolo.contorno{ color:var(--paper-input); -webkit-text-stroke:1.5px var(--ink); }
+.profilo-sottotitolo{
+  font-family:'Oswald',sans-serif; font-size:20px; font-weight:500; line-height:1.25;
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.profilo-motto{
+  margin:4px 0 0; padding-top:14px; border-top:1px solid var(--filo-lieve);
+  font-size:19px; font-style:italic; line-height:1.5; white-space:pre-line;
+}
+
+/* --- I numeri --- */
+.numeri-griglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.numero{ padding:12px 0 14px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.numero:nth-child(odd){ padding-right:12px; border-right:1px solid var(--filo-lieve); }
+.numero:nth-child(even){ padding-left:16px; }
+.numero:nth-child(-n+2){ border-bottom:1px solid var(--filo-lieve); }
+.numero b{ font-family:'Anton',sans-serif; font-weight:400; font-size:54px; line-height:1; overflow-wrap:anywhere; }
+.numero span{
+  font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+
+/* --- La forma --- */
+.forma-riga{ display:flex; justify-content:space-between; gap:6px; }
+.forma-voce{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.bollino{
+  width:54px; height:54px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Anton',sans-serif; font-size:25px;
+  box-shadow:var(--ombra-bassa);
+}
+.bollino.esito-V{ background:var(--ink); color:var(--paper-input); }
+.bollino.esito-N{ background:var(--superficie-piena); color:var(--ink); border:2px solid var(--ink); }
+.bollino.esito-P{ background:var(--paper-dark); color:var(--ink); }
+.forma-voce .g{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.08em; color:var(--ink-soft); }
+
+/* --- La squadra --- */
+.squadra-testa{ display:flex; align-items:center; gap:16px; }
+.squadra-testi{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.squadra-nome-grande{
+  font-family:'Anton',sans-serif; font-size:34px; line-height:1.05;
+  text-transform:uppercase; overflow-wrap:anywhere;
+}
+.squadra-maglia{ width:44px; height:44px; object-fit:contain; }
+.squadra-rosa-riga{
+  display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding-top:14px; border-top:1px solid var(--filo-lieve);
+}
+.squadra-rosa-riga span{
+  font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+.squadra-rosa-riga b{ font-family:'Anton',sans-serif; font-weight:400; font-size:24px; }
+
+/* Comando secondario grande: pillola a contorno, alta 56px. */
+.bottone-contorno{
+  width:100%; min-height:56px; padding:0 18px;
+  border-radius:var(--r-pill); cursor:pointer;
+  background:transparent; border:2px solid var(--ink); color:var(--ink);
+  font-family:'Oswald',sans-serif; font-size:17px; font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  transition:transform .1s var(--ease-tap), background .15s;
+}
+.bottone-contorno:active{ transform:scale(.97); background:color-mix(in srgb, var(--ink) 6%, transparent); }
+
+/* --- Il cuore --- */
+.cuore-testa{ display:flex; align-items:center; gap:16px; }
+.cuore-disco{ width:72px; height:72px; border-radius:50%; flex:0 0 auto; box-shadow:var(--ombra-media); }
+.cuore-nome{ font-family:'Anton',sans-serif; font-size:40px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere; }
+
+/* --- Dall'archivio --- */
+.archivio-lista{ display:flex; flex-direction:column; }
+.archivio-voce{
+  display:flex; align-items:center; gap:14px; min-height:76px; padding:12px 0;
+  background:none; border:none; border-top:1px solid var(--filo-lieve);
+  color:var(--ink); text-align:left; cursor:pointer; font:inherit;
+}
+.archivio-voce:first-child{ border-top:none; }
+.archivio-voce:active{ transform:scale(.98); }
+.archivio-voce .tag{
+  flex:0 0 auto; min-width:46px; padding:5px 0; text-align:center;
+  border:1.5px solid var(--gold); border-radius:var(--r-pill);
+  font-family:'Oswald',sans-serif; font-size:14px; font-weight:500; color:var(--gold);
+}
+.archivio-voce svg, .impostazione svg{ flex:0 0 auto; }
+.archivio-voce .titolo{ flex:1 1 auto; font-size:17px; font-weight:700; line-height:1.3; }
+
+/* --- Nell'albo --- */
+.albo-chips{ display:flex; flex-wrap:wrap; gap:10px; }
+.albo-chip{
+  display:inline-flex; align-items:center; min-height:44px; padding:0 18px;
+  border-radius:var(--r-pill); background:var(--paper-dark);
+  font-family:'Oswald',sans-serif; font-size:15.5px; font-weight:500;
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.albo-chip.oro{ background:var(--gold); color:var(--paper-input); }
+
+/* --- Impostazioni --- */
+.ritaglio-impostazioni{ gap:0; padding-top:8px; }
+.impostazione{
+  display:flex; align-items:center; gap:14px; min-height:64px; padding:0;
+  background:none; border:none; border-bottom:1px solid var(--filo-lieve);
+  color:var(--ink); cursor:pointer; text-align:left;
+  font-family:'Oswald',sans-serif; font-size:18px; font-weight:500;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.impostazione span{ flex:1 1 auto; }
+.impostazione:active{ transform:scale(.98); }
+.ritaglio-impostazioni .bottone-contorno{ margin-top:16px; }
+
+.profilo-colophon{
+  margin:0; padding:12px 8px 0; border-top:1px solid var(--ink);
+  font-size:13px; font-style:italic; line-height:1.5; text-align:center; color:var(--ink-soft);
+}
+
+.scheda-squadra{ display:flex; flex-direction:column; gap:14px; padding-top:10px; }
+.scheda-bio{ margin:0; font-size:16px; line-height:1.6; }
+
+/* ===== "Componi la tua pagina" (components/ui/ComponiProfilo.jsx) ===== */
+.componi{ padding-top:6px; }
+.componi-gruppo{
+  display:flex; align-items:center; gap:12px; margin:26px 0 4px;
+  font-family:'Oswald',sans-serif; font-size:13px; font-weight:500;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--gold);
+}
+.componi-gruppo::after{ content:''; flex:1 1 auto; height:1px; background:var(--filo-lieve); }
+.componi-etichetta{
+  display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+  margin:14px 0 6px; font-family:'Oswald',sans-serif; font-size:14px; font-weight:500;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--ink);
+}
+.componi-etichetta .facoltativo{ font-weight:400; text-transform:none; letter-spacing:.02em; color:var(--ink-soft); }
+.componi input[type=text]{ min-height:52px; font-size:17px; }
+.componi .campo-titolo{ font-family:'Anton',sans-serif; font-size:21px; text-transform:uppercase; }
+.componi .campo-motto{ font-style:italic; font-size:17px; line-height:1.45; resize:none; }
+
+.sfondi-riga{ display:flex; flex-wrap:wrap; gap:10px; }
+.sfondo-pallino{
+  width:46px; height:46px; border-radius:50%; cursor:pointer;
+  border:3px solid var(--paper-input); box-shadow:var(--ombra-bassa);
+  transition:transform .1s var(--ease-tap), box-shadow .15s;
+}
+.sfondo-pallino:active{ transform:scale(.92); }
+.sfondo-pallino.scelto{ box-shadow:0 0 0 3px var(--stamp-red), var(--ombra-bassa); }
+
+.stili-titolo{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:8px; }
+.stile-carta{
+  min-height:60px; border-radius:var(--r-md); cursor:pointer;
+  background:var(--superficie-piena); border:1px solid var(--filo-lieve);
+  font-family:'Anton',sans-serif; font-size:25px; text-transform:uppercase; color:var(--ink);
+  box-shadow:var(--ombra-bassa);
+  transition:transform .1s var(--ease-tap), box-shadow .15s;
+}
+.stile-carta.stile-contorno{ color:var(--paper-input); -webkit-text-stroke:1.3px var(--ink); }
+.stile-carta:active{ transform:scale(.97); }
+.stile-carta.scelto{ box-shadow:0 0 0 3px var(--stamp-red), var(--ombra-bassa); }
+
+.ritagli-lista{ display:flex; flex-direction:column; }
+.ritaglio-voce{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  min-height:62px; padding:0; cursor:pointer;
+  background:none; border:none; border-bottom:1px solid var(--filo-lieve);
+  color:var(--ink); text-align:left;
+  font-family:'Oswald',sans-serif; font-size:18px; font-weight:500;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.ritaglio-voce:last-child{ border-bottom:none; }
+.interruttore{
+  position:relative; flex:0 0 auto; width:54px; height:32px; border-radius:var(--r-pill);
+  background:var(--paper-dark); transition:background .2s ease;
+}
+.interruttore span{
+  position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%;
+  background:var(--paper-input); box-shadow:var(--ombra-bassa);
+  transition:transform .2s var(--ease-tap);
+}
+.interruttore.acceso{ background:var(--ink); }
+.interruttore.acceso span{ transform:translateX(22px); }

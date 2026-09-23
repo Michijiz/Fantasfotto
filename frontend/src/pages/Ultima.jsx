@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
@@ -13,7 +13,9 @@ export default function Ultima() {
   const { utente } = useOutletContext();
   const { ultimaEdizione, edizioni, ricaricaTutto } = useDati();
   const mostraToast = useToast();
-  const [selezionataId, setSelezionataId] = useState(null);
+  const location = useLocation();
+  // Dal Profilo ("Dall'archivio") si arriva qui con l'edizione da aprire.
+  const [selezionataId, setSelezionataId] = useState(() => location.state?.edizioneId || null);
   const [mostraArchivio, setMostraArchivio] = useState(false);
   const [inModifica, setInModifica] = useState(false);
 

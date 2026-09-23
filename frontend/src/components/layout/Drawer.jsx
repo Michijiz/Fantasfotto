@@ -8,6 +8,8 @@ import { sfondoTema } from '../../temi';
 import { etichettaRuolo } from '../../ruoli';
 import Sheet from '../ui/Sheet';
 import SelettoreTema from '../ui/SelettoreTema';
+import Avatar from '../ui/Avatar';
+import { avatarUtente } from '../../avatar';
 import '../../styles/drawer.css';
 
 // Menu profilo aperto dall'hamburger nell'header. Pannello in vetro della stessa
@@ -95,6 +97,7 @@ export default function Drawer({ aperto, onChiudi }) {
               transition={MOLLA_PANNELLO}
             >
               <div className="drawer-testa">
+                <Avatar id={avatarUtente(utente)} nome={utente?.nomeVisualizzato} size={52} className="drawer-avatar" />
                 <div className="drawer-chi">
                   <div className="nome">{utente?.nomeVisualizzato}</div>
                   <div className="ruolo">{etichettaRuolo(utente)}</div>

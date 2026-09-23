@@ -5,6 +5,8 @@ import { useTema } from '../context/TemaContext';
 import { api } from '../api/client';
 import Masthead from '../components/ui/Masthead';
 import SelettoreTema from '../components/ui/SelettoreTema';
+import SelettoreAvatar from '../components/ui/SelettoreAvatar';
+import { avatarDefault } from '../avatar';
 import { RUOLI_ISCRIZIONE } from '../ruoli';
 
 export default function Login() {
@@ -26,6 +28,9 @@ export default function Login() {
   const [regCodice, setRegCodice] = useState('');
   const [regRuolo, setRegRuolo] = useState('giocatore');
   const [regCodiceRedazione, setRegCodiceRedazione] = useState('');
+  // Vuoto finché non si tocca un avatar: fino ad allora segue la squadra tifata,
+  // così chi cambia tema si ritrova anche l'avatar coerente.
+  const [regAvatar, setRegAvatar] = useState('');
 
   useEffect(() => {
     api.get('/api/squadre')
@@ -67,6 +72,7 @@ export default function Login() {
         squadraId: regSquadra,
         codiceInvito: regCodice,
         tema: temaId,
+        avatar: regAvatar || avatarDefault(temaId),
         ruolo: regRuolo,
         codiceRedazione: regRuolo === 'redattore' ? regCodiceRedazione : undefined
       });
@@ -158,6 +164,10 @@ export default function Login() {
           <label>Per chi tifi in Serie A</label>
           <p className="tema-nota">Decide i colori della tua Gazzetta. Si cambia quando vuoi dal menù.</p>
           <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
+
+          <label>La tua faccia in redazione</label>
+          <p className="tema-nota">Il tuo avatar nella Gazzetta. Si cambia quando vuoi dal profilo.</p>
+          <SelettoreAvatar valore={regAvatar || avatarDefault(temaId)} onSceglie={setRegAvatar} />
 
           <label>Codice invito della Lega</label>
           <input type="text" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />

@@ -20,6 +20,25 @@ const userSchema = new mongoose.Schema({
   // storico della Gazzetta). L'elenco vero vive nel frontend (src/temi.js): qui
   // si salva solo lo slug scelto, così aggiungere una squadra non tocca il DB.
   tema: { type: String, default: 'palermo', trim: true, lowercase: true },
+
+  // Avatar: lo slug di un'illustrazione in frontend/public/avatars/ (vedi
+  // src/avatar.js). Come per il tema, qui si salva solo lo slug: aggiungere un
+  // avatar non tocca il database. Vuoto = quello della squadra tifata.
+  avatar: { type: String, default: '', trim: true, lowercase: true },
+
+  // La pagina Profilo la compone l'utente: ogni testo è facoltativo e, se vuoto,
+  // sparisce dal ritaglio. Il titolo è nomeVisualizzato. `nascosti` elenca i
+  // ritagli spenti (e non quelli accesi): un ritaglio aggiunto in futuro compare
+  // a tutti senza migrare nulla.
+  profilo: {
+    occhiello: { type: String, default: '', trim: true, maxlength: 40 },
+    sottotitolo: { type: String, default: '', trim: true, maxlength: 60 },
+    motto: { type: String, default: '', trim: true, maxlength: 160 },
+    didascalia: { type: String, default: '', trim: true, maxlength: 100 },
+    sfondo: { type: String, default: 'tema', trim: true, lowercase: true },
+    stileTitolo: { type: String, enum: ['pieno', 'contorno'], default: 'pieno' },
+    nascosti: [{ type: String, trim: true, lowercase: true }]
+  },
   attivo: { type: Boolean, default: true },
 
   // Protezione del PIN (4-6 cifre, quindi indovinabile a forza di tentativi):

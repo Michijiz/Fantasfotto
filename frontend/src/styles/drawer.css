@@ -29,7 +29,8 @@
   padding:2px 4px 14px 6px;margin-bottom:8px;
   border-bottom:1px solid var(--vetro-filo);
 }
-.drawer-chi{ min-width:0; }
+.drawer-chi{ min-width:0; flex:1 1 auto; align-self:center; }
+.drawer-avatar{ border:2px solid var(--vetro-filo); }
 .drawer-chi .nome{
   font-family:'Anton',sans-serif;font-size:21px;line-height:1.15;color:var(--nav-testo);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;

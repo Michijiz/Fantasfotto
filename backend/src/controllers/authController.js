@@ -24,7 +24,27 @@ function pubblico(user) {
     nomeVisualizzato: user.nomeVisualizzato,
     ruolo: user.ruolo,
     squadra: user.squadra,
-    tema: user.tema || TEMA_DEFAULT
+    tema: user.tema || TEMA_DEFAULT,
+    avatar: user.avatar || '',
+    profilo: profiloPubblico(user.profilo)
+  };
+}
+
+// Limiti dei testi del profilo: gli stessi del modello, ripetuti qui per tagliare
+// invece di rifiutare (un motto di 170 caratteri si accorcia, non fa fallire il
+// salvataggio di tutto il resto).
+const LIMITI_PROFILO = { occhiello: 40, sottotitolo: 60, motto: 160, didascalia: 100 };
+const STILI_TITOLO = ['pieno', 'contorno'];
+
+function profiloPubblico(p = {}) {
+  return {
+    occhiello: p.occhiello || '',
+    sottotitolo: p.sottotitolo || '',
+    motto: p.motto || '',
+    didascalia: p.didascalia || '',
+    sfondo: p.sfondo || 'tema',
+    stileTitolo: STILI_TITOLO.includes(p.stileTitolo) ? p.stileTitolo : 'pieno',
+    nascosti: Array.isArray(p.nascosti) ? [...p.nascosti] : []
   };
 }
 
@@ -33,6 +53,9 @@ function pubblico(user) {
 // tenere allineata a src/temi.js — ma si controlla che sia uno slug plausibile.
 const TEMA_DEFAULT = 'palermo';
 const temaValido = (v) => /^[a-z][a-z0-9-]{1,23}$/.test(v);
+// Stessa logica per avatar, sfondo e ritagli: slug plausibili, l'elenco vero
+// vive nel frontend.
+const slugValido = temaValido;
 
 // I campi arrivano da JSON: un PIN numerico (1234 invece di "1234") farebbe
 // esplodere bcrypt con un 500. Normalizziamo tutto a stringa.
@@ -66,6 +89,7 @@ const registrati = async (req, res) => {
   const temaRichiesto = testo(req.body.tema).toLowerCase();
   const ruoloRichiesto = testo(req.body.ruolo).toLowerCase();
   const codiceRedazione = testo(req.body.codiceRedazione);
+  const avatarRichiesto = testo(req.body.avatar).toLowerCase();
 
   if (!username || !nomeVisualizzato || !pin || !squadraId || !codiceInvito) {
     return res.status(400).json({ errore: 'Compila tutti i campi' });
@@ -92,7 +116,8 @@ const registrati = async (req, res) => {
     pinHash,
     ruolo,
     squadra: squadra._id,
-    tema: temaValido(temaRichiesto) ? temaRichiesto : TEMA_DEFAULT
+    tema: temaValido(temaRichiesto) ? temaRichiesto : TEMA_DEFAULT,
+    avatar: slugValido(avatarRichiesto) ? avatarRichiesto : ''
   });
 
   const token = firmaToken(user);
@@ -166,4 +191,55 @@ const aggiornaTema = async (req, res) => {
   res.json({ utente: pubblico(user) });
 };
 
-module.exports = { registrati, login, me, aggiornaTema };
+// La pagina Profilo: nome da mostrare, avatar e i testi/le scelte del ritaglio.
+// Si aggiorna solo ciò che arriva: un campo assente resta com'è, un testo vuoto
+// lo cancella (ed è il modo per togliere un sottotitolo).
+const aggiornaProfilo = async (req, res) => {
+  const set = {};
+  const { body } = req;
+
+  if (body.nomeVisualizzato !== undefined) {
+    const nome = testo(body.nomeVisualizzato).slice(0, 30);
+    if (!nome) return res.status(400).json({ errore: 'Il nome non può essere vuoto' });
+    set.nomeVisualizzato = nome;
+  }
+
+  if (body.avatar !== undefined) {
+    const avatar = testo(body.avatar).toLowerCase();
+    if (avatar && !slugValido(avatar)) return res.status(400).json({ errore: 'Avatar non valido' });
+    set.avatar = avatar;
+  }
+
+  const p = body.profilo && typeof body.profilo === 'object' ? body.profilo : null;
+  if (p) {
+    for (const [campo, max] of Object.entries(LIMITI_PROFILO)) {
+      if (p[campo] !== undefined) set[`profilo.${campo}`] = testo(p[campo]).slice(0, max);
+    }
+    if (p.sfondo !== undefined) {
+      const sfondo = testo(p.sfondo).toLowerCase();
+      set['profilo.sfondo'] = slugValido(sfondo) ? sfondo : 'tema';
+    }
+    if (p.stileTitolo !== undefined) {
+      set['profilo.stileTitolo'] = STILI_TITOLO.includes(p.stileTitolo) ? p.stileTitolo : 'pieno';
+    }
+    if (p.nascosti !== undefined) {
+      const elenco = Array.isArray(p.nascosti) ? p.nascosti : [];
+      set['profilo.nascosti'] = [...new Set(elenco.map((v) => testo(v).toLowerCase()).filter(slugValido))].slice(0, 12);
+    }
+  }
+
+  if (Object.keys(set).length === 0) {
+    return res.status(400).json({ errore: 'Niente da aggiornare' });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.utente.id,
+    { $set: set },
+    { new: true, runValidators: true }
+  ).populate('squadra', 'nome stemma');
+
+  if (!user) return res.status(404).json({ errore: 'Utente non trovato' });
+  res.json({ utente: pubblico(user) });
+};
+
+module.exports = { registrati, login, me, aggiornaTema, aggiornaProfilo };
