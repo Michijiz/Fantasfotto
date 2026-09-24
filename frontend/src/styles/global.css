@@ -828,6 +828,15 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
 .match-row .punteggio{font-variant-numeric:tabular-nums;font-weight:600;}
 
 .sheet.grande{max-height:92%;}
+
+/* Tastiera aperta (vedi utils/altezzaApp.js): l'app compensa lo scorrimento che
+   iOS impone alla pagina, e i fogli si alzano sopra la tastiera invece di
+   finirle sotto. Il resto dell'app non si schiaccia. */
+#root{ transform:translateY(var(--vv-top, 0px)); }
+.sheet{ bottom:var(--tastiera, 0px); transition:transform .3s var(--ease-tap), bottom .2s ease; }
+.con-tastiera .sheet{ max-height:calc((var(--app-h, 100dvh) - var(--tastiera, 0px)) * .94); }
+.con-tastiera .sheet .sheet-body{ padding-bottom:24px; }
+.con-tastiera .auth-screen{ padding-bottom:calc(var(--tastiera, 0px) + 24px); }
 .sheet-body form{padding-bottom:6px;}
 
 /* ============ SPLASH DI APERTURA ============

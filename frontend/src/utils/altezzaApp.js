@@ -18,8 +18,38 @@
 let ultima = 0;
 let inCoda = false;
 
+let ultimaTastiera = -1;
+let ultimoSpostamento = -1;
+
+// La tastiera di iPhone non accorcia la finestra: si appoggia sopra e iOS fa
+// scorrere la pagina verso l'alto per mostrare il campo. Il risultato era un
+// foglio tagliato a metà e, sotto, una fascia piatta di sfondo. Qui si misurano
+// due cose dal viewport visuale:
+//   --tastiera  quanto spazio copre la tastiera (i fogli si alzano di tanto)
+//   --vv-top    di quanto iOS ha fatto scorrere la pagina (si compensa, così
+//               l'app resta ferma dov'è invece di scivolare via)
+function misuraTastiera() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  // Con lo zoom a due dita il viewport visuale si rimpicciolisce senza tastiera.
+  const zoom = Math.abs((vv.scale || 1) - 1) > 0.01;
+  const tastiera = zoom ? 0 : Math.max(0, Math.round(window.innerHeight - vv.height));
+  const spostamento = zoom ? 0 : Math.max(0, Math.round(vv.offsetTop));
+  const radice = document.documentElement.style;
+  if (tastiera !== ultimaTastiera) {
+    ultimaTastiera = tastiera;
+    radice.setProperty('--tastiera', `${tastiera}px`);
+    document.documentElement.classList.toggle('con-tastiera', tastiera > 80);
+  }
+  if (spostamento !== ultimoSpostamento) {
+    ultimoSpostamento = spostamento;
+    radice.setProperty('--vv-top', `${spostamento}px`);
+  }
+}
+
 function misura() {
   inCoda = false;
+  misuraTastiera();
   const altezza = Math.round(window.innerHeight);
   if (!altezza || altezza === ultima) return;
   ultima = altezza;

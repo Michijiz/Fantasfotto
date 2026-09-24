@@ -44,17 +44,15 @@
 }
 .cedolino-totale b{ font-family:'Anton',sans-serif; font-weight:400; font-size:34px; }
 
-/* Barra di consegna: resta in vista sopra la navigazione mentre si scorre. */
+/* Piede del cedolino: quota e consegna, in fondo agli scontri. Non resta
+   agganciata allo schermo: scorrendo copriva gli scontri. */
 .barra-consegna{
-  position:sticky; z-index:3;
-  bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 6px);
-  display:flex; align-items:center; gap:14px; padding:10px 10px 10px 22px;
-  border-radius:var(--r-pill); background:var(--superficie-piena);
-  box-shadow:0 2px 8px rgba(0,0,0,.12), 0 14px 40px rgba(0,0,0,.2);
+  display:flex; align-items:center; gap:14px; margin:0 20px 20px; padding:14px 0 0;
+  border-top:2px solid var(--ink);
 }
 .barra-consegna .testi{ flex:1 1 auto; display:flex; flex-direction:column; }
-.barra-consegna .testi b{ font-family:'Anton',sans-serif; font-weight:400; font-size:30px; line-height:1; }
-.barra-consegna .bottone-grande{ width:auto; min-height:56px; padding:0 24px; font-size:17px; }
+.barra-consegna .testi b{ font-family:'Anton',sans-serif; font-weight:400; font-size:34px; line-height:1; }
+.barra-consegna .bottone-grande{ width:auto; min-height:58px; padding:0 26px; font-size:17px; }
 .barra-consegna .bottone-grande.spento{ opacity:.5; }
 
 /* Gli altri gufi. */
