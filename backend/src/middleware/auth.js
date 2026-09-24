@@ -44,10 +44,10 @@ function guardia(ammessi, messaggio) {
 }
 
 // Cancellare è l'unica azione senza ritorno: resta a chi amministra la lega.
-const richiedeAdmin = guardia(['admin'], 'Azione riservata all\'amministratore della lega');
+const richiedeAdmin = guardia(['admin'], 'Questa la può fare solo l\'amministratore');
 
 // Compilare la giornata, mandare in stampa l'edizione, tenere l'albo d'oro:
 // è il lavoro della redazione. L'admin è un redattore con in più le cancellazioni.
-const richiedeRedazione = guardia(['redattore', 'admin'], 'Azione riservata alla redazione');
+const richiedeRedazione = guardia(['redattore', 'admin'], 'Questa la può fare solo il direttore di turno');
 
 module.exports = { verificaToken, richiedeAdmin, richiedeRedazione };

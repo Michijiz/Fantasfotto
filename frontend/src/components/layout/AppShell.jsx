@@ -7,6 +7,7 @@ import { puoRedigere } from '../../ruoli';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import InstallBanner from './InstallBanner';
+import RistampaBanner from './RistampaBanner';
 import Drawer from './Drawer';
 import Sheet from '../ui/Sheet';
 import EdizioneForm from '../ui/EdizioneForm';
@@ -28,6 +29,7 @@ function ShellInterno({ utente }) {
   return (
     <div id="appScreen">
       <InstallBanner />
+      <RistampaBanner />
       <div className="area-scroll">
         <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
         <div className="contenuto" ref={scrollRef}>
@@ -40,12 +42,12 @@ function ShellInterno({ utente }) {
       <Drawer aperto={drawerAperto} onChiudi={() => setDrawerAperto(false)} />
 
       {puoRedigere(utente) && (
-        <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Nuova edizione" aria-label="Nuova edizione">
+        <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Si va in stampa" aria-label="Si va in stampa">
           <Plus size={26} weight="bold" />
         </button>
       )}
 
-      <Sheet aperto={sheetNuovaAperta} onChiudi={() => setSheetNuovaAperta(false)} titolo="Nuova Edizione" grande>
+      <Sheet aperto={sheetNuovaAperta} onChiudi={() => setSheetNuovaAperta(false)} titolo="Si va in stampa" grande>
         {sheetNuovaAperta && <EdizioneForm onFatto={() => setSheetNuovaAperta(false)} />}
       </Sheet>
 

@@ -1,26 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { X } from '@phosphor-icons/react';
+import useInstallazione from '../../hooks/useInstallazione';
 
 export default function InstallBanner() {
-  const [promptEvent, setPromptEvent] = useState(null);
+  const { evento, installa } = useInstallazione();
   const [chiuso, setChiuso] = useState(() => sessionStorage.getItem('gazzetta_install_chiuso') === '1');
 
-  useEffect(() => {
-    const onPrompt = (e) => {
-      e.preventDefault();
-      setPromptEvent(e);
-    };
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
-  }, []);
-
-  if (!promptEvent || chiuso) return null;
-
-  const installa = async () => {
-    promptEvent.prompt();
-    await promptEvent.userChoice;
-    setPromptEvent(null);
-  };
+  if (!evento || chiuso) return null;
 
   const chiudi = () => {
     sessionStorage.setItem('gazzetta_install_chiuso', '1');

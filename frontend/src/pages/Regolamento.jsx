@@ -74,8 +74,8 @@ function CalcolatriceGol() {
     : SOGLIA_PRIMO_GOL + AMPIEZZA_FASCIA * gol - Number(fantapunti);
 
   return (
-    <div className="card calcolatrice-gol">
-      <h2 className="section-title">Quanti gol fai?</h2>
+    <section className="ritaglio calcolatrice-gol">
+      <div className="ritaglio-occhiello"><span>Quanti gol fai?</span><span className="filo" /></div>
       <div className="calcolatrice-riga">
         <div className="calcolatrice-input">
           <label htmlFor="calc-fp">I tuoi fantapunti</label>
@@ -99,7 +99,12 @@ function CalcolatriceGol() {
           ? `Sotto i ${SOGLIA_PRIMO_GOL} punti non si segna. Dopo, un gol ogni ${AMPIEZZA_FASCIA} punti.`
           : `Per il gol successivo servono altri ${formattaFantapunti(mancano)} punti.`}
       </p>
-    </div>
+      <div className="calcolatrice-scala">
+        {[0, 1, 2, 3].map((i) => (
+          <span key={i}>{SOGLIA_PRIMO_GOL + AMPIEZZA_FASCIA * i} · {i === 0 ? '1 gol' : i + 1}</span>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -133,9 +138,16 @@ export default function Regolamento() {
   const montepremi = PREMI.reduce((tot, [, cifra]) => tot + cifra, 0);
 
   return (
-    <>
-      <div className="card">
-        <h2 className="section-title">Regolamento</h2>
+    <div className="ritagli regolamento">
+      <div className="testatina">
+        <span>Regolamento e FAQ</span>
+        <span>Stagione 2026/27</span>
+      </div>
+
+      <CalcolatriceGol />
+
+      <section className="ritaglio">
+        <div className="ritaglio-occhiello"><span>Le regole</span><span className="filo" /></div>
        
         <Voce id="rosa" titolo="Rosa e formazione" apertaAllInizio={sezione === 'rosa'}>
           <p>La rosa è di 25 calciatori: 3 portieri, 8 difensori, 8 centrocampisti e 6 attaccanti.</p>
@@ -250,9 +262,34 @@ export default function Regolamento() {
           <Tabella righe={PREMI.map(([voce, cifra]) => [voce, euro(cifra)])} />
           <p className="faq-nota">Montepremi complessivo: {euro(montepremi)}.</p>
         </Voce>
-      </div>
 
-      <CalcolatriceGol />
-    </>
+        <Voce id="schedina" titolo="La schedina" apertaAllInizio={sezione === 'schedina'}>
+          <p>
+            Ogni giornata si gioca una multipla sola: per ogni scontro scegli 1, X o 2. Le quote si fissano
+            quando il banco apre, in base alla classifica di quel momento, e poi non cambiano più: due schedine
+            uguali valgono uguale, chiunque le consegni e in qualunque momento.
+          </p>
+          <p>
+            Puoi modificarla fino al fischio d&apos;inizio; dopo si chiude. La schedina è vinta solo se azzecchi
+            tutti gli scontri, altrimenti è persa: niente premi parziali. Chi la vince diventa Re dei Gufi e
+            finisce nel tabellino dell&apos;edizione.
+          </p>
+        </Voce>
+
+        <Voce id="tribunale" titolo="Il tribunale" apertaAllInizio={sezione === 'tribunale'}>
+          <p>
+            Dopo ogni edizione la lega giudica la giornata in sette categorie: Fenomeno di giornata, Il Brocco
+            della settimana, San Culo, Il Cornuto e mazziato, Muro del pianto, Formazione da denuncia e Il
+            Panchinaro d&apos;oro. Un voto per categoria, e la propria squadra non si vota.
+          </p>
+          <p>
+            Si vota fino al fischio d&apos;inizio della giornata dopo. Com&apos;è andata lo vede subito chi ha
+            votato tutte le categorie; gli altri lo scoprono a votazioni chiuse.
+          </p>
+        </Voce>
+      </section>
+
+      <p className="colophon">La Gazzetta dello Sfottò — ogni riferimento a fatti o allenatori reali è puramente voluto.</p>
+    </div>
   );
 }

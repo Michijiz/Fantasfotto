@@ -246,4 +246,25 @@ const aggiornaProfilo = async (req, res) => {
   res.json({ utente: pubblico(user) });
 };
 
-module.exports = { registrati, login, me, aggiornaTema, aggiornaProfilo };
+// Cambio del PIN dal Profilo: serve quello attuale, il nuovo deve avere 4-6 cifre
+// ed essere diverso dal vecchio.
+const cambiaPin = async (req, res) => {
+  const attuale = testo(req.body.pinAttuale);
+  const nuovo = testo(req.body.nuovoPin);
+  if (!/^\d{4,6}$/.test(nuovo)) {
+    return res.status(400).json({ errore: 'Il PIN va da 4 a 6 cifre. Niente di più, niente di meno' });
+  }
+  const user = await User.findById(req.utente.id);
+  if (!user) return res.status(404).json({ errore: 'Utente non trovato' });
+  if (!(await bcrypt.compare(attuale, user.pinHash))) {
+    return res.status(400).json({ errore: 'Il PIN attuale non è giusto' });
+  }
+  if (attuale === nuovo) {
+    return res.status(400).json({ errore: 'Il nuovo PIN è uguale al vecchio: così non vale' });
+  }
+  user.pinHash = await bcrypt.hash(nuovo, 10);
+  await user.save();
+  res.json({ ok: true });
+};
+
+module.exports = { registrati, login, me, aggiornaTema, aggiornaProfilo, cambiaPin };

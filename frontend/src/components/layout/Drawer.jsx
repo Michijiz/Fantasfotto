@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
-import { User, BookOpen, SignOut, X } from '@phosphor-icons/react';
+import { User, BookOpen, SignOut, X, Key, DownloadSimple } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { useTema } from '../../context/TemaContext';
 import { sfondoTema } from '../../temi';
 import { etichettaRuolo } from '../../ruoli';
 import Sheet from '../ui/Sheet';
-import SelettoreTema from '../ui/SelettoreTema';
+import CaroselloTema from '../ui/CaroselloTema';
+import CambiaPin from '../ui/CambiaPin';
+import useInstallazione from '../../hooks/useInstallazione';
 import Avatar from '../ui/Avatar';
 import { avatarUtente } from '../../avatar';
 import '../../styles/drawer.css';
@@ -26,6 +28,9 @@ export default function Drawer({ aperto, onChiudi }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [sceltaAperta, setSceltaAperta] = useState(false);
+  const [pinAperto, setPinAperto] = useState(false);
+  const [istruzioniAperte, setIstruzioniAperte] = useState(false);
+  const { disponibile, iPhone, installa } = useInstallazione();
 
   // Esc chiude il menu (tastiera, desktop).
   useEffect(() => {
@@ -65,11 +70,21 @@ export default function Drawer({ aperto, onChiudi }) {
       mattonella: <span className="drawer-pallina" style={{ background: sfondoTema(tema.colori) }} />
     },
     {
+      chiave: 'pin', label: 'Cambia PIN', tipo: 'azione',
+      onClick: () => { onChiudi(); setPinAperto(true); },
+      mattonella: <Key size={20} />
+    },
+    disponibile && {
+      chiave: 'installa', label: "Installa l'app", sotto: 'Sulla home, anche offline', tipo: 'azione',
+      onClick: () => { onChiudi(); if (iPhone) setIstruzioniAperte(true); else installa(); },
+      mattonella: <DownloadSimple size={20} />
+    },
+    {
       chiave: 'esci', label: 'Esci', tipo: 'esci',
       onClick: () => { onChiudi(); logout(); },
       mattonella: <SignOut size={20} />
     }
-  ];
+  ].filter(Boolean);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -102,7 +117,7 @@ export default function Drawer({ aperto, onChiudi }) {
                   <div className="nome">{utente?.nomeVisualizzato}</div>
                   <div className="ruolo">{etichettaRuolo(utente)}</div>
                 </div>
-                <button className="drawer-chiudi" onClick={onChiudi} aria-label="Chiudi menu">
+                <button className="drawer-chiudi" onClick={onChiudi} aria-label="Chiudi il menù">
                   <X size={18} />
                 </button>
               </div>
@@ -136,13 +151,21 @@ export default function Drawer({ aperto, onChiudi }) {
         onChiudi={() => setSceltaAperta(false)}
         titolo="Colori della Gazzetta"
         sottotitolo={`Ora: ${tema.nome}`}
-        grande
       >
         <p className="tema-nota">
-          Scegli la squadra che tifi: cambiano carta, inchiostro e accenti di tutta
-          l&apos;app. Resta salvato sul tuo profilo, non solo su questo telefono.
+          Scegli la squadra che tifi: cambiano carta, inchiostro e accenti di tutta l&apos;app.
         </p>
-        <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
+        <CaroselloTema valore={temaId} onSceglie={cambiaTema} />
+      </Sheet>
+
+      <Sheet aperto={pinAperto} onChiudi={() => setPinAperto(false)} titolo="Cambia PIN">
+        {pinAperto && <CambiaPin onFatto={() => setPinAperto(false)} />}
+      </Sheet>
+
+      <Sheet aperto={istruzioniAperte} onChiudi={() => setIstruzioniAperte(false)} titolo="Installa l'app">
+        <p className="tema-nota">
+          Tocca Condividi, poi «Aggiungi alla schermata Home». Fatto: la Gazzetta ti aspetta tra le app.
+        </p>
       </Sheet>
     </MotionConfig>
   );

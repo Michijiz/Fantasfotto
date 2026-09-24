@@ -11,6 +11,7 @@ const votiRoutes = require('./routes/voti');
 const schedineRoutes = require('./routes/schedine');
 const uploadRoutes = require('./routes/upload');
 const alboRoutes = require('./routes/albo');
+const legaRoutes = require('./routes/lega');
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,7 @@ app.use('/api/voti', votiRoutes);
 app.use('/api/schedine', schedineRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/albo', alboRoutes);
+app.use('/api/lega', legaRoutes);
 
 app.use((req, res) => res.status(404).json({ errore: 'Rotta non trovata' }));
 app.use(errorHandler);

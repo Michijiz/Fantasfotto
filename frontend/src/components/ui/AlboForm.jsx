@@ -32,7 +32,7 @@ export default function AlboForm({ voce = null, onFatto }) {
     setErrore('');
 
     if (!stagione.trim() || !squadra) {
-      setErrore('Indica la stagione e la squadra vincitrice.');
+      setErrore('Servono la stagione e la squadra campione');
       return;
     }
 
@@ -81,16 +81,16 @@ export default function AlboForm({ voce = null, onFatto }) {
         type="text"
         value={stagione}
         onChange={(e) => setStagione(e.target.value)}
-        placeholder="es. 2023/2024"
+        placeholder="es. 2025/26"
       />
 
-      <label>Squadra vincitrice</label>
+      <label>Squadra campione</label>
       <select value={squadra} onChange={(e) => setSquadra(e.target.value)}>
-        <option value="">Seleziona...</option>
+        <option value="">Scegli…</option>
         {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
       </select>
 
-      <label>Punti (facoltativo)</label>
+      <label>Punti <span className="facoltativo">facoltativo</span></label>
       <input
         type="number"
         step="0.5"
@@ -99,7 +99,7 @@ export default function AlboForm({ voce = null, onFatto }) {
         placeholder="es. 78"
       />
 
-      <label>Note (facoltativo)</label>
+      <label>Note <span className="facoltativo">facoltativo</span></label>
       <input
         type="text"
         value={note}
@@ -107,7 +107,7 @@ export default function AlboForm({ voce = null, onFatto }) {
         placeholder="es. imbattuti tutta la stagione"
       />
 
-      <button className="primary" type="submit" disabled={inviando}>
+      <button className="bottone-grande" type="submit" disabled={inviando}>
         {modifica ? 'Salva le correzioni' : 'Aggiungi all\'albo'}
       </button>
       {errore && <div className="errore-msg">{errore}</div>}

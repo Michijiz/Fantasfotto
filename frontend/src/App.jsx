@@ -13,6 +13,7 @@ import Squadre from './pages/Squadre';
 import Squadra from './pages/Squadra';
 import Archivio from './pages/Archivio';
 import Risultati from './pages/Risultati';
+import NonTrovata from './pages/NonTrovata';
 import Profilo from './pages/Profilo';
 import Regolamento from './pages/Regolamento';
 
@@ -39,6 +40,7 @@ function Gate() {
           <Route path="/squadre/:id" element={<Squadra />} />
           <Route path="/profilo" element={<Profilo />} />
           <Route path="/regolamento" element={<Regolamento />} />
+          <Route path="*" element={<NonTrovata />} />
         </Route>
       </Routes>
     </ToastProvider>

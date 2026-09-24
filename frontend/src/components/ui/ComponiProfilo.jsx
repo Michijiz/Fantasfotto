@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { puoRedigere } from '../../ruoli';
 import { SFONDI, RITAGLI } from '../../profilo';
-import SelettoreAvatar from './SelettoreAvatar';
+import CaroselloAvatar from './CaroselloAvatar';
 
 // Il foglio "Componi la tua pagina". Lavora su una bozza che vive nella pagina
 // Profilo (onCambia a ogni tocco): così dietro lo sheet il ritaglio cambia mentre
@@ -29,6 +29,10 @@ export default function ComponiProfilo({ bozza, onCambia, onFatto }) {
   const salva = async (e) => {
     e.preventDefault();
     setErrore('');
+    if (!bozza.nomeVisualizzato.trim()) {
+      setErrore('Il titolo non può restare vuoto: anche i misteri hanno un nome');
+      return;
+    }
     setSalvando(true);
     try {
       const { utente: aggiornato } = await api.patch('/api/auth/profilo', bozza);
@@ -77,7 +81,7 @@ export default function ComponiProfilo({ bozza, onCambia, onFatto }) {
       <input id="c-didascalia" type="text" maxLength={100} value={p.didascalia} onChange={testo('didascalia')} placeholder="Es. Nella foto: prima del fantamercato" />
 
       <div className="componi-gruppo">Il volto</div>
-      <SelettoreAvatar valore={bozza.avatar} onSceglie={(avatar) => cambia({ avatar })} />
+      <CaroselloAvatar valore={bozza.avatar} onSceglie={(avatar) => cambia({ avatar })} />
 
       <div className="componi-etichetta"><span>Sfondo della foto</span></div>
       <div className="sfondi-riga">
@@ -126,7 +130,7 @@ export default function ComponiProfilo({ bozza, onCambia, onFatto }) {
         ))}
       </div>
 
-      <button className="primary" type="submit" disabled={salvando || !bozza.nomeVisualizzato.trim()}>
+      <button className="bottone-grande" type="submit" disabled={salvando}>
         {salvando ? 'In stampa…' : 'Manda in stampa'}
       </button>
       {errore && <div className="errore-msg">{errore}</div>}

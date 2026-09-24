@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PencilSimple, BookOpen, CaretRight } from '@phosphor-icons/react';
+import { PencilSimple, BookOpen, CaretRight, Key } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { useTema } from '../context/TemaContext';
@@ -8,9 +8,11 @@ import { api } from '../api/client';
 import Avatar from '../components/ui/Avatar';
 import Stemma from '../components/ui/Stemma';
 import Sheet from '../components/ui/Sheet';
-import SelettoreTema from '../components/ui/SelettoreTema';
+import CaroselloTema from '../components/ui/CaroselloTema';
+import CambiaPin from '../components/ui/CambiaPin';
+import NomeLega from '../components/ui/NomeLega';
 import ComponiProfilo from '../components/ui/ComponiProfilo';
-import { etichettaRuolo, puoRedigere } from '../ruoli';
+import { etichettaRuolo, puoRedigere, puoCancellare } from '../ruoli';
 import { avatarUtente } from '../avatar';
 import { coloreSfondo, profiloDi } from '../profilo';
 import { sfondoTema } from '../temi';
@@ -52,6 +54,7 @@ export default function Profilo() {
   const [componi, setComponi] = useState(false);
   const [bozza, setBozza] = useState(null);
   const [temaAperto, setTemaAperto] = useState(false);
+  const [pinAperto, setPinAperto] = useState(false);
   const [schedine, setSchedine] = useState(null);
 
   useEffect(() => {
@@ -87,7 +90,7 @@ export default function Profilo() {
   return (
     <div className="profilo">
       <div className="profilo-testatina">
-        <span>Edizione personale</span>
+        <span>Il personaggio</span>
         <span>{oggi}</span>
       </div>
 
@@ -107,7 +110,9 @@ export default function Profilo() {
             {titolo}
           </h1>
           {p.sottotitolo.trim() && <div className="profilo-sottotitolo">{p.sottotitolo}</div>}
-          {p.motto.trim() && <p className="profilo-motto">{p.motto}</p>}
+          {p.motto.trim()
+            ? <p className="profilo-motto">{p.motto}</p>
+            : <button type="button" className="profilo-invito" onClick={apriComponi}>Scrivi il tuo motto →</button>}
         </div>
       </article>
 
@@ -235,6 +240,11 @@ export default function Profilo() {
           <span>Componi la tua pagina</span>
           <CaretRight size={20} />
         </button>
+        <button type="button" className="impostazione" onClick={() => setPinAperto(true)}>
+          <Key size={22} />
+          <span>Cambia PIN</span>
+          <CaretRight size={20} />
+        </button>
         <button type="button" className="impostazione" onClick={() => navigate('/regolamento')}>
           <BookOpen size={22} />
           <span>Regolamento e FAQ</span>
@@ -242,6 +252,8 @@ export default function Profilo() {
         </button>
         <button type="button" className="bottone-contorno" onClick={logout}>Esci</button>
       </section>
+
+      {puoCancellare(utente) && <NomeLega />}
 
       <p className="profilo-colophon">
         La Gazzetta dello Sfottò — ogni riferimento a fatti o allenatori reali è puramente voluto.
@@ -253,11 +265,13 @@ export default function Profilo() {
         )}
       </Sheet>
 
-      <Sheet aperto={temaAperto} onChiudi={() => setTemaAperto(false)} titolo="Il cuore" sottotitolo={`Ora: ${tema.nome}`} grande>
-        <p className="tema-nota">
-          La squadra che tifi ridipinge tutta la Gazzetta. Resta salvata sul tuo profilo.
-        </p>
-        <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
+      <Sheet aperto={temaAperto} onChiudi={() => setTemaAperto(false)} titolo="Il cuore" sottotitolo={`Ora: ${tema.nome}`}>
+        <p className="tema-nota">La squadra che tifi ridipinge tutta la Gazzetta.</p>
+        <CaroselloTema valore={temaId} onSceglie={cambiaTema} />
+      </Sheet>
+
+      <Sheet aperto={pinAperto} onChiudi={() => setPinAperto(false)} titolo="Cambia PIN">
+        {pinAperto && <CambiaPin onFatto={() => setPinAperto(false)} />}
       </Sheet>
 
     </div>

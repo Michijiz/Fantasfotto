@@ -6,14 +6,15 @@
 // - la barra fluttua sopra il contenuto, che le scorre sotto sfocato.
 // È il riferimento di stile di tutta l'app ("Grammatica visiva" in global.css).
 import { NavLink, useLocation } from 'react-router-dom';
+import { useDati } from '../../context/DataContext';
 import { motion, MotionConfig } from 'framer-motion';
 import { House, Newspaper, Trophy, SoccerBall, Shield } from '@phosphor-icons/react';
 
 const VOCI = [
-  { to: '/', end: true, label: 'Dashboard', Icona: House },
-  { to: '/gazzetta', label: 'Gazzetta', Icona: Newspaper },
+  { to: '/', end: true, label: 'Home', Icona: House },
+  { to: '/gazzetta', label: 'Gazzetta', Icona: Newspaper, anche: ['/archivio'] },
   { to: '/lega', label: 'Lega', Icona: Trophy },
-  { to: '/gioca', label: 'Gioca', Icona: SoccerBall },
+  { to: '/gioca', label: 'Gioca', Icona: SoccerBall, anche: ['/verdetti'] },
   { to: '/squadre', label: 'Squadre', Icona: Shield }
 ];
 
@@ -25,7 +26,15 @@ export default function BottomNav() {
   // Stesso criterio di "attivo" di NavLink (end solo sulla prima voce). Sulle
   // pagine fuori dalla barra (Profilo, Regolamento) nessuna voce è attiva e la
   // pillola sparisce invece di restare sotto Dashboard.
-  const indiceAttivo = VOCI.findIndex((v) => (v.end ? pathname === v.to : pathname.startsWith(v.to)));
+  const indiceAttivo = VOCI.findIndex((v) => (v.end
+    ? pathname === v.to
+    : pathname.startsWith(v.to) || (v.anche || []).some((p) => pathname.startsWith(p))));
+  // Pallino rosso su Gioca quando c'è qualcosa da fare: pronostici o voti.
+  const { schedina, risultatiVoti, categorieVoto, ultimaEdizione } = useDati();
+  const daPronosticare = schedina.giornata?.accoppiamenti?.length > 0 && !schedina.chiusa && !schedina.miaSchedina;
+  const daVotare = ultimaEdizione && !risultatiVoti.chiuse
+    && Object.keys(risultatiVoti.mioVoto || {}).length < categorieVoto.length;
+  const daFare = daPronosticare || daVotare;
 
   return (
     // reducedMotion="user": con "riduci movimento" attivo nel sistema le molle
@@ -52,6 +61,7 @@ export default function BottomNav() {
               >
                 <Icona size={24} weight={attivo ? 'fill' : 'regular'} />
               </motion.span>
+              {to === '/gioca' && daFare && <span className="nav-pallino" aria-label="da fare" />}
               <span className="etichetta">{label}</span>
             </NavLink>
           );

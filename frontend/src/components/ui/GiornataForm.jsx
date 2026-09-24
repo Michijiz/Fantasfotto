@@ -102,15 +102,15 @@ export default function GiornataForm({ giornata, onFatto }) {
     setErrore('');
 
     const n = Number(numero);
-    if (!n) { setErrore('Serve il numero della giornata.'); return; }
+    if (!n) { setErrore('Serve il numero della giornata'); return; }
 
     const pieni = scontri.filter((s) => s.casa && s.trasferta);
     if (pieni.some((s) => s.casa === s.trasferta)) {
-      setErrore('Una squadra non può giocare contro se stessa.');
+      setErrore('Una squadra non può giocare contro se stessa (nemmeno se se lo merita)');
       return;
     }
     if (doppioni.length) {
-      setErrore('Una squadra compare in due scontri della stessa giornata.');
+      setErrore('Una squadra compare in due scontri della stessa giornata');
       return;
     }
 
@@ -158,7 +158,7 @@ export default function GiornataForm({ giornata, onFatto }) {
 
   const opzioni = (selezionata) => (
     <>
-      <option value="">Seleziona...</option>
+      <option value="">Scegli…</option>
       {squadre.map((s) => (
         <option key={s._id} value={s._id}>
           {impegnate[s._id] && s._id !== selezionata ? `• ${s.nome}` : s.nome}
@@ -172,22 +172,22 @@ export default function GiornataForm({ giornata, onFatto }) {
       <div className="row2">
         <div>
           <label>Numero giornata</label>
-          <input type="number" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="es. 8" />
+          <input type="number" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="es. 10" />
         </div>
         <div>
-          <label>Giornata di Serie A</label>
-          <input type="number" value={serieANumero} onChange={(e) => setSerieANumero(e.target.value)} placeholder="facoltativo" />
+          <label>Giornata di Serie A <span className="facoltativo">facoltativo</span></label>
+          <input type="number" value={serieANumero} onChange={(e) => setSerieANumero(e.target.value)} placeholder="es. 12" />
         </div>
       </div>
 
-      <label>Data e ora del primo fischio (facoltativa)</label>
+      <label>Fischio d'inizio <span className="facoltativo">facoltativo</span></label>
       <input
         type="datetime-local"
         className="campo-data"
         value={data}
         onChange={(e) => setData(e.target.value)}
       />
-      <p className="nota-form">Se la imposti, le schedine si chiudono da sole a quell&apos;ora.</p>
+      <p className="nota-form">Se lo imposti, schedine e votazioni si chiudono da sole a quell&apos;ora.</p>
 
       <h2 className="section-title" style={{ marginTop: 18 }}>Scontri</h2>
       {scontri.map((s, i) => (
@@ -204,13 +204,13 @@ export default function GiornataForm({ giornata, onFatto }) {
           ><X size={16} /></button>
         </div>
       ))}
-      <button type="button" className="ghost blocco" onClick={() => { righeAutomatiche.current = false; setScontri((s) => [...s, rigaVuota()]); }}>
+      <button type="button" className="bottone-contorno" onClick={() => { righeAutomatiche.current = false; setScontri((s) => [...s, rigaVuota()]); }}>
         + Aggiungi scontro
       </button>
 
       <h2 className="section-title" style={{ marginTop: 22 }}>Punteggi fantacalcio</h2>
       <p className="nota-form" style={{ marginTop: 0, marginBottom: 8 }}>
-        Il totale di giornata preso da Leghe Fantacalcio. Accanto compaiono i gol che ne
+        Lascia vuoto chi non ha ancora il punteggio. Accanto compaiono i gol che ne
         escono, così un numero digitato male si vede subito.
       </p>
       <div className="punteggi-lista">
@@ -241,7 +241,7 @@ export default function GiornataForm({ giornata, onFatto }) {
           checked={conclusa}
           onChange={(e) => { spuntaToccata.current = true; setConclusa(e.target.checked); }}
         />
-        Giornata conclusa — entra in classifica
+        Giornata conclusa: i punteggi sono definitivi
       </label>
       {quantiPunteggi > 0 && !conclusa && (
         <p className="avviso-form">
@@ -250,7 +250,7 @@ export default function GiornataForm({ giornata, onFatto }) {
         </p>
       )}
 
-      <button className="primary" type="submit" disabled={salvando}>Salva la giornata</button>
+      <button className="bottone-grande" type="submit" disabled={salvando}>{salvando ? 'Aggiorno la classifica…' : 'Salva la giornata'}</button>
       {errore && <div className="errore-msg">{errore}</div>}
 
       {giornata?._id && puoCancellare(utente) && (

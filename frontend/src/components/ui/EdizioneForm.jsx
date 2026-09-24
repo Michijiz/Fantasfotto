@@ -1,20 +1,14 @@
 import { useRef, useState } from 'react';
 import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import ImageUpload from './ImageUpload';
 
-const campoIniziale = {
-  giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '', immagineUrl: '',
-  vincitore: '', puntiVincitore: '', ultimo: '', puntiUltimo: '', fenomeno: '', bidone: ''
-};
+const vuoto = { giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '', immagineUrl: '', didascalia: '' };
 
-const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
-
-// Da un'edizione salvata ai campi del form (il corpo è un array di paragrafi, nel
-// form è un testo con righe vuote in mezzo).
-function daEdizione(ed) {
-  if (!ed) return campoIniziale;
+function daEdizione(ed, firma) {
+  if (!ed) return { ...vuoto, direttore: firma };
   return {
     giornataNumero: String(ed.giornataNumero ?? ''),
     direttore: ed.direttore || '',
@@ -22,28 +16,30 @@ function daEdizione(ed) {
     titolo: ed.titolo || '',
     corpo: (ed.corpo || []).join('\n\n'),
     immagineUrl: ed.immagineUrl || '',
-    vincitore: idDi(ed.stats?.vincitore),
-    puntiVincitore: ed.stats?.puntiVincitore == null ? '' : String(ed.stats.puntiVincitore),
-    ultimo: idDi(ed.stats?.ultimo),
-    puntiUltimo: ed.stats?.puntiUltimo == null ? '' : String(ed.stats.puntiUltimo),
-    fenomeno: idDi(ed.stats?.fenomeno),
-    bidone: idDi(ed.stats?.bidone)
+    didascalia: ed.didascalia || ''
   };
 }
 
-// Serve sia a scrivere un'edizione nuova sia a correggerne una già in stampa:
-// passa `edizione` per la modifica. I fantapunti NON stanno più qui — si inseriscono
-// sulla giornata, dalla tab Lega → Calendario.
+// "Si va in stampa": il modulo dell'edizione. Il tabellino non si compila più a
+// mano: miglior e peggior punteggio li calcola la Gazzetta dai punteggi della
+// giornata, il Re dei Gufi arriva dalle schedine. La firma è libera (pseudonimi
+// ammessi) e parte dal nome di chi scrive.
 export default function EdizioneForm({ edizione = null, onFatto }) {
-  const { squadre, ricaricaTutto } = useDati();
+  const { utente } = useAuth();
+  const { giornate, ricaricaTutto } = useDati();
   const mostraToast = useToast();
-  const [campi, setCampi] = useState(() => daEdizione(edizione));
+  const [campi, setCampi] = useState(() => daEdizione(edizione, utente?.nomeVisualizzato || ''));
   const [errore, setErrore] = useState('');
   const [inviando, setInviando] = useState(false);
-  const inviandoRef = useRef(false); // guardia sincrona: lo state da solo non basta a bloccare un doppio click molto ravvicinato
+  const inviandoRef = useRef(false);
 
   const modifica = Boolean(edizione?._id);
   const set = (chiave) => (e) => setCampi((c) => ({ ...c, [chiave]: e.target.value }));
+
+  const numero = Number(campi.giornataNumero);
+  const giornata = numero ? giornate.find((g) => g.numero === numero) : null;
+  const senzaPunteggi = numero > 0 && !(giornata?.accoppiamenti || [])
+    .some((a) => a.fantapuntiCasa != null || a.fantapuntiTrasferta != null);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -51,38 +47,29 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
     setErrore('');
 
     const corpo = campi.corpo.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-    if (!campi.giornataNumero || !campi.direttore || !campi.occhiello || !campi.titolo || corpo.length === 0) {
-      setErrore('Compila i campi obbligatori (numero, direttore, occhiello, titolo, testo).');
+    if (!campi.giornataNumero || !campi.direttore.trim() || !campi.occhiello.trim() || !campi.titolo.trim() || corpo.length === 0) {
+      setErrore('Mancano dei pezzi: giornata, firma, occhiello, titolo e testo sono obbligatori');
       return;
     }
 
     inviandoRef.current = true;
     setInviando(true);
-
-    const corpoRichiesta = {
-      giornataNumero: Number(campi.giornataNumero),
-      direttore: campi.direttore,
-      occhiello: campi.occhiello,
-      titolo: campi.titolo,
+    const dati = {
+      giornataNumero: numero,
+      direttore: campi.direttore.trim(),
+      occhiello: campi.occhiello.trim(),
+      titolo: campi.titolo.trim(),
       corpo,
-      immagineUrl: campi.immagineUrl || undefined,
-      vincitore: campi.vincitore || undefined,
-      puntiVincitore: campi.puntiVincitore ? Number(campi.puntiVincitore) : undefined,
-      ultimo: campi.ultimo || undefined,
-      puntiUltimo: campi.puntiUltimo ? Number(campi.puntiUltimo) : undefined,
-      fenomeno: campi.fenomeno || undefined,
-      bidone: campi.bidone || undefined
+      immagineUrl: campi.immagineUrl || '',
+      didascalia: campi.didascalia.trim()
     };
 
     try {
-      if (modifica) {
-        await api.put(`/api/edizioni/${edizione._id}`, corpoRichiesta);
-      } else {
-        await api.post('/api/edizioni', corpoRichiesta);
-      }
+      if (modifica) await api.put(`/api/edizioni/${edizione._id}`, dati);
+      else await api.post('/api/edizioni', dati);
       await ricaricaTutto();
       mostraToast(modifica ? 'Edizione corretta!' : 'Edizione mandata in stampa!');
-      if (!modifica) setCampi(campoIniziale);
+      if (!modifica) setCampi(daEdizione(null, utente?.nomeVisualizzato || ''));
       onFatto();
     } catch (err) {
       setErrore(err.message);
@@ -93,79 +80,44 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
   };
 
   return (
-    <form onSubmit={submit}>
-      <label>Numero giornata</label>
-      <input type="number" value={campi.giornataNumero} onChange={set('giornataNumero')} placeholder="es. 8" />
+    <form onSubmit={submit} noValidate>
+      <label htmlFor="e-numero">Numero giornata</label>
+      <input id="e-numero" type="number" inputMode="numeric" value={campi.giornataNumero} onChange={set('giornataNumero')} placeholder="es. 9" />
 
-      <label>Direttore di turno</label>
-      <input type="text" value={campi.direttore} onChange={set('direttore')} placeholder="Chi scrive stavolta?" />
+      <label htmlFor="e-firma">Firma</label>
+      <input id="e-firma" type="text" value={campi.direttore} onChange={set('direttore')} placeholder="Il tuo nome o uno pseudonimo" />
 
-      <div className="row2">
-        <div>
-          <label>Vincitore giornata</label>
-          <select value={campi.vincitore} onChange={set('vincitore')}>
-            <option value="">Seleziona...</option>
-            {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
-          </select>
-        </div>
-        <div>
-          <label>Punti vincitore</label>
-          <input type="number" step="0.5" value={campi.puntiVincitore} onChange={set('puntiVincitore')} placeholder="es. 78" />
-        </div>
-      </div>
+      <label htmlFor="e-occhiello">Occhiello</label>
+      <input id="e-occhiello" type="text" value={campi.occhiello} onChange={set('occhiello')} placeholder="Es. Il caso" />
 
-      <div className="row2">
-        <div>
-          <label>Ultimo classificato</label>
-          <select value={campi.ultimo} onChange={set('ultimo')}>
-            <option value="">Seleziona...</option>
-            {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
-          </select>
-        </div>
-        <div>
-          <label>Punti ultimo</label>
-          <input type="number" step="0.5" value={campi.puntiUltimo} onChange={set('puntiUltimo')} placeholder="es. 41" />
-        </div>
-      </div>
+      <label htmlFor="e-titolo">Titolo</label>
+      <input id="e-titolo" type="text" value={campi.titolo} onChange={set('titolo')} placeholder="Es. Sono i re di questa giornata!" />
 
-      <div className="row2">
-        <div>
-          <label>Fenomeno (opzionale)</label>
-          <select value={campi.fenomeno} onChange={set('fenomeno')}>
-            <option value="">— automatico (il vincitore) —</option>
-            {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
-          </select>
-        </div>
-        <div>
-          <label>Bidone (opzionale)</label>
-          <select value={campi.bidone} onChange={set('bidone')}>
-            <option value="">— automatico (l&apos;ultimo) —</option>
-            {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <p className="nota-form">
-        Il Re dei Gufi non si sceglie: lo calcola l&apos;app dalle schedine azzeccate di
-        quella giornata.
-      </p>
-
-      <h2 className="section-title" style={{ marginTop: 20 }}>Testo dell&apos;articolo</h2>
-      <label>Occhiello</label>
-      <input type="text" value={campi.occhiello} onChange={set('occhiello')} placeholder="completa la frase..." />
-      <label>Titolo</label>
-      <input type="text" value={campi.titolo} onChange={set('titolo')} placeholder="es. Sono i re di questa giornata!" />
-      <label>Corpo (un paragrafo per riga vuota tra i blocchi)</label>
-      <textarea rows={8} value={campi.corpo} onChange={set('corpo')} placeholder={'Primo paragrafo...\n\nSecondo paragrafo...'} />
+      <label htmlFor="e-pezzo">Il pezzo</label>
+      <textarea id="e-pezzo" rows={9} value={campi.corpo} onChange={set('corpo')} placeholder="Scrivi qui. Lascia una riga vuota tra un paragrafo e l'altro." />
 
       <ImageUpload
-        label="Foto dell'edizione (opzionale, grande in prima pagina)"
+        label="Foto (facoltativa)"
         value={campi.immagineUrl}
         onChange={(url) => setCampi((c) => ({ ...c, immagineUrl: url }))}
       />
 
-      <button className="primary" type="submit" disabled={inviando}>
-        {modifica ? 'Salva le correzioni' : 'Manda in stampa'}
+      <label htmlFor="e-didascalia">Didascalia <span className="facoltativo">facoltativa</span></label>
+      <input id="e-didascalia" type="text" maxLength={140} value={campi.didascalia} onChange={set('didascalia')} placeholder="Es. Nella foto: la lavagna tattica" />
+
+      <p className="nota-form">
+        Miglior e peggior punteggio li calcola la Gazzetta dai punteggi della giornata. Il Re dei Gufi arriva dalle schedine.
+      </p>
+      {senzaPunteggi && (
+        <p className="nota-form avviso">
+          I punteggi della G{numero} non ci sono ancora: il tabellino resterà vuoto finché non li inserisci.
+        </p>
+      )}
+
+      <button className="bottone-grande" type="submit" disabled={inviando}>
+        {modifica
+          ? (inviando ? 'Correggo le bozze…' : 'Salva le correzioni')
+          : (inviando ? 'In stampa…' : 'Manda in stampa')}
       </button>
       {errore && <div className="errore-msg">{errore}</div>}
     </form>

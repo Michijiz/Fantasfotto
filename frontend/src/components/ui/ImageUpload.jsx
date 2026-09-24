@@ -213,8 +213,13 @@ export default function ImageUpload({ label, value, onChange }) {
       <label>{label}</label>
       <div className="upload-row">
         {value && <img src={value} className="img-preview" alt="" />}
-        <input type="file" accept="image/*" onChange={onFile} disabled={caricando} />
-        {caricando && <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 12.5, color: 'var(--ink-soft)' }}>Caricamento...</span>}
+        <label className={`bottone-contorno upload-bottone${caricando ? ' spento' : ''}`}>
+          {caricando ? 'Sviluppo il rullino…' : value ? 'Cambia' : 'Carica foto'}
+          <input type="file" accept="image/*" onChange={onFile} disabled={caricando} hidden />
+        </label>
+        {value && !caricando && (
+          <button type="button" className="bottone-link" onClick={() => onChange('')}>Togli</button>
+        )}
       </div>
     </>
   );

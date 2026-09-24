@@ -187,3 +187,9 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
   color:var(--ink);
 }
 .calcolatrice-esito .unita{font-family:'Oswald',sans-serif;font-size:13.5px;text-transform:uppercase;letter-spacing:.06em;}
+
+/* Scala dei gol sotto la calcolatrice. */
+.calcolatrice-scala{
+  display:flex; justify-content:space-between; gap:6px; padding-top:12px; border-top:1px solid var(--filo-lieve);
+  font-family:'Oswald',sans-serif; font-size:14px; color:var(--ink-soft);
+}
