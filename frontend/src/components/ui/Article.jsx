@@ -63,7 +63,7 @@ export default function Article({ edizione }) {
         </div>
         <button type="button" className="tabellino-verdetti" onClick={() => navigate('/gioca', { state: { tab: 'verdetti' } })}>
           <span className="testi">
-            <span className="sopra">Il resto lo giudica la lega</span>
+            
             <span className="sotto">Vai ai verdetti</span>
           </span>
           <CaretRight size={22} weight="bold" />

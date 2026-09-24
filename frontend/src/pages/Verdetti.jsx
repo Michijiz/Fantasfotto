@@ -150,7 +150,7 @@ export default function Verdetti() {
         <button type="button" className="riga-azione sbloccata" onClick={() => navigate('/verdetti/risultati')}>
           <span className="freccia rossa"><ChartBar size={26} weight="bold" /></span>
           <span className="testi">
-            <span className="ritaglio-titolo medio">Come ha votato la lega</span>
+            <span className="ritaglio-titolo medio">Risultati</span>
             <span className="dettaglio">{chiuse ? 'Votazioni chiuse: i grafici sono per tutti' : 'Hai votato tutto: guarda i grafici'}</span>
           </span>
           <CaretRight size={22} weight="bold" />
