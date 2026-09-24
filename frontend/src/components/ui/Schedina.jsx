@@ -1,30 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, X as Croce } from '@phosphor-icons/react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Stemma from './Stemma';
 
 const SEGNI = ['1', 'X', '2'];
-
 const formattaQuota = (n) => (n == null ? '—' : Number(n).toFixed(2).replace('.', ','));
 
-const ETICHETTA_ESITO = { attesa: 'In attesa', vinta: 'Vinta', persa: 'Persa' };
-
-// "In attesa" da solo sembra un guasto: uno non sa se deve fare qualcosa o no.
-// Il motivo è sempre lo stesso — mancano dei fantapunti — e si scrive per esteso
-// sotto al titolo. Nel bollo no: lì ci sta una parola, e una frase lunga manderebbe
-// l'intestazione su tre righe.
-function motivoAttesa(giornata) {
-  const scontri = giornata?.accoppiamenti || [];
-  const mancanti = scontri.filter((a) => a.golCasa == null || a.golTrasferta == null).length;
-  if (mancanti === 0) return null;
-  const quali = mancanti === scontri.length
-    ? 'Mancano ancora i fantapunti di questa giornata'
-    : `Manca il risultato di ${mancanti} scontr${mancanti === 1 ? 'o' : 'i'}`;
-  return `${quali}: la schedina si risolve da sola appena la redazione li inserisce.`;
-}
-
-// '1' | 'X' | '2' già uscito, oppure null se lo scontro non è ancora stato giocato.
+// '1' | 'X' | '2' già uscito, oppure null se lo scontro non ha ancora un risultato.
 const esitoReale = (a) => {
   if (a.golCasa == null || a.golTrasferta == null) return null;
   if (a.golCasa > a.golTrasferta) return '1';
@@ -32,64 +17,165 @@ const esitoReale = (a) => {
   return 'X';
 };
 
-function Scontri({ scontri, scelte, onScegli, soloLettura, quotePronostici }) {
+function tempo(giornata) {
+  if (!giornata?.data) return null;
+  const diff = new Date(giornata.data).getTime() - Date.now();
+  if (diff <= 0) return giornata.conclusa ? 'fischio finale' : 'in campo';
+  return `fischio d'inizio tra ${Math.floor(diff / 86400000)}g ${Math.floor((diff % 86400000) / 3600000)}h`;
+}
+
+// L'esito in cima al cedolino dopo la chiusura, in parole semplici.
+function esitoTesto(giornata, miaSchedina) {
+  if (!miaSchedina) return null;
+  if (miaSchedina.esito === 'vinta') return 'Vinta';
+  if (miaSchedina.esito === 'persa') {
+    const scontri = giornata.accoppiamenti || [];
+    const giusti = (miaSchedina.pronostici || []).filter((p) => {
+      const a = scontri.find((x) => String(x._id) === String(p.accoppiamento));
+      return a && esitoReale(a) === p.esito;
+    }).length;
+    return `Persa, ${giusti} su ${scontri.length}`;
+  }
+  return 'In attesa dei risultati';
+}
+
+function Scontro({ a, scelta, quotaGiocata, soloLettura, onScegli }) {
+  const uscito = esitoReale(a);
   return (
-    <div className="schedina-lista">
-      {scontri.map((a) => {
-        const id = String(a._id);
-        const scelta = scelte[id];
-        const uscito = esitoReale(a);
-        return (
-          <div className="schedina-scontro" key={id}>
-            <div className="squadre">
-              <span className="sq">
-                <Stemma src={a.squadraCasa?.stemma} nome={a.squadraCasa?.nome} size={18} />
-                <span className="nome">{a.squadraCasa?.nome}</span>
-              </span>
-              <span className="trattino">—</span>
-              <span className="sq">
-                <Stemma src={a.squadraTrasferta?.stemma} nome={a.squadraTrasferta?.nome} size={18} />
-                <span className="nome">{a.squadraTrasferta?.nome}</span>
-              </span>
-            </div>
-            <div className="segni">
-              {SEGNI.map((segno) => {
-                // Le quote vive vengono dalla giornata; a giornata archiviata si
-                // mostra invece quella congelata sulla schedina, che è quella a cui
-                // hai davvero giocato.
-                const quota = a.quote?.[segno] ?? (scelta === segno ? quotePronostici?.[id] : null);
-                return (
-                  <button
-                    key={segno}
-                    type="button"
-                    disabled={soloLettura}
-                    className={
-                      `segno${scelta === segno ? ' scelto' : ''}${uscito === segno ? ' giusto' : ''}`
-                    }
-                    onClick={() => onScegli(id, segno)}
-                  >
-                    <b>{segno}</b>
-                    <span>{quota ? formattaQuota(quota) : '·'}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+    <div className="cedolino-scontro">
+      <div className="squadre">
+        <Stemma src={a.squadraCasa?.stemma} nome={a.squadraCasa?.nome} size={32} />
+        <span className="nome casa">{a.squadraCasa?.nome}</span>
+        <span className="vs">vs</span>
+        <span className="nome trasferta">{a.squadraTrasferta?.nome}</span>
+        <Stemma src={a.squadraTrasferta?.stemma} nome={a.squadraTrasferta?.nome} size={32} />
+      </div>
+      <div className="segni">
+        {SEGNI.map((segno) => {
+          // Quote vive dalla giornata; a banco chiuso quella congelata sulla schedina.
+          const quota = a.quote?.[segno] ?? (scelta === segno ? quotaGiocata : null);
+          const giusto = soloLettura && uscito && scelta === segno && uscito === segno;
+          const sbagliato = soloLettura && uscito && scelta === segno && uscito !== segno;
+          return (
+            <button
+              key={segno}
+              type="button"
+              disabled={soloLettura}
+              aria-pressed={scelta === segno}
+              className={`segno${scelta === segno ? ' scelto' : ''}${uscito === segno ? ' uscito' : ''}`}
+              onClick={() => onScegli(String(a._id), segno)}
+            >
+              <b>{segno}</b>
+              <span>{quota ? formattaQuota(quota) : '·'}</span>
+              {giusto && <Check className="spunta" size={18} weight="bold" aria-label="azzeccato" />}
+              {sbagliato && <Croce className="spunta" size={18} weight="bold" aria-label="sbagliato" />}
+            </button>
+          );
+        })}
+      </div>
+      {soloLettura && uscito && (
+        <span className="dettaglio risultato">Risultato: {a.golCasa} – {a.golTrasferta}</span>
+      )}
     </div>
   );
 }
 
-// Il blocco su cui si gioca: multipla su tutti gli scontri della giornata che deve
-// ancora cominciare. Niente puntata e niente valuta — si gioca per il titolo di Re
-// dei Gufi, che finisce in prima pagina.
-function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
+// Gli altri gufi: prima della chiusura chi ha consegnato e con che quota; dopo,
+// anche l'esito, e toccando una riga i suoi pronostici.
+function AltriGufi({ giornata, chiusa }) {
+  const { squadre } = useDati();
+  const { utente } = useAuth();
+  const mia = typeof utente?.squadra === 'object' ? utente?.squadra?._id : utente?.squadra;
+  const [dati, setDati] = useState(null);
+  const [aperta, setAperta] = useState(null);
+  const numero = giornata?.numero;
+
+  useEffect(() => {
+    if (!numero) return undefined;
+    let attivo = true;
+    let inCorso = false;
+    const carica = () => {
+      if (inCorso || document.visibilityState !== 'visible') return;
+      inCorso = true;
+      api.get(`/api/schedine/giornata/${numero}`)
+        .then((d) => { if (attivo) setDati(d); })
+        .catch(() => { if (attivo) setDati(null); })
+        .finally(() => { inCorso = false; });
+    };
+    carica();
+    // A banco aperto la lista cambia: un poll leggero, in pausa a scheda nascosta.
+    const intervallo = chiusa ? null : setInterval(carica, 30000);
+    if (!chiusa) document.addEventListener('visibilitychange', carica);
+    return () => {
+      attivo = false;
+      if (intervallo) clearInterval(intervallo);
+      document.removeEventListener('visibilitychange', carica);
+    };
+  }, [numero, chiusa]);
+
+  if (!dati) return null;
+
+  let righe;
+  if (!dati.chiusa) {
+    const consegnate = new Map((dati.partecipanti || []).map((p) => [p.squadra?._id, p]));
+    righe = squadre.filter((s) => s._id !== mia).map((s) => ({
+      chiave: s._id, squadra: s,
+      quota: consegnate.has(s._id) ? formattaQuota(consegnate.get(s._id).quotaTotale) : '—',
+      stato: consegnate.has(s._id) ? 'Consegnata' : 'Non ancora'
+    }));
+    if (consegnate.size === 0) righe = [];
+  } else {
+    righe = (dati.schedine || []).filter((s) => s.squadra?._id !== mia).map((s) => ({
+      chiave: s._id, squadra: s.squadra, quota: formattaQuota(s.quotaTotale),
+      stato: s.esito === 'vinta' ? 'Vinta' : s.esito === 'persa' ? 'Persa' : 'In attesa', schedina: s
+    }));
+  }
+
+  return (
+    <section className="ritaglio">
+      <div className="ritaglio-occhiello"><span>Gli altri gufi</span><span className="filo" /></div>
+      {righe.length === 0 ? (
+        <p className="ritaglio-vuoto">Nessun gufo in giro, per ora.</p>
+      ) : (
+        <div className="gufi">
+          {righe.map((r) => (
+            <div key={r.chiave}>
+              <button
+                type="button"
+                className="gufo"
+                disabled={!r.schedina}
+                onClick={() => setAperta(aperta === r.chiave ? null : r.chiave)}
+                aria-expanded={r.schedina ? aperta === r.chiave : undefined}
+              >
+                <Stemma src={r.squadra?.stemma} nome={r.squadra?.nome} size={36} />
+                <span className="nome">{r.squadra?.nome}</span>
+                <span className="dx">
+                  <b>{r.quota}</b>
+                  <span className="dettaglio">{r.stato}</span>
+                </span>
+              </button>
+              {aperta === r.chiave && r.schedina && (
+                <div className="gufo-pronostici">
+                  {(r.schedina.pronostici || []).map((p) => (
+                    <span key={String(p.accoppiamento)} className="dettaglio">
+                      {p.squadraCasa?.nome} – {p.squadraTrasferta?.nome}: <b>{p.esito}</b>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
   const mostraToast = useToast();
   const [scelte, setScelte] = useState({});
   const [inviando, setInviando] = useState(false);
   const inviandoRef = useRef(false);
-  const [partecipanti, setPartecipanti] = useState([]);
 
   useEffect(() => {
     const iniziali = {};
@@ -97,80 +183,29 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
     setScelte(iniziali);
   }, [miaSchedina]);
 
-  // Finché si gioca si vede solo chi ha già consegnato, non cosa ha giocato:
-  // lo scontrino resta segreto fino al fischio d'inizio. Un poll leggero (in
-  // pausa a tab nascosta) tiene la lista aggiornata senza bombardare il backend.
-  const numeroGiornata = giornata?.numero;
-
-  useEffect(() => {
-    if (!numeroGiornata || chiusa) {
-      setPartecipanti([]);
-      return undefined;
-    }
-
-    let attivo = true;
-    let inCorso = false;
-    const carica = () => {
-      // Una richiesta per volta: l'intervallo e il ritorno sulla scheda possono
-      // scattare a un soffio di distanza, e due risposte concorrenti arrivavano
-      // in ordine qualsiasi — vinceva la più vecchia.
-      if (inCorso || document.visibilityState !== 'visible') return;
-      inCorso = true;
-      api.get(`/api/schedine/giornata/${numeroGiornata}`)
-        .then((dati) => { if (attivo) setPartecipanti(dati.partecipanti || []); })
-        .catch(() => { if (attivo) setPartecipanti([]); })
-        .finally(() => { inCorso = false; });
-    };
-
-    carica();
-    const intervallo = setInterval(carica, 30000);
-    document.addEventListener('visibilitychange', carica);
-
-    return () => {
-      attivo = false;
-      clearInterval(intervallo);
-      document.removeEventListener('visibilitychange', carica);
-    };
-    // Si dipende dal numero della giornata, non dall'oggetto: `giornata` è nuovo
-    // a ogni ricarica e il poll ripartiva da zero ogni volta. `miaSchedina` non
-    // compare dentro l'effetto: era una dipendenza morta che, dopo ogni consegna,
-    // buttava via intervallo e listener per ricrearli identici.
-  }, [numeroGiornata, chiusa]);
-
   const scontri = useMemo(() => giornata?.accoppiamenti || [], [giornata]);
+  const quoteGiocate = useMemo(() => {
+    const q = {};
+    for (const p of miaSchedina?.pronostici || []) q[String(p.accoppiamento)] = p.quota;
+    return q;
+  }, [miaSchedina]);
 
+  const fatti = scontri.filter((a) => scelte[String(a._id)]).length;
+  const completa = scontri.length > 0 && fatti === scontri.length;
   const quotaTotale = useMemo(() => {
     const scelti = scontri.filter((a) => scelte[String(a._id)]);
     if (scelti.length === 0) return null;
-    const tot = scelti.reduce((acc, a) => acc * (a.quote?.[scelte[String(a._id)]] ?? 1), 1);
-    return Math.round(tot * 100) / 100;
+    return Math.round(scelti.reduce((acc, a) => acc * (a.quote?.[scelte[String(a._id)]] ?? 1), 1) * 100) / 100;
   }, [scontri, scelte]);
 
-  const completa = scontri.length > 0 && scontri.every((a) => scelte[String(a._id)]);
-
-  if (!giornata) {
-    return (
-      <div className="card schedina">
-        <h2 className="section-title">Schedina</h2>
-        <div className="empty">Nessuna giornata aperta: si torna a gufare alla prossima.</div>
-      </div>
-    );
-  }
-
-  if (motivo === 'calendario-mancante' || scontri.length === 0) {
-    return (
-      <div className="card schedina">
-        <h2 className="section-title">Schedina — Giornata {giornata.numero}</h2>
-        <div className="empty">
-          Gli scontri di questa giornata non sono ancora stati impostati: senza calendario non c&apos;è
-          niente da pronosticare.
-        </div>
-      </div>
-    );
-  }
+  const cambiata = miaSchedina && scontri.some((a) => {
+    const p = miaSchedina.pronostici?.find((x) => String(x.accoppiamento) === String(a._id));
+    return p?.esito !== scelte[String(a._id)];
+  });
 
   const consegna = async () => {
-    if (inviandoRef.current || !completa) return;
+    if (!completa) { mostraToast('Manca un pronostico: la multipla è una sola.'); return; }
+    if (inviandoRef.current) return;
     inviandoRef.current = true;
     setInviando(true);
     try {
@@ -179,7 +214,7 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
         pronostici: scontri.map((a) => ({ accoppiamento: a._id, esito: scelte[String(a._id)] }))
       });
       await onSalvato();
-      mostraToast(miaSchedina ? 'Schedina aggiornata!' : 'Schedina consegnata!');
+      mostraToast('Consegnata. Che la fortuna ti assista');
     } catch (err) {
       mostraToast(err.message);
     } finally {
@@ -188,139 +223,65 @@ function SchedinaAperta({ giornata, miaSchedina, chiusa, motivo, onSalvato }) {
     }
   };
 
-  return (
-    <div className="card schedina">
-      <h2 className="section-title">
-        Schedina — Giornata {giornata.numero}
-        {miaSchedina && <span className="bollo-esito consegnata">Consegnata</span>}
-      </h2>
-
-      {chiusa && !miaSchedina ? (
-        <div className="empty">Schedine chiuse, e tu non ne hai consegnata nessuna.</div>
-      ) : (
-        <Scontri
-          scontri={scontri}
-          scelte={scelte}
-          soloLettura={chiusa}
-          onScegli={(id, segno) => setScelte((s) => ({ ...s, [id]: segno }))}
-        />
-      )}
-
-      {!chiusa && (
-        <>
-          <div className="schedina-totale">
-            <span>Quota totale</span>
-            <b className={quotaTotale ? '' : 'vuota'}>
-              {quotaTotale ? formattaQuota(quotaTotale) : 'da compilare'}
-            </b>
-          </div>
-          <button className="primary" onClick={consegna} disabled={!completa || inviando}>
-            {miaSchedina ? 'Aggiorna la schedina' : 'Consegna la schedina'}
-          </button>
-          {!completa ? (
-            <p className="nota-form">Serve un pronostico su tutti gli scontri: la multipla è unica.</p>
-          ) : (
-            <p className="nota-form">
-              Le quote di questa giornata sono uguali per tutti e non cambiano più:
-              consegnare presto o all&apos;ultimo non sposta nulla.
-            </p>
-          )}
-        </>
-      )}
-
-      {!chiusa && partecipanti.length > 0 && (
-        <>
-          <h3 className="sotto-titolo">L&apos;angolo dei gufi ({partecipanti.length})</h3>
-          <div className="gufi-lista">
-            {partecipanti.map((p) => (
-              <div className="gufo-riga" key={p.utente?._id || p.squadra?._id}>
-                <Stemma src={p.squadra?.stemma} nome={p.squadra?.nome} size={22} />
-                <span className="chi">{p.squadra?.nome || p.utente?.nomeVisualizzato}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// Com'è andata l'ultima giornata archiviata: lo scontrino personale e la lista di
-// tutti. Prima che la giornata chiuda le schedine altrui non sono visibili.
-function SchedinaEsito({ giornata, miaSchedina }) {
-  const [altre, setAltre] = useState([]);
-
-  const numeroGiornata = giornata?.numero;
-
-  useEffect(() => {
-    if (!numeroGiornata) return undefined;
-    // Stessa guardia del poll qui sopra: senza, la risposta di una giornata
-    // precedente poteva arrivare dopo ed elencare le schedine sbagliate sotto
-    // il titolo giusto.
-    let attivo = true;
-    api.get(`/api/schedine/giornata/${numeroGiornata}`)
-      .then((dati) => { if (attivo) setAltre(dati.schedine || []); })
-      .catch(() => { if (attivo) setAltre([]); });
-    return () => { attivo = false; };
-  }, [numeroGiornata]);
-
-  if (!giornata) return null;
-  if (!miaSchedina && altre.length === 0) return null;
-
-  const scelte = {};
-  const quote = {};
-  for (const p of miaSchedina?.pronostici || []) {
-    scelte[String(p.accoppiamento)] = p.esito;
-    quote[String(p.accoppiamento)] = p.quota;
-  }
+  const t = tempo(giornata);
+  const esito = chiusa ? esitoTesto(giornata, miaSchedina) : null;
+  const etichettaBottone = inviando ? 'Consegno…' : miaSchedina ? 'Aggiorna' : 'Consegna';
+  const bottoneSpento = !completa || (miaSchedina && !cambiata);
 
   return (
-    <div className="card schedina">
-      <h2 className="section-title">
-        Com&apos;è andata — Giornata {giornata.numero}
-        {miaSchedina && (
-          <span className={`bollo-esito ${miaSchedina.esito}`}>{ETICHETTA_ESITO[miaSchedina.esito]}</span>
-        )}
-      </h2>
-
-      {miaSchedina?.esito === 'attesa' && motivoAttesa(giornata) && (
-        <p className="nota-form">{motivoAttesa(giornata)}</p>
-      )}
-
-      {miaSchedina ? (
-        <>
-          <Scontri
-            scontri={giornata.accoppiamenti || []}
-            scelte={scelte}
-            quotePronostici={quote}
-            soloLettura
-            onScegli={() => {}}
-          />
-          <div className="schedina-totale">
-            <span>Quota giocata</span>
+    <>
+      <section className="ritaglio cedolino">
+        <div className="cedolino-testa">
+          <div className="ritaglio-testa">
+            <span className="occhiello-oro">Cedolino · Giornata {giornata.numero}</span>
+            {t && <span className="chip-tempo">{t}</span>}
+          </div>
+          <h1 className="ritaglio-titolo">Gufa la giornata</h1>
+          {esito && <span className={`cedolino-esito ${miaSchedina?.esito || ''}`}>{esito}</span>}
+          {chiusa && !miaSchedina && <p className="ritaglio-vuoto">Questa giornata non l&apos;hai gufata.</p>}
+        </div>
+        <div className="cedolino-filo">
+          <span className="tacca sx" aria-hidden="true" />
+          <span className="tacca dx" aria-hidden="true" />
+        </div>
+        <div className="cedolino-scontri">
+          {scontri.map((a) => (
+            <Scontro
+              key={String(a._id)}
+              a={a}
+              scelta={scelte[String(a._id)]}
+              quotaGiocata={quoteGiocate[String(a._id)]}
+              soloLettura={chiusa}
+              onScegli={(id, segno) => setScelte((s) => ({ ...s, [id]: segno }))}
+            />
+          ))}
+        </div>
+        {chiusa && miaSchedina && (
+          <div className="cedolino-totale">
+            <span className="dettaglio">Quota giocata</span>
             <b>{formattaQuota(miaSchedina.quotaTotale)}</b>
           </div>
-        </>
-      ) : (
-        <div className="empty">Quella giornata non l&apos;avevi giocata.</div>
-      )}
+        )}
+      </section>
 
-      {altre.length > 0 && (
-        <>
-          <h3 className="sotto-titolo">Chi ha gufato cosa</h3>
-          <div className="gufi-lista">
-            {altre.map((s) => (
-              <div className={`gufo-riga ${s.esito}`} key={s._id}>
-                <Stemma src={s.squadra?.stemma} nome={s.squadra?.nome} size={22} />
-                <span className="chi">{s.squadra?.nome || s.utente?.nomeVisualizzato}</span>
-                <span className="quota">{formattaQuota(s.quotaTotale)}</span>
-                <span className="esito">{ETICHETTA_ESITO[s.esito]}</span>
-              </div>
-            ))}
-          </div>
-        </>
+      {!chiusa && (
+        <div className="barra-consegna">
+          <span className="testi">
+            <span className="dettaglio">Quota · {fatti} su {scontri.length}</span>
+            <b>{quotaTotale ? formattaQuota(quotaTotale) : '—'}</b>
+          </span>
+          <button
+            type="button"
+            className={`bottone-grande${bottoneSpento ? ' spento' : ''}`}
+            onClick={consegna}
+            aria-disabled={bottoneSpento}
+            disabled={inviando}
+          >
+            {etichettaBottone}
+          </button>
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -328,18 +289,38 @@ export default function Schedina() {
   const { schedina, ricaricaSchedina } = useDati();
   const { giornata, miaSchedina, chiusa, motivo, precedente } = schedina;
 
+  if (!giornata) {
+    return (
+      <div className="ritagli">
+        <section className="ritaglio">
+          <h2 className="ritaglio-titolo medio">Banco chiuso</h2>
+          <p className="ritaglio-vuoto">Si torna a gufare alla prossima giornata.</p>
+        </section>
+        {precedente?.giornata && (
+          <>
+            <Cedolino giornata={precedente.giornata} miaSchedina={precedente.miaSchedina} chiusa onSalvato={ricaricaSchedina} />
+            <AltriGufi giornata={precedente.giornata} chiusa />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (motivo === 'calendario-mancante' || !giornata.accoppiamenti?.length) {
+    return (
+      <div className="ritagli">
+        <section className="ritaglio">
+          <h2 className="ritaglio-titolo medio">Giornata {giornata.numero}</h2>
+          <p className="ritaglio-vuoto">Il banco apre quando il direttore di turno imposta gli scontri.</p>
+        </section>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <SchedinaAperta
-        giornata={giornata}
-        miaSchedina={miaSchedina}
-        chiusa={chiusa}
-        motivo={motivo}
-        onSalvato={ricaricaSchedina}
-      />
-      {precedente && (
-        <SchedinaEsito giornata={precedente.giornata} miaSchedina={precedente.miaSchedina} />
-      )}
-    </>
+    <div className="ritagli">
+      <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} onSalvato={ricaricaSchedina} />
+      <AltriGufi giornata={giornata} chiusa={chiusa} />
+    </div>
   );
 }

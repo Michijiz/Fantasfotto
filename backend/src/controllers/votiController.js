@@ -1,5 +1,17 @@
 const Voto = require('../models/Voto');
 const Edizione = require('../models/Edizione');
+const Giornata = require('../models/Giornata');
+const User = require('../models/User');
+
+// Le votazioni su un'edizione restano aperte fino al fischio d'inizio della
+// giornata dopo. Senza data impostata su quella giornata, restano aperte finché
+// non viene conclusa.
+async function votazioniChiuse(edizione) {
+  const dopo = await Giornata.findOne({ numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
+  if (!dopo) return false;
+  if (dopo.conclusa) return true;
+  return Boolean(dopo.data && new Date(dopo.data).getTime() <= Date.now());
+}
 
 // Categorie di voto disponibili per edizione. Tenute qui (non in DB) perché
 // cambiano raramente e servono sia al form di voto che ai conteggi. Le etichette
@@ -10,13 +22,12 @@ const Edizione = require('../models/Edizione');
 // registrati i voti già dati.
 const CATEGORIE_DEF = [
   { id: 'fenomeno', etichetta: 'Fenomeno di giornata', breve: 'Fenomeno', descrizione: 'Ha spaccato tutto, e si vede.' },
-  { id: 'bidone', etichetta: 'Bidone di giornata', breve: 'Bidone', descrizione: 'Il disastro annunciato.' },
-  { id: 'culo', etichetta: 'Il più culo', breve: 'Culo', descrizione: 'Ha vinto senza capire come.' },
-  { id: 'sfigato', etichetta: 'Il più sfigato', breve: 'Sfigato', descrizione: 'Ha perso pur facendo tutto giusto.' },
-  { id: 'piangina', etichetta: 'Il più piangina', breve: 'Piangina', descrizione: 'Chi ha rotto di più in chat.' },
+  { id: 'bidone', etichetta: 'Il Brocco della settimana', breve: 'Brocco', descrizione: 'Doveva essere un purosangue, era un ronzino.' },
+  { id: 'culo', etichetta: 'San Culo', breve: 'San Culo', descrizione: 'Ha vinto senza capire come. Accendetegli un cero.' },
+  { id: 'sfigato', etichetta: 'Il Cornuto e mazziato', breve: 'Cornuto', descrizione: 'Ha fatto tutto giusto e ha perso lo stesso.' },
+  { id: 'piangina', etichetta: 'Muro del pianto', breve: 'Pianto', descrizione: 'Ha riempito la chat di lamenti.' },
   { id: 'formazione', etichetta: 'Formazione da denuncia', breve: 'Formazione', descrizione: 'Schierata col cuore, non con la testa.' },
-  { id: 'panchina', etichetta: 'Re delle panchine', breve: 'Panchine', descrizione: 'Ha lasciato fuori i migliori.' },
-  { id: 'mercato', etichetta: 'Colpo di mercato', breve: 'Mercato', descrizione: "L'affare (o il misfatto) della settimana." }
+  { id: 'panchina', etichetta: "Il Panchinaro d'oro", breve: 'Panchinaro', descrizione: 'I migliori li ha lasciati a scaldare la panca.' }
 ];
 
 const CATEGORIE = CATEGORIE_DEF.map((c) => c.id);
@@ -36,8 +47,15 @@ const vota = async (req, res) => {
 
   // Senza questo si potevano registrare voti su un'edizione qualsiasi (anche
   // inesistente): righe che nessuna schermata mostra più e che restano lì.
-  const esiste = await Edizione.exists({ _id: edizioneId });
-  if (!esiste) return res.status(404).json({ errore: 'Edizione non trovata' });
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero').lean();
+  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
+  if (await votazioniChiuse(edizione)) {
+    return res.status(403).json({ errore: 'Votazioni chiuse: il tribunale ha già emesso le sentenze' });
+  }
+  const io = await User.findById(req.utente.id).select('squadra').lean();
+  if (io && String(io.squadra) === String(squadraId)) {
+    return res.status(400).json({ errore: 'La tua squadra non si vota: niente autoassoluzioni' });
+  }
 
   const voto = await Voto.findOneAndUpdate(
     { edizione: edizioneId, categoria, votante: req.utente.id },
@@ -48,30 +66,43 @@ const vota = async (req, res) => {
   res.json({ voto });
 };
 
-// Conteggio voti per squadra, raggruppato per categoria, per un'edizione — usato dai
-// bottoni "verdetti" e per evidenziare la scelta dell'utente corrente.
+// Com'è andata un'edizione. Il proprio voto si vede sempre; i conteggi di tutti
+// solo a chi ha votato ogni categoria, oppure a votazioni chiuse: così chi deve
+// ancora votare non si fa trascinare dalla maggioranza. Il controllo sta qui e
+// non solo nell'app, altrimenti basterebbe aprire l'indirizzo della pagina.
 const risultati = async (req, res) => {
   const { edizioneId } = req.params;
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero').lean();
+  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
 
-  const voti = await Voto.find({ edizione: edizioneId }).lean();
-
-  const conteggi = {};
-  for (const cat of CATEGORIE) conteggi[cat] = {};
-
-  for (const v of voti) {
-    const cat = conteggi[v.categoria] || (conteggi[v.categoria] = {});
-    const id = String(v.votato);
-    cat[id] = (cat[id] || 0) + 1;
-  }
+  const [voti, chiuse, utentiTotali] = await Promise.all([
+    Voto.find({ edizione: edizioneId, categoria: { $in: CATEGORIE } }).lean(),
+    votazioniChiuse(edizione),
+    User.countDocuments({ attivo: true })
+  ]);
 
   const mioVoto = {};
+  const perVotante = new Map();
   for (const v of voti) {
-    if (String(v.votante) === String(req.utente.id)) {
-      mioVoto[v.categoria] = String(v.votato);
+    const chi = String(v.votante);
+    perVotante.set(chi, (perVotante.get(chi) || 0) + 1);
+    if (chi === String(req.utente.id)) mioVoto[v.categoria] = String(v.votato);
+  }
+  const votantiCompleti = [...perVotante.values()].filter((n) => n >= CATEGORIE.length).length;
+  const hoVotatoTutto = Object.keys(mioVoto).length >= CATEGORIE.length;
+  const visibili = chiuse || hoVotatoTutto;
+
+  let conteggi = null;
+  if (visibili) {
+    conteggi = {};
+    for (const cat of CATEGORIE) conteggi[cat] = {};
+    for (const v of voti) {
+      const id = String(v.votato);
+      conteggi[v.categoria][id] = (conteggi[v.categoria][id] || 0) + 1;
     }
   }
 
-  res.json({ conteggi, mioVoto });
+  res.json({ conteggi, mioVoto, chiuse, visibili, votantiCompleti, utentiTotali });
 };
 
 module.exports = { categorie, vota, risultati };

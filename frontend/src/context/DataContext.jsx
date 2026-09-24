@@ -9,7 +9,7 @@ import { useAuth } from './AuthContext';
 const DataContext = createContext(null);
 
 const SCHEDINA_VUOTA = { giornata: null, miaSchedina: null, chiusa: true, motivo: null, precedente: null };
-const VOTI_VUOTI = { conteggi: {}, mioVoto: {} };
+const VOTI_VUOTI = { conteggi: null, mioVoto: {}, chiuse: false, visibili: false, votantiCompleti: 0, utentiTotali: 0 };
 
 // Le categorie di voto arrivano dal backend già con etichetta e descrizione. Una
 // vecchia versione dell'API mandava solo gli id come stringhe: normalizziamo qui

@@ -12,6 +12,7 @@ import Gioca from './pages/Gioca';
 import Squadre from './pages/Squadre';
 import Squadra from './pages/Squadra';
 import Archivio from './pages/Archivio';
+import Risultati from './pages/Risultati';
 import Profilo from './pages/Profilo';
 import Regolamento from './pages/Regolamento';
 
@@ -33,6 +34,7 @@ function Gate() {
           <Route path="/lega" element={<Lega />} />
           <Route path="/gioca" element={<Gioca />} />
           <Route path="/archivio" element={<Archivio />} />
+          <Route path="/verdetti/risultati" element={<Risultati />} />
           <Route path="/squadre" element={<Squadre />} />
           <Route path="/squadre/:id" element={<Squadra />} />
           <Route path="/profilo" element={<Profilo />} />

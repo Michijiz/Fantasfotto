@@ -146,3 +146,11 @@
 }
 .albo-chip.oro{ background:var(--gold); color:var(--paper-input); }
 
+
+/* Linguette a pillola (Lega, Gioca). */
+.linguette{ margin:0; flex-wrap:nowrap; }
+.linguette .tab{ min-height:52px; font-size:15px; flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.bollino-conto{
+  min-width:22px; height:22px; padding:0 6px; border-radius:var(--r-pill); background:var(--stamp-red); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; letter-spacing:0;
+}

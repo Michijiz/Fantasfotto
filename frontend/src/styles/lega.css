@@ -1,6 +1,4 @@
 /* ===== Lega: classifica, calendario, albo ===== */
-.linguette{ margin:0; }
-.linguette .tab{ min-height:50px; font-size:15px; flex:1 1 0; }
 
 .classifica-intesta{
   display:flex; justify-content:space-between; padding:0 12px;
