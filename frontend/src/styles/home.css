@@ -1,0 +1,24 @@
+/* ===== Home (pages/Dashboard.jsx): tre blocchi, una domanda ciascuno ===== */
+.home-match{ display:flex; align-items:center; justify-content:space-between; gap:6px; padding:4px 0 2px; }
+.home-match .vs{ font-family:'Anton',sans-serif; font-size:40px; line-height:1; margin-bottom:40px; }
+.home-lato{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+.home-lato .nome{ font-family:'Anton',sans-serif; font-size:20px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+
+.home-schedina{ display:flex; flex-direction:column; gap:12px; padding-top:16px; border-top:1px solid var(--filo-lieve); }
+
+.home-prima{ overflow:hidden; }
+.home-foto{
+  position:relative; margin:-20px -20px 0; height:180px; background:var(--paper-dark);
+  border-radius:26px 26px 0 0; overflow:hidden;
+}
+.home-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.home-foto .timbro{ position:absolute; top:16px; right:16px; }
+.home-foto.vuota{ height:84px; }
+.home-attacco{
+  margin:0; font-size:17px; line-height:1.65;
+  display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
+}
+.home-attacco::first-letter{
+  float:left; font-family:'Anton',sans-serif; font-size:58px; line-height:.9; padding:4px 8px 0 0;
+}
+.riga-azione .ritaglio-titolo{ display:block; }

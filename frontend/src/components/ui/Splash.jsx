@@ -11,7 +11,7 @@ export default function Splash() {
         <span>dello Sfottò</span>
       </h1>
       <div className="splash-rigo" />
-      <span className="splash-sr">Caricamento…</span>
+      <span className="splash-sr">Stampa in corso…</span>
     </div>
   );
 }

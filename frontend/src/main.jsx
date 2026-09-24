@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import './styles/global.css';
+import './styles/ritagli.css';
 import App from './App.jsx';
 import { applicaTema, temaSalvato } from './temi';
 import { seguiAltezzaApp } from './utils/altezzaApp';

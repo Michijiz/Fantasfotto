@@ -1,0 +1,31 @@
+/* ===== Accesso e iscrizione (pages/Login.jsx) ===== */
+.accesso .auth-toggle{ margin:0 0 18px; }
+.accesso .auth-toggle .tab{ min-height:50px; font-size:15px; }
+
+.campo{ display:flex; flex-direction:column; gap:6px; }
+.campo-etichetta{
+  display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:0;
+  font-family:'Oswald',sans-serif; font-size:15px; font-weight:500; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink);
+}
+.campo-nota-dx{ font-weight:400; font-size:13.5px; letter-spacing:.02em; text-transform:none; color:var(--ink-soft); }
+.accesso input[type=text], .accesso input[type=password], .accesso select{
+  min-height:56px; border-radius:16px; font-size:17px;
+}
+.accesso .campo-anton{ font-family:'Anton',sans-serif; font-size:21px; text-transform:uppercase; }
+
+.nota-accesso{ margin:0; text-align:center; font-size:15px; font-style:italic; line-height:1.5; color:var(--ink-soft); }
+.avviso-accesso{
+  padding:14px 18px; border-radius:18px; background:color-mix(in srgb, var(--stamp-red) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--stamp-red) 35%, transparent);
+  font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:.02em; color:var(--ink);
+}
+.campo-nota.centro{ text-align:center; margin:0; }
+
+.scelta-squadra{ display:flex; align-items:center; gap:12px; }
+.scelta-squadra select{ flex:1 1 auto; font-family:'Anton',sans-serif; font-size:20px; text-transform:uppercase; }
+.stemma-vuoto{ flex:0 0 auto; width:44px; height:44px; border-radius:50%; background:var(--paper-dark); }
+
+.accesso .ruolo-carta{ padding:16px 18px; border-radius:20px; }
+.accesso .ruolo-carta .nome{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
+.accesso .ruolo-carta .descrizione{ font-family:'Libre Baskerville',serif; font-size:15px; line-height:1.5; }

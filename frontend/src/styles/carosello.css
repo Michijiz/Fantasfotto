@@ -1,0 +1,46 @@
+/* ===== Carosello (components/ui/Carosello.jsx) ===== */
+.carosello{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.carosello-pista{
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:4px;
+  touch-action:pan-y; user-select:none; -webkit-user-select:none;
+}
+.carosello-freccia{
+  flex:0 0 auto; width:48px; height:48px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--superficie-piena); color:var(--ink); box-shadow:var(--ombra-media);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .1s var(--ease-tap);
+}
+.carosello-freccia:active{ transform:scale(.92); }
+.carosello-lato{
+  flex:0 0 auto; width:48px; height:48px; padding:0; border:none; border-radius:50%; cursor:pointer;
+  background:none; opacity:.45; overflow:hidden; transition:opacity .15s;
+}
+.carosello-lato:active{ opacity:.8; }
+.carosello-centro{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+.carosello-nome{
+  margin-top:8px; font-family:'Anton',sans-serif; font-size:34px; line-height:1;
+  text-transform:uppercase; text-align:center; color:var(--ink);
+}
+.carosello-nota{ font-family:'Oswald',sans-serif; font-size:14px; color:var(--ink-soft); text-align:center; }
+
+/* Pezzi specifici: dischetto del tema e tondo dell'avatar. */
+.disco-tema{ display:block; border-radius:50%; }
+.disco-tema.grande{ width:118px; height:118px; box-shadow:0 0 0 5px var(--superficie-piena), var(--ombra-alta); }
+.disco-tema.piccolo{ width:48px; height:48px; }
+.tondo-avatar{ display:block; border-radius:50%; overflow:hidden; background:var(--paper-dark); }
+.tondo-avatar img{ width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
+.tondo-avatar.grande{ width:132px; height:132px; box-shadow:0 0 0 5px var(--superficie-piena), var(--ombra-alta); }
+.tondo-avatar.piccolo{ width:48px; height:48px; }
+
+/* Anteprima dei colori del tema: carta, inchiostro e accento del tema scelto. */
+.anteprima-tema{
+  width:100%; margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; border-radius:20px; border:1px solid var(--filo-lieve);
+}
+.anteprima-tema .testi{ display:flex; flex-direction:column; gap:2px; }
+.anteprima-tema .etichetta{ font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; opacity:.7; }
+.anteprima-tema .testata{ font-family:'Anton',sans-serif; font-size:22px; line-height:1; text-transform:uppercase; }
+.anteprima-tema .bottone{
+  padding:10px 16px; border-radius:var(--r-pill); color:#fff;
+  font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.08em; text-transform:uppercase;
+}

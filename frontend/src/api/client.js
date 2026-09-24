@@ -30,10 +30,10 @@ function sessioneScaduta() {
 // Quando la risposta non è il nostro JSON (pagina d'errore di Vercel, timeout,
 // body troppo grande) serve comunque un messaggio comprensibile.
 function messaggioPerStato(status) {
-  if (status === 413) return 'File troppo grande';
-  if (status === 429) return 'Troppe richieste, riprova tra poco';
+  if (status === 413) return 'File troppo pesante per la nostra tipografia';
+  if (status === 429) return 'Calma, la rotativa ha i suoi tempi: riprova tra poco';
   if (status === 502 || status === 503 || status === 504) return 'Il server non risponde, riprova tra poco';
-  return `Errore ${status}`;
+  return 'Qualcosa si è inceppato in tipografia. Riprova tra poco';
 }
 
 async function richiesta(path, { method = 'GET', body, isFormData = false } = {}) {

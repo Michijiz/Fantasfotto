@@ -10,13 +10,13 @@
 const RUOLI = {
   giocatore: {
     id: 'giocatore',
-    nome: 'Giocatore',
+    nome: 'Abbonato',
     badge: 'Abbonato',
     descrizione: 'Leggi la Gazzetta, compili la schedina e voti i verdetti.'
   },
   redattore: {
     id: 'redattore',
-    nome: 'Redattore',
+    nome: 'Direttore di turno',
     badge: 'Direttore di turno',
     descrizione: 'In più compili la giornata, mandi in stampa l\'edizione e tieni l\'albo d\'oro.'
   },

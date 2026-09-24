@@ -29,7 +29,7 @@ export default function InstallBanner() {
 
   return (
     <div className="install-banner">
-      <span>Installa La Gazzetta sulla home — anche offline</span>
+      <span>Metti la Gazzetta sulla home: si legge anche offline</span>
       <button className="installa" onClick={installa}>Installa</button>
       <button className="chiudi" onClick={chiudi} aria-label="Chiudi"><X size={16} /></button>
     </div>

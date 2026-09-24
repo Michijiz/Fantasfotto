@@ -75,7 +75,7 @@ function verificaRuolo(ruoloRichiesto, codiceRedazione) {
 
   const atteso = testo(process.env.CODICE_REDAZIONE);
   if (atteso && codiceRedazione !== atteso) {
-    return { errore: 'Codice della redazione non valido' };
+    return { errore: 'Codice della redazione sbagliato: la direzione non si improvvisa' };
   }
   return { ruolo };
 }
@@ -92,21 +92,25 @@ const registrati = async (req, res) => {
   const avatarRichiesto = testo(req.body.avatar).toLowerCase();
 
   if (!username || !nomeVisualizzato || !pin || !squadraId || !codiceInvito) {
-    return res.status(400).json({ errore: 'Compila tutti i campi' });
+    return res.status(400).json({ errore: 'Manca qualcosa: anche in redazione si compila tutto' });
   }
   if (codiceInvito !== process.env.CODICE_INVITO) {
-    return res.status(403).json({ errore: 'Codice invito non valido' });
+    return res.status(403).json({ errore: 'Codice invito sbagliato: chiedilo al direttore, gentilmente' });
   }
   if (!/^\d{4,6}$/.test(pin)) {
-    return res.status(400).json({ errore: 'Il PIN deve avere 4-6 cifre' });
+    return res.status(400).json({ errore: 'Il PIN va da 4 a 6 cifre. Niente di più, niente di meno' });
   }
 
   const { ruolo, errore } = verificaRuolo(ruoloRichiesto, codiceRedazione);
   if (errore) return res.status(403).json({ errore });
 
+  if (await User.exists({ username })) {
+    return res.status(409).json({ errore: 'Username già preso: qualcuno è arrivato prima' });
+  }
+
   const squadra = await Squadra.findById(squadraId);
   if (!squadra) {
-    return res.status(400).json({ errore: 'Squadra non valida' });
+    return res.status(400).json({ errore: 'Squadra non trovata: riprova' });
   }
 
   const pinHash = await bcrypt.hash(pin, 10);
@@ -128,17 +132,17 @@ const login = async (req, res) => {
   const username = testo(req.body.username).toLowerCase();
   const pin = testo(req.body.pin);
   if (!username || !pin) {
-    return res.status(400).json({ errore: 'Username e PIN richiesti' });
+    return res.status(400).json({ errore: 'Servono username e PIN: la redazione non apre agli sconosciuti' });
   }
 
   const user = await User.findOne({ username, attivo: true });
   if (!user) {
-    return res.status(401).json({ errore: 'Credenziali non valide' });
+    return res.status(401).json({ errore: 'Username o PIN sbagliati. Riprova, con calma' });
   }
 
   if (user.bloccatoFino && user.bloccatoFino > new Date()) {
     const minuti = Math.ceil((user.bloccatoFino.getTime() - Date.now()) / 60000);
-    return res.status(429).json({ errore: `Troppi tentativi sbagliati: riprova tra ${minuti} min` });
+    return res.status(429).json({ errore: `Troppi tentativi: la redazione riapre tra ${minuti} minuti` });
   }
 
   const valido = await bcrypt.compare(pin, user.pinHash);
@@ -154,9 +158,9 @@ const login = async (req, res) => {
         { _id: user._id },
         { $set: { tentativiFalliti: 0, bloccatoFino: new Date(Date.now() + BLOCCO_MINUTI * 60000) } }
       );
-      return res.status(429).json({ errore: `Troppi tentativi sbagliati: riprova tra ${BLOCCO_MINUTI} min` });
+      return res.status(429).json({ errore: `Troppi tentativi: la redazione riapre tra ${BLOCCO_MINUTI} minuti` });
     }
-    return res.status(401).json({ errore: 'Credenziali non valide' });
+    return res.status(401).json({ errore: 'Username o PIN sbagliati. Riprova, con calma' });
   }
 
   if (user.tentativiFalliti || user.bloccatoFino) {
@@ -200,7 +204,7 @@ const aggiornaProfilo = async (req, res) => {
 
   if (body.nomeVisualizzato !== undefined) {
     const nome = testo(body.nomeVisualizzato).slice(0, 30);
-    if (!nome) return res.status(400).json({ errore: 'Il nome non può essere vuoto' });
+    if (!nome) return res.status(400).json({ errore: 'Il titolo non può restare vuoto: anche i misteri hanno un nome' });
     set.nomeVisualizzato = nome;
   }
 

@@ -1,141 +1,179 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { ArrowRight } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
-import Article from '../components/ui/Article';
 import Sheet from '../components/ui/Sheet';
 import Stemma from '../components/ui/Stemma';
-import LegaOverview from '../components/ui/LegaOverview';
+import '../styles/home.css';
 
-// Calcola "Xg Xh" tra ora e la data della prossima giornata. Torna null se la
-// giornata non ha ancora una data (l'admin non l'ha impostata) o è già passata.
-function formattaCountdown(data) {
-  if (!data) return null;
-  const diffMs = new Date(data).getTime() - Date.now();
-  if (diffMs <= 0) return null;
+const idDi = (v) => (v && typeof v === 'object' ? v._id : v);
+const formattaQuota = (n) => Number(n).toFixed(2).replace('.', ',');
+
+// "fischio d'inizio tra 2g 14h" prima, "in campo" durante, "fischio finale" a
+// giornata conclusa. Senza data impostata non si mostra niente.
+function statoTempo(giornata) {
+  if (!giornata) return null;
+  if (giornata.conclusa) return 'fischio finale';
+  if (!giornata.data) return null;
+  const diffMs = new Date(giornata.data).getTime() - Date.now();
+  if (diffMs <= 0) return 'in campo';
   const giorni = Math.floor(diffMs / 86400000);
   const ore = Math.floor((diffMs % 86400000) / 3600000);
-  return `${giorni}g ${ore}h`;
+  return `fischio d'inizio tra ${giorni}g ${ore}h`;
+}
+
+// Lo stato della schedina in parole semplici, e il bottone che le corrisponde.
+function statoSchedina({ miaSchedina, chiusa }) {
+  if (miaSchedina) {
+    if (miaSchedina.esito === 'vinta') return { testo: 'Vinta', bottone: 'Conta i danni' };
+    if (miaSchedina.esito === 'persa') return { testo: 'Persa', bottone: 'Conta i danni' };
+    if (chiusa) return { testo: 'In attesa dei risultati', bottone: 'Conta i danni' };
+    return { testo: `Consegnata, quota ${formattaQuota(miaSchedina.quotaTotale)}`, bottone: 'Rigufa' };
+  }
+  if (chiusa) return { testo: 'Non giocata', bottone: 'Conta i danni' };
+  return { testo: 'Da giocare', bottone: 'Gufa ora' };
+}
+
+function Lato({ squadra, info }) {
+  return (
+    <div className="home-lato">
+      <Stemma src={squadra?.stemma} nome={squadra?.nome} size={72} />
+      <span className="nome">{squadra?.nome}</span>
+      {info && <span className="dettaglio">{info}</span>}
+    </div>
+  );
 }
 
 export default function Dashboard() {
   const { utente } = useOutletContext();
   const {
-    ultimaEdizione, prossimaGiornata, tabellone, squadre, risultatiVoti, categorieVoto, schedina
+    ultimaEdizione, prossimaGiornata, tabellone, risultatiVoti, categorieVoto, schedina
   } = useDati();
-  const [sheetAperta, setSheetAperta] = useState(false);
-  const [legaAperta, setLegaAperta] = useState(false);
+  const [scontriAperti, setScontriAperti] = useState(false);
   const navigate = useNavigate();
 
-  // utente.squadra a volte è un id (dopo login), a volte l'oggetto squadra
-  // popolato {_id, nome, stemma} (dopo /auth/me) — normalizziamo qui, una volta sola.
-  const miaSquadraId = typeof utente.squadra === 'object' ? utente.squadra?._id : utente.squadra;
+  const miaSquadraId = idDi(utente.squadra);
 
-  const miaSquadra = squadre.find((s) => s._id === miaSquadraId);
-  const posizione = tabellone.findIndex((s) => s._id === miaSquadraId);
-  const miePunti = tabellone.find((s) => s._id === miaSquadraId)?.punti;
-
-  // Optional chaining anche qui: se una squadra è stata cancellata dal database
-  // mongoose lascia il riferimento a null, e senza il `?.` la Home andava in
-  // pagina bianca. Tutti gli altri consumatori degli stessi dati erano già difesi.
-  const accoppiamenti = (prossimaGiornata?.accoppiamenti || [])
-    .filter((a) => a.squadraCasa && a.squadraTrasferta);
+  // Una squadra cancellata lascia il riferimento a null: si scartano quegli scontri
+  // invece di far cadere la pagina.
+  const accoppiamenti = (prossimaGiornata?.accoppiamenti || []).filter((a) => a.squadraCasa && a.squadraTrasferta);
   const mioMatch = accoppiamenti.find(
-    (a) => a.squadraCasa?._id === miaSquadraId || a.squadraTrasferta?._id === miaSquadraId
-  ) || accoppiamenti[0];
-  const countdown = formattaCountdown(prossimaGiornata?.data);
+    (a) => idDi(a.squadraCasa) === miaSquadraId || idDi(a.squadraTrasferta) === miaSquadraId
+  );
+  const riposo = accoppiamenti.length > 0 && !mioMatch;
+  const tempo = statoTempo(prossimaGiornata);
 
-  const squadraPerId = Object.fromEntries(squadre.map((s) => [s._id, s]));
-  const etichettaCat = (id) => categorieVoto.find((c) => c.id === id)?.breve || id;
-  const inTesta = Object.entries(risultatiVoti.conteggi || {})
-    .map(([cat, conteggi]) => {
-      const top = Object.entries(conteggi).sort((a, b) => b[1] - a[1])[0];
-      if (!top) return null;
-      const squadra = squadraPerId[top[0]];
-      return squadra ? { cat, squadra, count: top[1] } : null;
-    })
-    .filter(Boolean);
+  const infoClassifica = (squadra) => {
+    const i = tabellone.findIndex((s) => s._id === idDi(squadra));
+    return i >= 0 ? `${i + 1}ª · ${tabellone[i].punti ?? 0} pt` : null;
+  };
+
+  const banco = schedina.giornata && (schedina.giornata.accoppiamenti?.length > 0);
+  const stato = statoSchedina(schedina);
+  const scontriBanco = schedina.giornata?.accoppiamenti?.length || 0;
+  const pronosticiFatti = schedina.miaSchedina?.pronostici?.length || 0;
+
+  const categorie = categorieVoto.length;
+  const votate = Object.keys(risultatiVoti.mioVoto || {}).length;
+  const mancano = Math.max(0, categorie - votate);
+
+  const attacco = ultimaEdizione?.corpo?.[0] || '';
 
   return (
-    <>
-      {miaSquadra && (
-        <div className="card">
-          <div
-            className="squadra-card-riga"
-            onClick={() => setLegaAperta(true)}
-            role="button"
-            tabIndex={0}
-          >
-            <Stemma src={miaSquadra.stemma} nome={miaSquadra.nome} size={46} className="stemma" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="squadra-nome">{miaSquadra.nome}</div>
-              <div className="squadra-owner">{utente.nomeVisualizzato}</div>
-            </div>
+    <div className="ritagli home">
+      {/* 1 · Cosa si gioca adesso */}
+      {!prossimaGiornata ? (
+        <section className="ritaglio">
+          <h2 className="ritaglio-titolo medio">Il calendario è ancora in bozza</h2>
+          <p className="ritaglio-vuoto">Appena il direttore di turno imposta gli scontri, li trovi qui.</p>
+        </section>
+      ) : (
+        <section className="ritaglio">
+          <div className="ritaglio-testa">
+            <h2 className="ritaglio-titolo medio">Giornata {prossimaGiornata.numero}</h2>
+            {tempo && <span className="chip-tempo">{tempo}</span>}
           </div>
 
-          <div className="stat-strip">
-            <div className="stat">Posizione<b>{posizione >= 0 ? `${posizione + 1}ª` : '—'}</b></div>
-            <div className="stat">Punti<b>{miePunti ?? '—'}</b></div>
-            <div className="stat">Giornata<b>{ultimaEdizione?.giornataNumero ?? '—'}</b></div>
-            <div className="stat">Squadre<b>{tabellone.length || squadre.length}</b></div>
-          </div>
-
-          {mioMatch && (
-            <div className="match-preview" onClick={() => setSheetAperta(true)} role="button" tabIndex={0}>
-              <div className="sq">
-                <Stemma src={mioMatch.squadraCasa.stemma} nome={mioMatch.squadraCasa.nome} size={30} className="stemma" />
-                <span>{mioMatch.squadraCasa.nome}</span>
-              </div>
-              <div className="match-mid">
-                {countdown && <span className="countdown">{countdown}</span>}
-                <span className="vs">VS</span>
-              </div>
-              <div className="sq">
-                <Stemma src={mioMatch.squadraTrasferta.stemma} nome={mioMatch.squadraTrasferta.nome} size={30} className="stemma" />
-                <span>{mioMatch.squadraTrasferta.nome}</span>
-              </div>
+          {mioMatch ? (
+            <div className="home-match">
+              <Lato squadra={mioMatch.squadraCasa} info={infoClassifica(mioMatch.squadraCasa)} />
+              <span className="vs">VS</span>
+              <Lato squadra={mioMatch.squadraTrasferta} info={infoClassifica(mioMatch.squadraTrasferta)} />
             </div>
+          ) : riposo ? (
+            <p className="ritaglio-vuoto">Questa giornata riposi. Goditi lo spettacolo degli altri.</p>
+          ) : (
+            <p className="ritaglio-vuoto">Scontri non ancora impostati: ci pensa il direttore di turno.</p>
           )}
-        </div>
+
+          {banco && (
+            <>
+              <div className="home-schedina">
+                <div className="ritaglio-testa">
+                  <span className="occhiello-oro">La tua schedina</span>
+                  <span className="dettaglio">{stato.testo}</span>
+                </div>
+                <div className="slot-riga" aria-hidden="true">
+                  {Array.from({ length: scontriBanco }, (_, i) => (
+                    <span key={i} className={i < pronosticiFatti ? 'pieno' : ''} />
+                  ))}
+                </div>
+              </div>
+              <button type="button" className="bottone-grande" onClick={() => navigate('/gioca')}>
+                {stato.bottone}
+              </button>
+            </>
+          )}
+
+          {accoppiamenti.length > 0 && (
+            <button type="button" className="bottone-link" onClick={() => setScontriAperti(true)}>
+              Tutti gli scontri della giornata →
+            </button>
+          )}
+        </section>
       )}
 
-      {schedina.giornata && !schedina.chiusa && (schedina.giornata.accoppiamenti?.length > 0) && (
-        <button className="card schedina-invito" onClick={() => navigate('/gioca')}>
-          <div className="invito-testo">
-            <div className="invito-occhiello">Schedina · Giornata {schedina.giornata.numero}</div>
-            <b>{schedina.miaSchedina ? 'Schedina consegnata' : 'Non hai ancora gufato'}</b>
-            {schedina.miaSchedina && (
-              <span>Quota {Number(schedina.miaSchedina.quotaTotale).toFixed(2)}</span>
-            )}
-          </div>
-          <span className="freccia">→</span>
+      {/* 2 · Cosa ti manca: solo se c'è un'edizione da giudicare */}
+      {ultimaEdizione && categorie > 0 && (
+        <button type="button" className="riga-azione" onClick={() => navigate('/gioca', { state: { tab: 'verdetti' } })}>
+          <span className="testi">
+            <span className="occhiello-oro">Verdetti · G{ultimaEdizione.giornataNumero} · fino al fischio d&apos;inizio</span>
+            <span className="ritaglio-titolo medio">
+              {mancano === 0 ? 'Hai votato tutto: vedi i risultati' : mancano === 1 ? 'Ti manca 1 voto' : `Ti mancano ${mancano} voti`}
+            </span>
+            <span className="barra-avanzamento">
+              <span className="binario"><span className="riempito" style={{ width: `${Math.round((100 * votate) / categorie)}%` }} /></span>
+              <b>{votate}/{categorie}</b>
+            </span>
+          </span>
+          <span className="freccia"><ArrowRight size={24} weight="bold" /></span>
         </button>
       )}
 
-      <div className="card teaser">
-        <Article edizione={ultimaEdizione} teaser onContinua={() => navigate('/gazzetta')} />
-      </div>
-
-      {inTesta.length > 0 && (
-        <div className="card">
-          <h2 className="section-title">
-            Ultimi Verdetti
-            <button className="vedi-tutto" onClick={() => navigate('/gioca')}>Verdetti</button>
-          </h2>
-          <div className="verdetti-ticker">
-            {inTesta.map(({ cat, squadra, count }) => (
-              <div className="flash" key={cat}>
-                <div className="flash-cat">{etichettaCat(cat)}</div>
-                <div className="flash-nome"><Stemma src={squadra.stemma} nome={squadra.nome} size={15} /> {squadra.nome} ({count})</div>
-              </div>
-            ))}
+      {/* 3 · Cosa si legge */}
+      {!ultimaEdizione ? (
+        <section className="ritaglio">
+          <h2 className="ritaglio-titolo medio">La rotativa è ferma</h2>
+          <p className="ritaglio-vuoto">Nessuna edizione in edicola: il direttore di turno sta cercando l&apos;ispirazione.</p>
+        </section>
+      ) : (
+        <section className="ritaglio home-prima">
+          <div className={`home-foto${ultimaEdizione.immagineUrl ? '' : ' vuota'}`}>
+            {ultimaEdizione.immagineUrl && <img src={ultimaEdizione.immagineUrl} alt="" />}
+            <span className="timbro">Prima pagina · G{ultimaEdizione.giornataNumero}</span>
           </div>
-        </div>
+          <h2 className="ritaglio-titolo">{ultimaEdizione.titolo}</h2>
+          {attacco && <p className="home-attacco">{attacco}</p>}
+          <button type="button" className="bottone-contorno" onClick={() => navigate('/gazzetta')}>
+            Leggi la Gazzetta
+          </button>
+        </section>
       )}
 
       {prossimaGiornata && (
         <Sheet
-          aperto={sheetAperta}
-          onChiudi={() => setSheetAperta(false)}
+          aperto={scontriAperti}
+          onChiudi={() => setScontriAperti(false)}
           titolo={`Giornata ${prossimaGiornata.numero}`}
           sottotitolo="Tutti gli scontri"
         >
@@ -154,16 +192,6 @@ export default function Dashboard() {
           ))}
         </Sheet>
       )}
-
-      <Sheet
-        aperto={legaAperta}
-        onChiudi={() => setLegaAperta(false)}
-        titolo="Lega"
-        sottotitolo="Classifica e calendario"
-        grande
-      >
-        {legaAperta && <LegaOverview utente={utente} />}
-      </Sheet>
-    </>
+    </div>
   );
 }

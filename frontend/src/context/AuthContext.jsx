@@ -12,6 +12,9 @@ const SPLASH_DURATA_MINIMA = 1400;
 export function AuthProvider({ children }) {
   const [utente, setUtente] = useState(null);
   const [caricamento, setCaricamento] = useState(true);
+  // true quando il server ha buttato fuori una sessione che c'era: la schermata di
+  // accesso lo dice ("La tua tessera è scaduta: rientra") invece di ripartire muta.
+  const [sessioneScaduta, setSessioneScaduta] = useState(false);
 
   useEffect(() => {
     const inizio = Date.now();
@@ -50,19 +53,23 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (username, pin) => {
     const { token, utente } = await api.post('/api/auth/login', { username, pin });
     impostaToken(token);
+    setSessioneScaduta(false);
     setUtente(utente);
+    return utente;
   }, []);
 
   const registrati = useCallback(async (dati) => {
     const { token, utente } = await api.post('/api/auth/registrati', dati);
     impostaToken(token);
+    setSessioneScaduta(false);
     setUtente(utente);
+    return utente;
   }, []);
 
   // Il client butta il token appena il server risponde 401 su una sessione che
   // c'era: qui si chiude il cerchio riportando l'app alla schermata di accesso.
   useEffect(() => {
-    const scaduta = () => setUtente(null);
+    const scaduta = () => { setUtente(null); setSessioneScaduta(true); };
     window.addEventListener(EVENTO_SESSIONE_SCADUTA, scaduta);
     return () => window.removeEventListener(EVENTO_SESSIONE_SCADUTA, scaduta);
   }, []);
@@ -73,7 +80,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ utente, setUtente, caricamento, login, registrati, logout }}>
+    <AuthContext.Provider value={{ utente, setUtente, caricamento, sessioneScaduta, login, registrati, logout }}>
       {children}
     </AuthContext.Provider>
   );

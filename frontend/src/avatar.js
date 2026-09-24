@@ -30,13 +30,13 @@ export const AVATAR_SQUADRE = [
 ];
 
 export const AVATAR_FUORI_CAMPIONATO = [
-  { id: 'cammello', nome: 'Cammello' },
-  { id: 'panda', nome: 'Panda' },
-  { id: 'rinoceronte', nome: 'Rinoceronte' },
-  { id: 'polpo', nome: 'Polpo' },
-  { id: 'mucca', nome: 'Mucca' },
-  { id: 'piccione', nome: 'Piccione' },
-  { id: 'ippopotamo', nome: 'Ippopotamo' }
+  { id: 'cammello', nome: 'Il Tranquillone' },
+  { id: 'panda', nome: 'Il Piangina' },
+  { id: 'rinoceronte', nome: 'Il Dubbioso' },
+  { id: 'polpo', nome: 'Lo Statistico' },
+  { id: 'mucca', nome: 'La Ruminante' },
+  { id: 'piccione', nome: 'Il Varista' },
+  { id: 'ippopotamo', nome: 'Lo Stremato' }
 ];
 
 export const AVATAR = [...AVATAR_SQUADRE, ...AVATAR_FUORI_CAMPIONATO];

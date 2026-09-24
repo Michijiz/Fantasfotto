@@ -10,7 +10,9 @@ const SOGLIA_COMPATTA = 60;
 const SOGLIA_RIAPRI = 24;
 
 export default function AppHeader({ scrollRef, onApriMenu }) {
-  const { ultimaEdizione } = useDati();
+  const { ultimaEdizione, prossimaGiornata } = useDati();
+  // La giornata in corso: quella in calendario, altrimenti l'ultima raccontata.
+  const numeroGiornata = prossimaGiornata?.numero ?? ultimaEdizione?.giornataNumero;
   const [compatto, setCompatto] = useState(false);
   const headerRef = useRef(null);
   const altezzaAperta = useRef(0);
@@ -63,14 +65,14 @@ export default function AppHeader({ scrollRef, onApriMenu }) {
   return (
     <div ref={headerRef} className={`app-header${compatto ? ' compatto' : ''}`}>
       <div className="top-row">
-        <button className="hamburger" aria-label="Apri profilo" onClick={onApriMenu}>
+        <button className="hamburger" aria-label="Apri il menù" onClick={onApriMenu}>
           <List size={18} weight="bold" />
         </button>
       </div>
       <Masthead
         sub={
           <>
-            <span>{ultimaEdizione ? `Giornata ${ultimaEdizione.giornataNumero}` : 'Nessuna edizione ancora'}</span>
+            <span>{numeroGiornata ? `Giornata ${numeroGiornata}` : 'Calendario in bozza'}</span>
             <span>Prezzo: la vostra dignità</span>
           </>
         }

@@ -4,7 +4,11 @@
 function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
   if (err.code === 11000) {
     const campo = Object.keys(err.keyPattern || {})[0] || 'valore';
-    return res.status(409).json({ errore: `${campo} già in uso` });
+    const messaggi = {
+      username: 'Username già preso: qualcuno è arrivato prima',
+      nome: 'Esiste già una squadra con questo nome: siate originali'
+    };
+    return res.status(409).json({ errore: messaggi[campo] || `${campo} già in uso` });
   }
 
   if (err.name === 'ValidationError') {
@@ -29,7 +33,7 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     return res.status(400).json({ errore: 'Richiesta non valida' });
   }
   if (err.type === 'entity.too.large') {
-    return res.status(413).json({ errore: 'Richiesta troppo grande' });
+    return res.status(413).json({ errore: 'File troppo pesante per la nostra tipografia' });
   }
 
   const status = err.status || err.statusCode || 500;
@@ -42,7 +46,7 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
   // era impossibile da diagnosticare dal telefono.
   if (status >= 500) {
     console.error(err);
-    const messaggio = err.esposto ? err.message : 'Errore interno del server';
+    const messaggio = err.esposto ? err.message : 'Qualcosa si è inceppato in tipografia. Riprova tra poco';
     return res.status(status).json({ errore: messaggio });
   }
 
