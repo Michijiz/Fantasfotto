@@ -26,7 +26,7 @@ const ultima = async (req, res) => {
 
 function campiEdizione(body) {
   const {
-    giornataNumero, direttore, occhiello, titolo, corpo, immagineUrl,
+    giornataNumero, direttore, occhiello, titolo, corpo, immagineUrl, didascalia,
     vincitore, puntiVincitore, ultimo, puntiUltimo, fenomeno, bidone
   } = body;
 
@@ -37,6 +37,7 @@ function campiEdizione(body) {
     titolo,
     corpo,
     immagineUrl,
+    didascalia,
     stats: {
       vincitore: vincitore || undefined,
       puntiVincitore,

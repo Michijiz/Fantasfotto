@@ -3,9 +3,20 @@ const Giornata = require('../models/Giornata');
 const User = require('../models/User');
 const { calcolaClassifica } = require('../utils/regolamento');
 
+// Ogni squadra porta con sé i suoi allenatori (più persone possono condividerne
+// una): nome, avatar e tema, quanto serve a elenco e interno squadra.
 const lista = async (req, res) => {
-  const squadre = await Squadra.find().sort('nome');
-  res.json({ squadre });
+  const [squadre, utenti] = await Promise.all([
+    Squadra.find().sort('nome').lean(),
+    User.find({ attivo: true }).select('nomeVisualizzato avatar tema squadra').lean()
+  ]);
+  const perSquadra = new Map();
+  for (const u of utenti) {
+    const chiave = String(u.squadra);
+    if (!perSquadra.has(chiave)) perSquadra.set(chiave, []);
+    perSquadra.get(chiave).push({ id: u._id, nomeVisualizzato: u.nomeVisualizzato, avatar: u.avatar || '', tema: u.tema });
+  }
+  res.json({ squadre: squadre.map((s) => ({ ...s, allenatori: perSquadra.get(String(s._id)) || [] })) });
 };
 
 // Le squadre NON si creano più dall'app: la lega è chiusa e iscrivere una squadra
@@ -33,7 +44,7 @@ const classifica = async (req, res) => {
 // Il nome è modificabile: ora che le squadre non si creano più dall'app, se uno
 // se lo ritrova scritto male deve poterlo correggere da qualche parte.
 const aggiornaMiaSquadra = async (req, res) => {
-  const { nome, stemma, maglia, foto, bio, rosa } = req.body;
+  const { nome, stemma, maglia, foto, bio, rosa, fondataNel, rosaRuoli } = req.body;
   const utente = await User.findById(req.utente.id);
   if (!utente) return res.status(404).json({ errore: 'Utente non trovato' });
 
@@ -41,10 +52,10 @@ const aggiornaMiaSquadra = async (req, res) => {
 
   if (nome !== undefined) {
     const pulito = String(nome).trim();
-    if (!pulito) return res.status(400).json({ errore: 'Il nome della squadra non può essere vuoto' });
+    if (!pulito) return res.status(400).json({ errore: 'Il nome della squadra non può restare vuoto' });
 
     const gia = await Squadra.findOne({ nome: pulito, _id: { $ne: utente.squadra } }).lean();
-    if (gia) return res.status(400).json({ errore: 'Esiste già una squadra con questo nome' });
+    if (gia) return res.status(400).json({ errore: 'Esiste già una squadra con questo nome: siate originali' });
 
     aggiornamenti.nome = pulito;
   }
@@ -59,7 +70,23 @@ const aggiornaMiaSquadra = async (req, res) => {
       : String(rosa).split(',').map((n) => n.trim()).filter(Boolean);
   }
 
-  const squadra = await Squadra.findByIdAndUpdate(utente.squadra, aggiornamenti, { new: true });
+  if (fondataNel !== undefined) {
+    const anno = String(fondataNel ?? '').trim();
+    if (anno && !/^\d{4}$/.test(anno)) {
+      return res.status(400).json({ errore: "L'anno di fondazione va scritto con quattro cifre" });
+    }
+    aggiornamenti.fondataNel = anno ? Number(anno) : null;
+  }
+
+  if (rosaRuoli !== undefined && rosaRuoli && typeof rosaRuoli === 'object') {
+    const pulisci = (v) => (Array.isArray(v) ? v : String(v || '').split(','))
+      .map((n) => String(n).trim()).filter(Boolean).slice(0, 40);
+    aggiornamenti.rosaRuoli = { P: pulisci(rosaRuoli.P), D: pulisci(rosaRuoli.D), C: pulisci(rosaRuoli.C), A: pulisci(rosaRuoli.A) };
+    // Chi salva la rosa per ruolo ha già sistemato i vecchi nomi senza ruolo.
+    if (rosa === undefined) aggiornamenti.rosa = [];
+  }
+
+  const squadra = await Squadra.findByIdAndUpdate(utente.squadra, aggiornamenti, { new: true, runValidators: true });
   res.json({ squadra });
 };
 

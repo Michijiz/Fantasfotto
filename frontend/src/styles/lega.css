@@ -1,0 +1,55 @@
+/* ===== Lega: classifica, calendario, albo ===== */
+.linguette{ margin:0; }
+.linguette .tab{ min-height:50px; font-size:15px; flex:1 1 0; }
+
+.classifica-intesta{
+  display:flex; justify-content:space-between; padding:0 12px;
+  font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);
+}
+.classifica{ display:flex; flex-direction:column; margin:0 -8px; }
+.classifica-riga{
+  display:flex; align-items:center; gap:12px; min-height:62px; padding:0 10px; width:100%; text-align:left;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); border-radius:16px; cursor:pointer; color:var(--ink); font:inherit;
+}
+.classifica-riga:first-child{ border-top-color:transparent; }
+.classifica-riga.mia{
+  background:color-mix(in srgb, var(--stamp-red) 12%, transparent);
+  box-shadow:inset 0 0 0 2px var(--stamp-red); border-top-color:transparent;
+}
+.classifica-riga.mia + .classifica-riga{ border-top-color:transparent; }
+.classifica-riga .posto{ width:24px; font-family:'Anton',sans-serif; font-size:24px; }
+.classifica-riga.mia .posto{ color:var(--stamp-red); }
+.classifica-riga .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.classifica-riga .nome{ font-family:'Anton',sans-serif; font-size:18px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.classifica-riga .punti{ font-family:'Anton',sans-serif; font-size:30px; line-height:1; }
+
+.giornata{ gap:12px; }
+.giornata-testa{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.giornata-testa .titolo{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
+.giornata-testa .dettaglio{ text-transform:none; }
+.scontro{
+  display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:center; gap:10px;
+  min-height:60px; border-top:1px solid var(--filo-lieve);
+}
+.scontro .lato{ display:flex; align-items:center; gap:8px; min-width:0; }
+.scontro .casa{ justify-content:flex-end; text-align:right; }
+.scontro .nome{ font-family:'Anton',sans-serif; font-size:16px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.scontro .vince .nome{ color:var(--ink); text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; }
+.scontro .vs{ font-family:'Anton',sans-serif; font-size:18px; color:var(--ink-soft); }
+.scontro .risultato{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.scontro .risultato b{ font-family:'Anton',sans-serif; font-weight:400; font-size:24px; line-height:1; }
+
+.albo{ display:flex; flex-direction:column; }
+.albo-riga{
+  display:flex; align-items:center; gap:14px; min-height:66px; width:100%; text-align:left;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); color:var(--ink); font:inherit; cursor:pointer;
+}
+.albo-riga:disabled{ cursor:default; }
+.albo-riga:first-child{ border-top:none; }
+.albo-riga .stagione{
+  flex:0 0 auto; padding:5px 10px; border:1.5px solid var(--gold); border-radius:var(--r-pill);
+  font-family:'Oswald',sans-serif; font-size:14px; font-weight:500; color:var(--gold);
+}
+.albo-riga .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.albo-riga .nome{ font-family:'Anton',sans-serif; font-size:18px; line-height:1.1; text-transform:uppercase; }
+.albo-riga .punti{ font-family:'Anton',sans-serif; font-size:24px; }

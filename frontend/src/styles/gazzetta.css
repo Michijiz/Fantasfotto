@@ -1,0 +1,103 @@
+/* ===== Gazzetta, articolo e archivio ===== */
+
+/* Fila delle copertine in cima. */
+.edicola{ display:flex; flex-direction:column; gap:10px; }
+.edicola-testa{ display:flex; align-items:baseline; justify-content:space-between; padding:0 4px; }
+.edicola-testa .titolo{ font-family:'Anton',sans-serif; font-size:26px; text-transform:uppercase; }
+.edicola-testa .bottone-link{ align-self:auto; }
+.edicola-fila{ display:flex; gap:12px; overflow-x:auto; margin:0 -16px; padding:4px 16px 14px; scrollbar-width:none; }
+.edicola-fila::-webkit-scrollbar{ display:none; }
+.copertina{
+  flex:0 0 124px; height:168px; padding:12px; border-radius:20px; cursor:pointer; text-align:left;
+  display:flex; flex-direction:column; gap:6px; color:var(--ink); font:inherit;
+  background:var(--superficie-piena); border:1px solid var(--filo-luce); box-shadow:var(--ombra-media);
+  transition:transform .1s var(--ease-tap);
+}
+.copertina:active{ transform:scale(.97); }
+.copertina.scelta{ box-shadow:0 0 0 3px var(--stamp-red), var(--ombra-media); }
+.copertina .num{ font-family:'Anton',sans-serif; font-size:30px; line-height:1; padding-bottom:6px; border-bottom:2px solid var(--ink); }
+.copertina .titolo{
+  font-family:'Anton',sans-serif; font-size:15px; line-height:1.1; text-transform:uppercase;
+  display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
+}
+
+/* Articolo. */
+.articolo{ gap:16px; overflow:hidden; }
+.articolo-foto{ position:relative; margin:-20px -20px 0; height:210px; background:var(--paper-dark); }
+.articolo-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.articolo-foto .timbro{ position:absolute; top:16px; right:16px; }
+.articolo-foto.vuota{ height:84px; }
+.articolo-didascalia{
+  margin:-4px -20px 0; padding:10px 20px; border-bottom:1px solid var(--filo-lieve);
+  font-size:13.5px; font-style:italic; line-height:1.5; color:var(--ink-soft);
+}
+.articolo-titolo{
+  margin:0; font-family:'Anton',sans-serif; font-weight:400; font-size:44px; line-height:1;
+  text-transform:uppercase; overflow-wrap:anywhere;
+}
+.articolo-firma{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+.articolo-firma b{ color:var(--ink); font-weight:600; }
+.articolo-corpo p{ margin:0 0 14px; font-size:18px; line-height:1.7; }
+.articolo-corpo p:last-child{ margin-bottom:0; }
+.articolo-corpo p:first-child::first-letter{
+  float:left; font-family:'Anton',sans-serif; font-size:64px; line-height:.9; padding:4px 8px 0 0;
+}
+
+/* Tabellino. */
+.tabellino{ display:flex; flex-direction:column; gap:14px; padding-top:18px; border-top:1px solid var(--filo-lieve); }
+.tabellino-premi{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.premio{ display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:20px; background:var(--paper-dark); min-width:0; }
+.premio.largo{ grid-column:1 / -1; }
+.premio .etichetta{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.premio .squadre{ display:flex; flex-wrap:wrap; gap:10px; }
+.premio .squadra{ display:flex; align-items:center; gap:10px; min-width:0; }
+.premio .nome{ font-family:'Anton',sans-serif; font-size:18px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.premio .punti{ font-family:'Anton',sans-serif; font-size:28px; line-height:1; }
+.premio .vuoto{ font-size:15px; font-style:italic; color:var(--ink-soft); }
+.tabellino-verdetti{
+  display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; border:none; border-radius:18px; cursor:pointer;
+  background:var(--ink); color:var(--paper-input); text-align:left; font:inherit;
+}
+.tabellino-verdetti .testi{ flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
+.tabellino-verdetti .sopra{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold-chiaro); }
+.tabellino-verdetti .sotto{ font-family:'Anton',sans-serif; font-size:22px; text-transform:uppercase; }
+
+.azioni-redazione{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.azioni-redazione button{ min-height:56px; }
+.sfoglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.sfoglia .bottone-contorno:disabled{ border-color:var(--filo-lieve); color:var(--ink-soft); cursor:default; }
+
+/* Testata delle pagine interne (archivio, interno squadra): ritorno e titolo. */
+.testa-sotto{ display:flex; align-items:center; gap:14px; padding:2px 0; }
+.testa-sotto .indietro{
+  flex:0 0 auto; width:48px; height:48px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--superficie-piena); box-shadow:var(--ombra-media); color:var(--ink);
+  display:flex; align-items:center; justify-content:center;
+}
+.testa-sotto .testi{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.testa-sotto .sopra{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); }
+.testa-sotto .titolo{ margin:0; font-family:'Anton',sans-serif; font-weight:400; font-size:34px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere; }
+
+/* Archivio. */
+.filtri{ display:flex; gap:8px; overflow-x:auto; margin:0 -16px; padding:2px 16px 8px; scrollbar-width:none; }
+.filtri::-webkit-scrollbar{ display:none; }
+.filtro{
+  flex:0 0 auto; min-height:44px; padding:0 18px; border-radius:var(--r-pill); border:none; cursor:pointer;
+  background:var(--superficie-piena); box-shadow:var(--ombra-bassa); color:var(--ink);
+  font-family:'Oswald',sans-serif; font-size:15px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+}
+select.filtro{ width:auto; padding-right:18px; background-image:none; }
+.filtro.attivo{ background:var(--ink); color:var(--paper-input); }
+.archivio-lista{ display:flex; flex-direction:column; }
+.archivio-riga{
+  display:flex; align-items:center; gap:14px; min-height:72px; padding:6px 0; width:100%; text-align:left;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); cursor:pointer; color:var(--ink); font:inherit;
+}
+.archivio-riga:first-child{ border-top:none; }
+.archivio-riga .g{
+  flex:0 0 auto; width:52px; height:52px; border-radius:16px; background:var(--paper-dark);
+  display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:22px;
+}
+.archivio-riga .testi{ flex:1 1 auto; display:flex; flex-direction:column; gap:3px; min-width:0; }
+.archivio-riga .titolo{ font-size:16.5px; font-weight:700; line-height:1.3; }
+.archivio-riga svg{ flex:0 0 auto; }

@@ -4,7 +4,6 @@ import { PencilSimple, BookOpen, CaretRight } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { useTema } from '../context/TemaContext';
-import { useToast } from '../context/ToastContext';
 import { api } from '../api/client';
 import Avatar from '../components/ui/Avatar';
 import Stemma from '../components/ui/Stemma';
@@ -17,47 +16,8 @@ import { coloreSfondo, profiloDi } from '../profilo';
 import { sfondoTema } from '../temi';
 import { magliaSquadra } from '../loghi';
 import { formattaFantapunti } from '../utils/regolamento';
+import { idDi, formaRecente, menzioni, rosaPerRuolo } from '../utils/lega';
 import '../styles/profilo.css';
-
-const idDi = (v) => (v && typeof v === 'object' ? v._id : v);
-
-// Ultimi cinque risultati della squadra, dal più vecchio al più recente: V/N/P
-// dai gol, come in classifica. Contano solo gli scontri con il risultato.
-function formaRecente(giornate, squadraId) {
-  const esiti = [];
-  for (const g of giornate) {
-    for (const a of g.accoppiamenti || []) {
-      const casa = idDi(a.squadraCasa) === squadraId;
-      const trasferta = idDi(a.squadraTrasferta) === squadraId;
-      if ((!casa && !trasferta) || a.golCasa == null || a.golTrasferta == null) continue;
-      const fatti = casa ? a.golCasa : a.golTrasferta;
-      const subiti = casa ? a.golTrasferta : a.golCasa;
-      esiti.push({ numero: g.numero, esito: fatti > subiti ? 'V' : fatti < subiti ? 'P' : 'N' });
-    }
-  }
-  return esiti.slice(-5);
-}
-
-// Le menzioni della squadra: titoli di stagione dall'albo d'oro e premi di
-// giornata dalle edizioni. Fenomeno e bidone si saltano quando coincidono con
-// vincitore e ultimo (è il ripiego dell'edizione: sarebbe la stessa voce due volte).
-function menzioni(albo, edizioni, squadraId) {
-  const voci = [];
-  for (const a of albo) {
-    if (idDi(a.squadra) === squadraId) voci.push({ chiave: `albo-${a._id}`, testo: `Campione · ${a.stagione}`, oro: true });
-  }
-  for (const e of edizioni) {
-    const s = e.stats || {};
-    const g = `G${e.giornataNumero}`;
-    const nostra = (v) => idDi(v) === squadraId;
-    if (nostra(s.vincitore)) voci.push({ chiave: `v-${e._id}`, testo: `Top score · ${g}` });
-    if (nostra(s.fenomeno) && idDi(s.fenomeno) !== idDi(s.vincitore)) voci.push({ chiave: `f-${e._id}`, testo: `Fenomeno · ${g}` });
-    if (nostra(s.ultimo)) voci.push({ chiave: `u-${e._id}`, testo: `Cucchiaio di legno · ${g}` });
-    if (nostra(s.bidone) && idDi(s.bidone) !== idDi(s.ultimo)) voci.push({ chiave: `b-${e._id}`, testo: `Bidone · ${g}` });
-    if ((s.reDeiGufi || []).some(nostra)) voci.push({ chiave: `r-${e._id}`, testo: `Re dei Gufi · ${g}` });
-  }
-  return voci;
-}
 
 // Il titolo è in Anton a tutta larghezza: la parola più lunga decide la misura,
 // così un nome lungo va a capo tra le parole e non a metà.
@@ -85,15 +45,13 @@ function Occhiello({ children }) {
 
 export default function Profilo() {
   const { utente, logout } = useAuth();
-  const { squadre, tabellone, giornate, edizioni, albo, ricaricaSquadre } = useDati();
+  const { squadre, tabellone, giornate, edizioni, albo } = useDati();
   const { temaId, tema, cambiaTema } = useTema();
-  const mostraToast = useToast();
   const navigate = useNavigate();
 
   const [componi, setComponi] = useState(false);
   const [bozza, setBozza] = useState(null);
   const [temaAperto, setTemaAperto] = useState(false);
-  const [rosaAperta, setRosaAperta] = useState(false);
   const [schedine, setSchedine] = useState(null);
 
   useEffect(() => {
@@ -113,7 +71,7 @@ export default function Profilo() {
   const posizione = tabellone.findIndex((s) => s._id === squadraId);
   const riga = posizione >= 0 ? tabellone[posizione] : null;
   const forma = useMemo(() => formaRecente(giornate, squadraId), [giornate, squadraId]);
-  const albi = useMemo(() => menzioni(albo, edizioni, squadraId), [albo, edizioni, squadraId]);
+  const albi = useMemo(() => menzioni(albo, edizioni, giornate, squadraId), [albo, edizioni, giornate, squadraId]);
   const firmate = useMemo(
     () => edizioni.filter((e) => idDi(e.createdBy) === utente.id).slice(0, 5),
     [edizioni, utente.id]
@@ -210,10 +168,10 @@ export default function Profilo() {
             </div>
             <div className="squadra-rosa-riga">
               <span>Rosa</span>
-              <b>{miaSquadra.rosa?.length ? `${miaSquadra.rosa.length} giocatori` : 'da compilare'}</b>
+              <b>{rosaPerRuolo(miaSquadra).totale ? `${rosaPerRuolo(miaSquadra).totale} giocatori` : 'da compilare'}</b>
             </div>
-            <button type="button" className="bottone-contorno" onClick={() => setRosaAperta(true)}>
-              La rosa e la scheda
+            <button type="button" className="bottone-contorno" onClick={() => navigate(`/squadre/${miaSquadra._id}`)}>
+              Vai alla squadra
             </button>
           </>
         )}
@@ -302,69 +260,6 @@ export default function Profilo() {
         <SelettoreTema valore={temaId} onSceglie={cambiaTema} />
       </Sheet>
 
-      <Sheet aperto={rosaAperta} onChiudi={() => setRosaAperta(false)} titolo={miaSquadra?.nome || 'La squadra'} sottotitolo="Rosa e scheda" grande>
-        {rosaAperta && miaSquadra && (
-          <SchedaSquadra squadra={miaSquadra} onSalvata={async () => {
-            await ricaricaSquadre();
-            mostraToast('Squadra aggiornata!');
-            setRosaAperta(false);
-          }} />
-        )}
-      </Sheet>
     </div>
-  );
-}
-
-// Rosa e scheda della squadra: si legge e, toccando "Modifica", si corregge.
-// Stemma e maglia non si caricano più da qui: arrivano dai loghi di redazione.
-function SchedaSquadra({ squadra, onSalvata }) {
-  const [modifica, setModifica] = useState(false);
-  const [nome, setNome] = useState(squadra.nome || '');
-  const [bio, setBio] = useState(squadra.bio || '');
-  const [rosa, setRosa] = useState((squadra.rosa || []).join(', '));
-  const [salvando, setSalvando] = useState(false);
-  const [errore, setErrore] = useState('');
-
-  const salva = async (e) => {
-    e.preventDefault();
-    setErrore('');
-    setSalvando(true);
-    try {
-      await api.patch('/api/squadre/mia', { nome, bio, rosa });
-      await onSalvata();
-    } catch (err) {
-      setErrore(err.message);
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  if (!modifica) {
-    return (
-      <div className="scheda-squadra">
-        {squadra.bio ? <p className="scheda-bio">{squadra.bio}</p> : <div className="ritaglio-vuoto">Nessuna storia ancora scritta.</div>}
-        {squadra.rosa?.length > 0 ? (
-          <div className="players">
-            {squadra.rosa.map((n) => <span className="chip" key={n}>{n}</span>)}
-          </div>
-        ) : (
-          <div className="ritaglio-vuoto">La rosa è ancora vuota.</div>
-        )}
-        <button type="button" className="bottone-contorno" onClick={() => setModifica(true)}>Modifica</button>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={salva}>
-      <label>Nome della squadra</label>
-      <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Come si chiama" />
-      <label>Bio / storia della squadra</label>
-      <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Racconta la storia della tua squadra..." />
-      <label>Rosa (nomi separati da virgola)</label>
-      <input type="text" value={rosa} onChange={(e) => setRosa(e.target.value)} placeholder="Giocatore 1, Giocatore 2, ..." />
-      <button className="primary" type="submit" disabled={salvando}>Salva squadra</button>
-      {errore && <div className="errore-msg">{errore}</div>}
-    </form>
   );
 }

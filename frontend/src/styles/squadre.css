@@ -1,0 +1,73 @@
+/* ===== Squadre ed interno squadra ===== */
+.squadre-lista{ padding:8px 20px; gap:0; }
+.squadra-voce{
+  display:flex; align-items:center; gap:14px; min-height:72px; width:100%; text-align:left;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); cursor:pointer; color:var(--ink); font:inherit;
+}
+.squadra-voce:first-child{ border-top:none; }
+.squadra-voce .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.squadra-voce .nome{ font-family:'Anton',sans-serif; font-size:19px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.squadra-voce .la-tua{
+  flex:0 0 auto; white-space:nowrap; padding:4px 10px; border-radius:var(--r-pill); background:var(--ink); color:var(--paper-input);
+  font-family:'Oswald',sans-serif; font-size:12.5px; letter-spacing:.08em; text-transform:uppercase;
+}
+.squadra-voce svg{ flex:0 0 auto; }
+
+/* Copertina della squadra: fascia d'inchiostro, stemma a cavallo, allenatori, numeri. */
+.squadra-copertina{ padding:0; gap:0; overflow:hidden; align-items:center; text-align:center; }
+.squadra-copertina .fascia{ position:relative; align-self:stretch; height:110px; background:var(--ink); }
+.squadra-copertina .fondata{
+  position:absolute; top:16px; left:16px; font-family:'Oswald',sans-serif; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--nav-testo);
+}
+.squadra-copertina .maglia{ position:absolute; top:12px; right:14px; width:56px; height:56px; object-fit:contain; }
+.squadra-copertina .stemma-grande{ position:relative; margin-top:-60px; padding:6px; border-radius:50%; background:var(--superficie-piena); }
+.squadra-copertina .nome{ margin:12px 20px 0; font-family:'Anton',sans-serif; font-weight:400; font-size:44px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere; }
+.allenatori{
+  display:flex; align-items:center; gap:10px; margin-top:12px; padding:6px 16px 6px 6px;
+  border-radius:var(--r-pill); background:var(--paper-dark);
+}
+.allenatori .volti{ display:flex; }
+.allenatori .volti > * + *{ margin-left:-12px; }
+.allenatori .chi{ font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
+.allenatori .chi b{ font-weight:600; }
+.numeri-tre{
+  align-self:stretch; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr));
+  margin:16px 20px 22px; padding-top:14px; border-top:1px solid var(--filo-lieve);
+}
+.numeri-tre > div{ display:flex; flex-direction:column; gap:4px; }
+.numeri-tre > div + div{ border-left:1px solid var(--filo-lieve); }
+.numeri-tre b{ font-family:'Anton',sans-serif; font-weight:400; font-size:34px; line-height:1; }
+
+.derby{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.derby .lato{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.derby .conto{ display:flex; gap:16px; text-align:center; }
+.derby .conto > div{ display:flex; flex-direction:column; gap:2px; }
+.derby .conto b{ font-family:'Anton',sans-serif; font-weight:400; font-size:40px; line-height:1; }
+.derby-prossimo{
+  display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px;
+  border-radius:16px; background:var(--paper-dark);
+}
+.derby-prossimo b{ font-family:'Anton',sans-serif; font-weight:400; font-size:17px; text-transform:uppercase; text-align:right; }
+
+.storia{ margin:0; font-size:18px; line-height:1.7; white-space:pre-line; }
+.storia::first-letter{ float:left; font-family:'Anton',sans-serif; font-size:60px; line-height:.9; padding:4px 8px 0 0; }
+
+.ruolo{ display:flex; flex-direction:column; gap:10px; }
+.ruolo + .ruolo{ padding-top:14px; border-top:1px solid var(--filo-lieve); }
+.ruolo-testa{ display:flex; align-items:center; gap:10px; }
+.ruolo-testa .sigla{
+  width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--paper-input);
+  display:flex; align-items:center; justify-content:center; font-family:'Anton',sans-serif; font-size:17px;
+}
+.ruolo-testa .nome{ font-family:'Oswald',sans-serif; font-size:16px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
+.giocatori{ display:flex; flex-wrap:wrap; gap:6px; }
+.giocatore{
+  display:inline-flex; align-items:center; min-height:38px; padding:0 14px; border-radius:var(--r-pill);
+  background:var(--superficie-piena); border:1px solid var(--filo-lieve); font-family:'Oswald',sans-serif; font-size:15px;
+}
+
+.scheda-form label{ display:flex; justify-content:space-between; gap:10px; font-size:14px; }
+.scheda-form .facoltativo{ text-transform:none; letter-spacing:.02em; font-size:13px; }
+.scheda-form .bottone-grande{ margin-top:18px; }
+.scheda-form .nota-form{ font-size:14px; }

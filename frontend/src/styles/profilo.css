@@ -82,20 +82,6 @@
   text-transform:uppercase; color:var(--ink-soft);
 }
 
-/* --- La forma --- */
-.forma-riga{ display:flex; justify-content:space-between; gap:6px; }
-.forma-voce{ display:flex; flex-direction:column; align-items:center; gap:8px; }
-.bollino{
-  width:54px; height:54px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Anton',sans-serif; font-size:25px;
-  box-shadow:var(--ombra-bassa);
-}
-.bollino.esito-V{ background:var(--ink); color:var(--paper-input); }
-.bollino.esito-N{ background:var(--superficie-piena); color:var(--ink); border:2px solid var(--ink); }
-.bollino.esito-P{ background:var(--paper-dark); color:var(--ink); }
-.forma-voce .g{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.08em; color:var(--ink-soft); }
-
 /* --- La squadra --- */
 .squadra-testa{ display:flex; align-items:center; gap:16px; }
 .squadra-testi{ display:flex; flex-direction:column; gap:8px; min-width:0; }
@@ -135,16 +121,6 @@
 }
 .archivio-voce svg, .impostazione svg{ flex:0 0 auto; }
 .archivio-voce .titolo{ flex:1 1 auto; font-size:17px; font-weight:700; line-height:1.3; }
-
-/* --- Nell'albo --- */
-.albo-chips{ display:flex; flex-wrap:wrap; gap:10px; }
-.albo-chip{
-  display:inline-flex; align-items:center; min-height:44px; padding:0 18px;
-  border-radius:var(--r-pill); background:var(--paper-dark);
-  font-family:'Oswald',sans-serif; font-size:15.5px; font-weight:500;
-  letter-spacing:.04em; text-transform:uppercase;
-}
-.albo-chip.oro{ background:var(--gold); color:var(--paper-input); }
 
 /* --- Impostazioni --- */
 .ritaglio-impostazioni{ gap:0; padding-top:8px; }

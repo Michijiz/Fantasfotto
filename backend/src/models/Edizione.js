@@ -9,6 +9,7 @@ const edizioneSchema = new mongoose.Schema({
   titolo: { type: String, required: true },
   corpo: [{ type: String }],
   immagineUrl: { type: String, default: '' },
+  didascalia: { type: String, default: '', trim: true, maxlength: 140 },
   stats: {
     vincitore: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
     puntiVincitore: Number,

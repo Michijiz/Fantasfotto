@@ -10,6 +10,8 @@ import Ultima from './pages/Ultima';
 import Lega from './pages/Lega';
 import Gioca from './pages/Gioca';
 import Squadre from './pages/Squadre';
+import Squadra from './pages/Squadra';
+import Archivio from './pages/Archivio';
 import Profilo from './pages/Profilo';
 import Regolamento from './pages/Regolamento';
 
@@ -30,7 +32,9 @@ function Gate() {
           <Route path="/gazzetta" element={<Ultima />} />
           <Route path="/lega" element={<Lega />} />
           <Route path="/gioca" element={<Gioca />} />
+          <Route path="/archivio" element={<Archivio />} />
           <Route path="/squadre" element={<Squadre />} />
+          <Route path="/squadre/:id" element={<Squadra />} />
           <Route path="/profilo" element={<Profilo />} />
           <Route path="/regolamento" element={<Regolamento />} />
         </Route>
