@@ -75,7 +75,9 @@ export function statoGiornata(g) {
 export function menzioni(albo, edizioni, giornate, squadraId) {
   const voci = [];
   for (const a of albo) {
-    if (idDi(a.squadra) === squadraId) voci.push({ chiave: `albo-${a._id}`, testo: `Campione · ${a.stagione}`, oro: true });
+    if (idDi(a.squadra) === squadraId) voci.push({ chiave: `albo-${a._id}`, testo: `Campione · ${a.stagione}`, oro: true, coppa: 'oro' });
+    if (idDi(a.secondo) === squadraId) voci.push({ chiave: `albo2-${a._id}`, testo: `2ª · ${a.stagione}`, coppa: 'argento' });
+    if (idDi(a.terzo) === squadraId) voci.push({ chiave: `albo3-${a._id}`, testo: `3ª · ${a.stagione}`, coppa: 'bronzo' });
   }
   for (const e of edizioni) {
     const g = `G${e.giornataNumero}`;
@@ -110,4 +112,53 @@ export function rosaPerRuolo(squadra) {
   if (squadra?.rosa?.length) gruppi.push({ id: '?', nome: 'Senza ruolo', nomi: squadra.rosa });
   const totale = gruppi.reduce((t, g) => t + g.nomi.length, 0);
   return { gruppi: gruppi.filter((g) => g.nomi.length > 0), totale };
+}
+
+// --- Albo d'oro --------------------------------------------------------------
+
+// La bacheca: per ogni squadra i titoli vinti (e i podi), in ordine di trofei.
+// Ci sono anche le squadre a secco: la bacheca vuota fa parte dello spettacolo.
+export function bacheca(albo, squadre) {
+  const conta = new Map(squadre.map((s) => [s._id, { squadra: s, titoli: 0, secondi: 0, terzi: 0, stagioni: [] }]));
+  for (const a of albo) {
+    const vincitrice = conta.get(idDi(a.squadra));
+    if (vincitrice) { vincitrice.titoli += 1; vincitrice.stagioni.push(a.stagione); }
+    const seconda = conta.get(idDi(a.secondo));
+    if (seconda) seconda.secondi += 1;
+    const terza = conta.get(idDi(a.terzo));
+    if (terza) terza.terzi += 1;
+  }
+  return [...conta.values()].sort((x, y) => (
+    y.titoli - x.titoli || y.secondi - x.secondi || y.terzi - x.terzi
+    || String(x.squadra.nome).localeCompare(String(y.squadra.nome), 'it')
+  ));
+}
+
+// Chi ha il conteggio più alto (con i pari merito). Null se nessuno ha niente.
+function inTesta(conteggi) {
+  const massimo = Math.max(0, ...conteggi.values());
+  if (massimo === 0) return null;
+  return { ids: [...conteggi.entries()].filter(([, n]) => n === massimo).map(([id]) => id), volte: massimo };
+}
+
+const aggiungi = (mappa, id) => { if (id) mappa.set(id, (mappa.get(id) || 0) + 1); };
+
+// I record di lega calcolati da soli dalle giornate e dalle edizioni: Re dei gufi,
+// miglior punteggio di giornata e maglia nera (peggior punteggio).
+export function recordLega(giornate, edizioni) {
+  const gufi = new Map();
+  const top = new Map();
+  const nera = new Map();
+  for (const e of edizioni) for (const s of e.stats?.reDeiGufi || []) aggiungi(gufi, idDi(s));
+  for (const g of giornate) {
+    if (!g.conclusa) continue;
+    const { migliore, peggiore } = estremiGiornata(giornate, g.numero);
+    aggiungi(top, idDi(migliore?.squadra));
+    aggiungi(nera, idDi(peggiore?.squadra));
+  }
+  return [
+    { id: 'gufi', nome: 'Re dei gufi', ...inTesta(gufi) },
+    { id: 'top', nome: 'Più volte top di giornata', ...inTesta(top) },
+    { id: 'nera', nome: 'Più volte maglia nera', ...inTesta(nera) }
+  ].filter((r) => r.ids);
 }

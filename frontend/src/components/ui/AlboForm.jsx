@@ -3,6 +3,7 @@ import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import BottoneElimina from './BottoneElimina';
+import ImageUpload from './ImageUpload';
 import { useAuth } from '../../context/AuthContext';
 import { puoCancellare } from '../../ruoli';
 
@@ -21,6 +22,9 @@ export default function AlboForm({ voce = null, onFatto }) {
   const [squadra, setSquadra] = useState(idDi(voce?.squadra));
   const [punti, setPunti] = useState(voce?.punti == null ? '' : String(voce.punti));
   const [note, setNote] = useState(voce?.note || '');
+  const [secondo, setSecondo] = useState(idDi(voce?.secondo));
+  const [terzo, setTerzo] = useState(idDi(voce?.terzo));
+  const [foto, setFoto] = useState(voce?.foto || '');
   const [errore, setErrore] = useState('');
   const [inviando, setInviando] = useState(false);
 
@@ -35,6 +39,11 @@ export default function AlboForm({ voce = null, onFatto }) {
       setErrore('Servono la stagione e la squadra campione');
       return;
     }
+    const podio = [squadra, secondo, terzo].filter(Boolean);
+    if (new Set(podio).size !== podio.length) {
+      setErrore('Una squadra può stare sul podio una volta sola');
+      return;
+    }
 
     inviandoRef.current = true;
     setInviando(true);
@@ -43,7 +52,11 @@ export default function AlboForm({ voce = null, onFatto }) {
       stagione: stagione.trim(),
       squadra,
       punti: punti === '' ? undefined : Number(punti),
-      note: note.trim() || undefined
+      note: note.trim() || undefined,
+      // Sempre inviati (anche vuoti): così si possono togliere.
+      secondo: secondo || '',
+      terzo: terzo || '',
+      foto
     };
 
     try {
@@ -90,6 +103,18 @@ export default function AlboForm({ voce = null, onFatto }) {
         {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
       </select>
 
+      <label>Seconda classificata <span className="facoltativo">facoltativo</span></label>
+      <select value={secondo} onChange={(e) => setSecondo(e.target.value)}>
+        <option value="">Nessuna</option>
+        {squadre.filter((s) => s._id !== squadra && s._id !== terzo).map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
+      </select>
+
+      <label>Terza classificata <span className="facoltativo">facoltativo</span></label>
+      <select value={terzo} onChange={(e) => setTerzo(e.target.value)}>
+        <option value="">Nessuna</option>
+        {squadre.filter((s) => s._id !== squadra && s._id !== secondo).map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
+      </select>
+
       <label>Punti <span className="facoltativo">facoltativo</span></label>
       <input
         type="number"
@@ -105,7 +130,11 @@ export default function AlboForm({ voce = null, onFatto }) {
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="es. imbattuti tutta la stagione"
+        maxLength={200}
       />
+
+      <label>Foto della stagione <span className="facoltativo">facoltativa · premiazione, squadra, trofeo</span></label>
+      <ImageUpload value={foto} onChange={setFoto} cartella="albo" forma="larga" />
 
       <button className="bottone-grande" type="submit" disabled={inviando}>
         {modifica ? 'Salva le correzioni' : 'Aggiungi all\'albo'}

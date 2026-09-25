@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { PencilSimple, BookOpen, CaretRight, CaretLeft, Key } from '@phosphor-icons/react';
+import { PencilSimple, BookOpen, CaretRight, CaretLeft, Key, Trophy } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { useTema } from '../context/TemaContext';
@@ -20,6 +20,7 @@ import { magliaSquadra } from '../loghi';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, formaRecente, menzioni, rosaPerRuolo } from '../utils/lega';
 import '../styles/profilo.css';
+import '../styles/albo.css';
 
 // Il titolo è in Anton a tutta larghezza: la parola più lunga decide la misura,
 // così un nome lungo va a capo tra le parole e non a metà.
@@ -294,7 +295,9 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
           ) : (
             <div className="albo-chips">
               {albi.map((a) => (
-                <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}`}>{a.testo}</span>
+                <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}${a.coppa ? ` coppa-${a.coppa}` : ''}`}>
+                  {a.coppa && <Trophy size={18} weight="fill" />}{a.testo}
+                </span>
               ))}
             </div>
           )}

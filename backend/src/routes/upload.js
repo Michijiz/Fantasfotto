@@ -50,6 +50,7 @@ const leggiFile = (req, res, next) => {
 // sceglie dove metterla. Un valore sconosciuto finisce nella cartella generica.
 const CARTELLE = {
   squadre: 'fantasfotto/squadre',
+  albo: 'fantasfotto/albo',
   edizioni: 'fantasfotto/edizioni'
 };
 

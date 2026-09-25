@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { CaretLeft, CaretRight, PencilSimple } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, PencilSimple, Trophy } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
 import Avatar from '../components/ui/Avatar';
@@ -15,6 +15,7 @@ import { idDi, formaRecente, derbyPersonale, menzioni, rosaPerRuolo } from '../u
 import { bozzaSquadra, ordineRitagli, sfondoColori, miniatura } from '../squadra';
 import '../styles/squadre.css';
 import '../styles/gazzetta.css';
+import '../styles/albo.css';
 
 function tempoAl(g) {
   if (!g?.data) return null;
@@ -194,7 +195,11 @@ export default function Squadra() {
           <p className="ritaglio-vuoto">Ancora nessuna menzione. C&apos;è tempo.</p>
         ) : (
           <div className="albo-chips">
-            {albi.map((a) => <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}`}>{a.testo}</span>)}
+            {albi.map((a) => (
+              <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}${a.coppa ? ` coppa-${a.coppa}` : ''}`}>
+                {a.coppa && <Trophy size={18} weight="fill" />}{a.testo}
+              </span>
+            ))}
           </div>
         )}
       </section>

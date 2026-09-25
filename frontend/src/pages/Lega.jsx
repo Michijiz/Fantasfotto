@@ -4,6 +4,7 @@ import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
 import Sheet from '../components/ui/Sheet';
 import AlboForm from '../components/ui/AlboForm';
+import AlboDOro from '../components/ui/AlboDOro';
 import GiornataForm from '../components/ui/GiornataForm';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, statoGiornata } from '../utils/lega';
@@ -117,43 +118,6 @@ function Calendario({ sonoRedazione, onModifica }) {
   );
 }
 
-function Albo({ sonoRedazione, onModifica }) {
-  const { albo } = useDati();
-  return (
-    <>
-      {sonoRedazione && (
-        <button type="button" className="bottone-contorno" onClick={() => onModifica({})}>+ Aggiungi un campione</button>
-      )}
-      <section className="ritaglio">
-        <div className="ritaglio-occhiello"><span>Albo d&apos;oro</span><span className="filo" /></div>
-        {albo.length === 0 ? (
-          <p className="ritaglio-vuoto">Nessun campione ancora: la bacheca aspetta il primo trofeo.</p>
-        ) : (
-          <div className="albo">
-            {albo.map((v) => (
-              <button
-                type="button"
-                key={v._id}
-                className="albo-riga"
-                onClick={sonoRedazione ? () => onModifica(v) : undefined}
-                disabled={!sonoRedazione}
-              >
-                <span className="stagione">{v.stagione}</span>
-                <Stemma src={v.squadra?.stemma} nome={v.squadra?.nome} size={38} />
-                <span className="testi">
-                  <span className="nome">{v.squadra?.nome}</span>
-                  {v.note && <span className="dettaglio">{v.note}</span>}
-                </span>
-                {v.punti != null && <span className="punti">{formattaFantapunti(v.punti)}</span>}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-    </>
-  );
-}
-
 // La lega in tre linguette: classifica, calendario e albo d'oro.
 export default function Lega() {
   const { utente } = useOutletContext();
@@ -182,7 +146,7 @@ export default function Lega() {
 
       {tab === 'classifica' && <Classifica miaSquadraId={idDi(utente.squadra)} />}
       {tab === 'calendario' && <Calendario sonoRedazione={sonoRedazione} onModifica={setGiornata} />}
-      {tab === 'albo' && <Albo sonoRedazione={sonoRedazione} onModifica={setVoceAlbo} />}
+      {tab === 'albo' && <AlboDOro sonoRedazione={sonoRedazione} onModifica={setVoceAlbo} />}
 
       {sonoRedazione && (
         <>

@@ -1,0 +1,153 @@
+/* ===== Albo d'oro come bacheca dei trofei (components/ui/AlboDOro.jsx) =====
+   Oro, argento e bronzo sono tinte "da medaglia" fisse: devono leggersi come tali
+   su qualunque tema. L'oro riprende --gold; argento e bronzo sono neutri caldi. */
+:root{
+  --medaglia-argento: #8d9399;
+  --medaglia-bronzo: #a0673a;
+}
+
+.bottone-contorno svg{ vertical-align:-3px; margin-right:4px; }
+
+.albo-vuoto{ align-items:center; text-align:center; color:var(--gold); padding:32px 20px; }
+.albo-vuoto .ritaglio-titolo{ color:var(--ink); }
+
+/* ----- 1 · Campione in carica ----- */
+.albo-campione{ align-items:center; text-align:center; gap:12px; padding:22px 20px 24px; overflow:hidden; position:relative; }
+/* Fascia d'oro in cima, come il nastro di una coppa. */
+.albo-campione::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:6px;
+  background:linear-gradient(90deg, var(--gold), color-mix(in srgb, var(--gold) 55%, var(--paper-input)), var(--gold));
+}
+.campione-testa{ align-self:stretch; display:flex; align-items:center; justify-content:center; position:relative; min-height:36px; }
+.campione-matita{
+  position:absolute; right:0; top:50%; transform:translateY(-50%);
+  width:40px; height:40px; border-radius:50%; border:1px solid var(--filo-lieve); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--superficie-piena); color:var(--ink); box-shadow:var(--ombra-bassa);
+}
+
+/* Senza foto: lo stemma in un medaglione con l'alone d'oro e la coppa appoggiata. */
+.campione-medaglione{ position:relative; width:170px; height:170px; margin:6px 0 2px; display:flex; align-items:center; justify-content:center; }
+.campione-medaglione .alone{
+  position:absolute; inset:0; border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--gold) 34%, transparent) 0%, color-mix(in srgb, var(--gold) 12%, transparent) 55%, transparent 72%);
+  border:2px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.campione-medaglione .alone::after{
+  content:''; position:absolute; inset:14px; border-radius:50%;
+  border:1.5px dashed color-mix(in srgb, var(--gold) 55%, transparent);
+  animation:alone-gira 40s linear infinite;
+}
+@keyframes alone-gira{ to{ transform:rotate(360deg); } }
+.campione-medaglione > img, .campione-medaglione > span:not(.alone):not(.coppa-grande){
+  position:relative; box-shadow:0 0 0 5px var(--paper-input), 0 0 0 7px var(--gold), var(--ombra-media);
+}
+.coppa-grande{
+  position:absolute; right:4px; bottom:10px; width:58px; height:58px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--gold); color:var(--paper-input); box-shadow:var(--ombra-media);
+  border:3px solid var(--paper-input);
+}
+
+/* Con la foto della stagione: foto larga, stemma piccolo a cavallo del bordo. */
+.campione-foto{ position:relative; align-self:stretch; margin:4px 0 26px; }
+.campione-foto img{ display:block; width:100%; aspect-ratio:4 / 3; object-fit:cover; border-radius:18px; box-shadow:var(--ombra-media); }
+.campione-stemma-piccolo{
+  position:absolute; left:50%; bottom:-30px; transform:translateX(-50%);
+  padding:4px; border-radius:50%; background:var(--gold); box-shadow:var(--ombra-media);
+}
+
+.campione-nome{
+  margin:0; padding:0; border:none; background:none; cursor:pointer; color:var(--ink);
+  font-family:'Anton',sans-serif; font-size:42px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere;
+}
+.campione-chi{ margin-top:-4px; text-transform:uppercase; letter-spacing:.1em; }
+.campione-numeri{
+  align-self:stretch; display:grid; grid-template-columns:repeat(auto-fit, minmax(0, 1fr));
+  margin-top:4px; padding-top:14px; border-top:1px solid var(--filo-lieve);
+}
+.campione-numeri > div{ display:flex; flex-direction:column; gap:4px; }
+.campione-numeri > div + div{ border-left:1px solid var(--filo-lieve); }
+.campione-numeri b{ font-family:'Anton',sans-serif; font-weight:400; font-size:32px; line-height:1; color:var(--gold); }
+.campione-citazione{
+  margin:6px 8px 0; padding:0; font-family:'Libre Baskerville',serif; font-style:italic;
+  font-size:18px; line-height:1.5; color:var(--ink-soft);
+}
+.campione-citazione::before{ content:'«'; color:var(--gold); }
+.campione-citazione::after{ content:'»'; color:var(--gold); }
+.podio-mini{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:6px; }
+.gradino{
+  display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 14px 0 10px;
+  border-radius:var(--r-pill); background:var(--paper-dark);
+  font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.04em; text-transform:uppercase;
+}
+.gradino b{ font-family:'Anton',sans-serif; font-weight:400; font-size:17px; }
+.gradino.argento b{ color:var(--medaglia-argento); }
+.gradino.bronzo b{ color:var(--medaglia-bronzo); }
+
+/* ----- 2 · Bacheca ----- */
+.bacheca{ display:flex; flex-direction:column; }
+.bacheca-riga{
+  display:flex; align-items:center; gap:12px; min-height:68px; width:100%; padding:8px 0;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); cursor:pointer;
+  color:var(--ink); font:inherit; text-align:left;
+}
+.bacheca-riga:first-child{ border-top:none; }
+.bacheca-riga .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.bacheca-riga .nome{ font-family:'Anton',sans-serif; font-size:19px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.bacheca-riga.vuota{ opacity:.55; }
+.bacheca-riga.vuota .dettaglio{ font-style:italic; }
+.bacheca-riga .trofei{ flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.coppe{ display:inline-flex; align-items:center; gap:1px; }
+.coppe.oro{ color:var(--gold); }
+.coppe b{ margin-left:4px; font-family:'Anton',sans-serif; font-weight:400; font-size:20px; }
+.podi{ display:flex; gap:6px; font-family:'Oswald',sans-serif; font-size:13px; font-weight:500; letter-spacing:.04em; }
+.podi .argento{ color:var(--medaglia-argento); }
+.podi .bronzo{ color:var(--medaglia-bronzo); }
+
+.record-griglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:4px; }
+.record{
+  position:relative; display:flex; flex-direction:column; gap:4px; padding:14px 14px 12px;
+  border-radius:var(--r-md); background:var(--paper-dark); overflow:hidden;
+}
+.record:last-child:nth-child(odd){ grid-column:1 / -1; }
+.record b{ font-family:'Anton',sans-serif; font-weight:400; font-size:19px; line-height:1.15; text-transform:uppercase; overflow-wrap:anywhere; }
+.record .volte{ font-family:'Oswald',sans-serif; font-size:15px; font-weight:600; color:var(--gold); }
+.record-nera{ background:var(--ink); color:var(--paper-input); }
+.record-nera .dettaglio{ color:color-mix(in srgb, var(--paper-input) 70%, transparent); }
+
+/* ----- 3 · Le stagioni: linea del tempo ----- */
+.stagioni{ list-style:none; margin:0; padding:0 0 0 8px; position:relative; }
+.stagioni::before{ content:''; position:absolute; left:14px; top:10px; bottom:10px; width:2px; background:var(--filo-lieve); }
+.stagioni li{ position:relative; padding-left:34px; }
+.stagioni li + li{ margin-top:6px; }
+.stagioni .pallino{
+  position:absolute; left:0; top:16px; width:14px; height:14px; border-radius:50%;
+  background:var(--paper-input); border:3px solid color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.stagioni li.ultima .pallino{ width:18px; height:18px; left:-2px; top:14px; background:var(--gold); border-color:var(--paper-input); box-shadow:0 0 0 2px var(--gold); }
+.stagione-voce{
+  position:relative; display:flex; flex-direction:column; gap:5px; width:100%; padding:10px 28px 12px 0;
+  background:none; border:none; cursor:pointer; color:var(--ink); font:inherit; text-align:left;
+}
+.stagione-etichetta{
+  align-self:flex-start; padding:4px 10px; border-radius:var(--r-pill); border:1.5px solid var(--gold);
+  font-family:'Oswald',sans-serif; font-size:14px; font-weight:500; color:var(--gold);
+}
+.stagioni li.ultima .stagione-etichetta{ background:var(--gold); color:var(--paper-input); }
+.stagione-vincitrice{ display:flex; align-items:center; gap:10px; min-width:0; }
+.stagione-vincitrice .nome{ flex:1 1 auto; min-width:0; font-family:'Anton',sans-serif; font-size:20px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.stagione-vincitrice .punti{ flex:0 0 auto; font-family:'Anton',sans-serif; font-size:20px; color:var(--gold); }
+.stagione-nota{ font-family:'Libre Baskerville',serif; font-style:italic; font-size:15.5px; line-height:1.45; color:var(--ink-soft); }
+.stagione-freccia{ position:absolute; right:0; top:50%; transform:translateY(-50%); opacity:.4; }
+
+/* Etichette "Nell'albo" di squadra e profilo: con la coppa del metallo giusto. */
+.albo-chip svg{ margin-right:6px; flex:0 0 auto; }
+.albo-chip.coppa-argento{ background:color-mix(in srgb, var(--medaglia-argento) 22%, var(--paper-dark)); }
+.albo-chip.coppa-argento svg{ color:var(--medaglia-argento); }
+.albo-chip.coppa-bronzo{ background:color-mix(in srgb, var(--medaglia-bronzo) 20%, var(--paper-dark)); }
+.albo-chip.coppa-bronzo svg{ color:var(--medaglia-bronzo); }
+
+@media (prefers-reduced-motion: reduce){
+  .campione-medaglione .alone::after{ animation:none; }
+}
