@@ -1,4 +1,5 @@
 const Edizione = require('../models/Edizione');
+const { registra } = require('../services/attivita');
 const Voto = require('../models/Voto');
 const { risolviSchedine } = require('./schedineController');
 
@@ -71,6 +72,10 @@ const crea = async (req, res) => {
   campi.stats.reDeiGufi = await calcolaReDeiGufi(campi.giornataNumero);
 
   const edizione = await Edizione.create({ ...campi, createdBy: req.utente.id });
+  await registra({
+    autore: req.utente.id, tipo: 'edizione',
+    dati: { giornata: edizione.giornataNumero, titolo: edizione.titolo }, chiave: String(edizione._id)
+  });
   await edizione.populate(POPOLA_STATS);
   res.status(201).json({ edizione });
 };

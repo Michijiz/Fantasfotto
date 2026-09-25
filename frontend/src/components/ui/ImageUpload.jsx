@@ -178,10 +178,29 @@ async function preparaImmagine(file) {
   }
 }
 
+// Prepara e carica un file su /api/upload (Cloudinary) e restituisce l'URL.
+// `cartella` dice al server a cosa serve l'immagine (vedi routes/upload.js).
+// Esportata per chi ha bisogno di un suo bottone (l'album della squadra).
+export async function caricaImmagine(file, cartella) {
+  const daInviare = await preparaImmagine(file);
+  const formData = new FormData();
+  if (cartella) formData.append('cartella', cartella);
+  formData.append('immagine', daInviare);
+  const { url } = await api.upload('/api/upload', formData);
+  return url;
+}
+
 // Campo "carica immagine" riutilizzabile: mostra l'anteprima corrente, un input file,
 // e al cambio file la carica subito su /api/upload (Cloudinary) restituendo l'URL
 // tramite onChange — il form che lo usa tiene solo l'URL nello stato, non il file.
-export default function ImageUpload({ label, value, onChange }) {
+//
+//   anteprima      immagine da mostrare quando `value` è vuoto (es. il logo di
+//                  redazione): così si vede cosa comparirà togliendo la propria
+//   etichettaTogli testo del link che svuota il campo ("Togli" di default)
+//   forma          'quadrata' (default) | 'tonda' | 'larga' per l'anteprima
+export default function ImageUpload({
+  label, value, onChange, cartella, anteprima = '', etichettaTogli = 'Togli', forma = 'quadrata'
+}) {
   const [caricando, setCaricando] = useState(false);
   const mostraToast = useToast();
 
@@ -196,11 +215,7 @@ export default function ImageUpload({ label, value, onChange }) {
 
     setCaricando(true);
     try {
-      const daInviare = await preparaImmagine(file);
-      const formData = new FormData();
-      formData.append('immagine', daInviare);
-      const { url } = await api.upload('/api/upload', formData);
-      onChange(url);
+      onChange(await caricaImmagine(file, cartella));
     } catch (err) {
       mostraToast(err.message || 'Upload fallito');
     } finally {
@@ -208,17 +223,19 @@ export default function ImageUpload({ label, value, onChange }) {
     }
   };
 
+  const mostrata = value || anteprima;
+
   return (
     <>
-      <label>{label}</label>
+      {label && <label>{label}</label>}
       <div className="upload-row">
-        {value && <img src={value} className="img-preview" alt="" />}
+        {mostrata && <img src={mostrata} className={`img-preview forma-${forma}${value ? '' : ' di-riserva'}`} alt="" />}
         <label className={`bottone-contorno upload-bottone${caricando ? ' spento' : ''}`}>
           {caricando ? 'Sviluppo il rullino…' : value ? 'Cambia' : 'Carica foto'}
           <input type="file" accept="image/*" onChange={onFile} disabled={caricando} hidden />
         </label>
         {value && !caricando && (
-          <button type="button" className="bottone-link" onClick={() => onChange('')}>Togli</button>
+          <button type="button" className="bottone-link" onClick={() => onChange('')}>{etichettaTogli}</button>
         )}
       </div>
     </>

@@ -46,6 +46,13 @@ const leggiFile = (req, res, next) => {
   });
 };
 
+// Cartelle su Cloudinary: il client dice a cosa serve l'immagine, il server
+// sceglie dove metterla. Un valore sconosciuto finisce nella cartella generica.
+const CARTELLE = {
+  squadre: 'fantasfotto/squadre',
+  edizioni: 'fantasfotto/edizioni'
+};
+
 const router = express.Router();
 
 // Diagnostica: dice se le credenziali Cloudinary sono presenti sull'ambiente,
@@ -75,7 +82,8 @@ router.post('/', verificaToken, leggiFile, asyncHandler(async (req, res) => {
   }
 
   try {
-    const risultato = await caricaBuffer(req.file.buffer);
+    const cartella = CARTELLE[String(req.body?.cartella || '')] || 'fantasfotto';
+    const risultato = await caricaBuffer(req.file.buffer, cartella);
     res.json({ url: risultato.secure_url });
   } catch (err) {
     // Gli errori di Cloudinary (chiavi sbagliate, quota, formato rifiutato) non

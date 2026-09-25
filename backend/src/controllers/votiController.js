@@ -2,6 +2,7 @@ const Voto = require('../models/Voto');
 const Edizione = require('../models/Edizione');
 const Giornata = require('../models/Giornata');
 const User = require('../models/User');
+const { registra } = require('../services/attivita');
 
 // Le votazioni su un'edizione restano aperte fino al fischio d'inizio della
 // giornata dopo. Senza data impostata su quella giornata, restano aperte finché
@@ -62,6 +63,13 @@ const vota = async (req, res) => {
     { votato: squadraId },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+
+  // Una riga per edizione, non una per categoria: e mai per chi ha votato chi.
+  await registra({
+    autore: req.utente.id, tipo: 'voti', squadra: io?.squadra,
+    dati: { giornata: edizione.giornataNumero }, chiave: String(edizioneId),
+    unisci: 'tieni', finestra: 24 * 3600 * 1000
+  });
 
   res.json({ voto });
 };

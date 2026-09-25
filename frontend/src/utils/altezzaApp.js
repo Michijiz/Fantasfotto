@@ -20,31 +20,62 @@ let inCoda = false;
 
 let ultimaTastiera = -1;
 let ultimoSpostamento = -1;
+let ultimaVisibile = -1;
+let ultimoBasso = -1;
 
 // La tastiera di iPhone non accorcia la finestra: si appoggia sopra e iOS fa
-// scorrere la pagina verso l'alto per mostrare il campo. Il risultato era un
-// foglio tagliato a metà e, sotto, una fascia piatta di sfondo. Qui si misurano
-// due cose dal viewport visuale:
-//   --tastiera  quanto spazio copre la tastiera (i fogli si alzano di tanto)
+// scorrere la pagina verso l'alto per mostrare il campo. Qui si misurano dal
+// viewport visuale:
+//   --tastiera  quanto spazio copre la tastiera (serve solo a `.con-tastiera`)
 //   --vv-top    di quanto iOS ha fatto scorrere la pagina (si compensa, così
 //               l'app resta ferma dov'è invece di scivolare via)
+//   --vv-h      l'altezza dell'area davvero visibile
+//   --vv-basso  la distanza tra il fondo dell'area visibile e il fondo della
+//               finestra: è lì che i fogli (Sheet) appoggiano il loro fondo.
+//
+// Perché i fogli non usano più --tastiera: prima vivevano dentro #appScreen, alto
+// --app-h e ritagliato ai bordi, e si alzavano di --tastiera. Ma a seconda della
+// versione di iOS la tastiera accorcia oppure no la finestra (e quindi --app-h):
+// quando la accorciava, il foglio veniva alzato due volte e #appScreen lo tagliava
+// sotto la testata — restava la maniglia col titolo e sotto una fascia vuota del
+// fondo della pagina. Ora i fogli sono position:fixed direttamente nel <body> e si
+// agganciano all'area visibile misurata qui, che è giusta in entrambi i casi.
 function misuraTastiera() {
   const vv = window.visualViewport;
   if (!vv) return;
   // Con lo zoom a due dita il viewport visuale si rimpicciolisce senza tastiera.
   const zoom = Math.abs((vv.scale || 1) - 1) > 0.01;
-  const tastiera = zoom ? 0 : Math.max(0, Math.round(window.innerHeight - vv.height));
+  const altezzaFinestra = window.innerHeight;
+  const visibile = zoom ? altezzaFinestra : Math.round(vv.height);
   const spostamento = zoom ? 0 : Math.max(0, Math.round(vv.offsetTop));
+  const tastiera = zoom ? 0 : Math.max(0, Math.round(altezzaFinestra - vv.height));
+  const basso = zoom ? 0 : Math.max(0, Math.round(altezzaFinestra - vv.offsetTop - vv.height));
+
   const radice = document.documentElement.style;
   if (tastiera !== ultimaTastiera) {
     ultimaTastiera = tastiera;
     radice.setProperty('--tastiera', `${tastiera}px`);
-    document.documentElement.classList.toggle('con-tastiera', tastiera > 80);
   }
   if (spostamento !== ultimoSpostamento) {
     ultimoSpostamento = spostamento;
     radice.setProperty('--vv-top', `${spostamento}px`);
   }
+  if (visibile !== ultimaVisibile) {
+    ultimaVisibile = visibile;
+    radice.setProperty('--vv-h', `${visibile}px`);
+  }
+  if (basso !== ultimoBasso) {
+    ultimoBasso = basso;
+    radice.setProperty('--vv-basso', `${basso}px`);
+  }
+
+  // "Tastiera aperta" si decide da un campo attivo più un'area visibile
+  // accorciata, non dalla sola differenza di altezze: se iOS accorcia anche la
+  // finestra quella differenza resta zero a tastiera aperta.
+  const attivo = document.activeElement;
+  const suCampo = Boolean(attivo?.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select, [contenteditable="true"]'));
+  const accorciata = zoom ? false : (tastiera > 80 || (suCampo && visibile < screen.height * 0.72));
+  document.documentElement.classList.toggle('con-tastiera', accorciata);
 }
 
 function misura() {
@@ -77,4 +108,8 @@ export function seguiAltezzaApp() {
   window.visualViewport?.addEventListener('scroll', programmaMisura);
   // Al ritorno dallo sfondo la finestra può essere cambiata senza eventi.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) programmaMisura(); });
+  // Entrando e uscendo da un campo la tastiera sale e scende: si rimisura anche
+  // lì, perché su qualche iOS il resize del viewport arriva in ritardo.
+  document.addEventListener('focusin', programmaMisura);
+  document.addEventListener('focusout', () => setTimeout(programmaMisura, 60));
 }

@@ -15,6 +15,7 @@ import Archivio from './pages/Archivio';
 import Risultati from './pages/Risultati';
 import NonTrovata from './pages/NonTrovata';
 import Profilo from './pages/Profilo';
+import Allenatori from './pages/Allenatori';
 import Regolamento from './pages/Regolamento';
 
 // Mostra lo splash finché AuthContext non ha finito di capire se c'è una
@@ -39,6 +40,8 @@ function Gate() {
           <Route path="/squadre" element={<Squadre />} />
           <Route path="/squadre/:id" element={<Squadra />} />
           <Route path="/profilo" element={<Profilo />} />
+          <Route path="/profilo/:id" element={<Profilo />} />
+          <Route path="/allenatori" element={<Allenatori />} />
           <Route path="/regolamento" element={<Regolamento />} />
           <Route path="*" element={<NonTrovata />} />
         </Route>

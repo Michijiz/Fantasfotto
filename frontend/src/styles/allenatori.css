@@ -1,0 +1,80 @@
+/* ===== Allenatori e diario della lega (pages/Allenatori.jsx, BannerAttivita.jsx) ===== */
+
+/* ----- Banner "Dal ritiro" in Home ----- */
+.banner-attivita{
+  width:100%; text-align:left; cursor:pointer; color:var(--ink); font:inherit;
+  gap:12px; padding:16px 18px;
+  transition:transform .1s var(--ease-tap);
+}
+.banner-attivita:active{ transform:scale(.985); }
+.banner-testa{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.banner-testa .occhiello-oro{ display:inline-flex; align-items:center; gap:8px; }
+.banner-testa .dettaglio{ display:inline-flex; align-items:center; gap:4px; text-transform:uppercase; letter-spacing:.1em; }
+/* Il pallino "in diretta" che pulsa piano. */
+.banner-punto{
+  width:9px; height:9px; border-radius:50%; background:var(--stamp-red);
+  box-shadow:0 0 0 0 color-mix(in srgb, var(--stamp-red) 55%, transparent);
+  animation:banner-pulsa 2s ease-out infinite;
+}
+@keyframes banner-pulsa{
+  0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--stamp-red) 55%, transparent); }
+  70%{ box-shadow:0 0 0 9px transparent; }
+  100%{ box-shadow:0 0 0 0 transparent; }
+}
+.banner-notizia{
+  display:flex; align-items:center; gap:12px; min-height:52px;
+  animation:banner-entra .45s var(--ease-tap) both;
+}
+@keyframes banner-entra{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:none; }
+}
+.banner-notizia .testo{
+  flex:1 1 auto; min-width:0; font-family:'Libre Baskerville',serif; font-size:16.5px; line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.banner-notizia .testo b{ font-family:'Oswald',sans-serif; font-weight:600; font-size:17px; text-transform:uppercase; letter-spacing:.03em; }
+.banner-notizia .quando{ font-family:'Oswald',sans-serif; font-size:14px; color:var(--ink-soft); }
+.banner-puntini{ display:flex; justify-content:center; gap:5px; }
+.banner-puntini span{
+  width:6px; height:6px; border-radius:50%; background:var(--ink); opacity:.18;
+  transition:opacity .3s, width .3s var(--ease-tap);
+}
+.banner-puntini span.attivo{ opacity:.7; width:16px; border-radius:var(--r-pill); }
+@media (prefers-reduced-motion: reduce){
+  .banner-punto, .banner-notizia{ animation:none; }
+}
+
+/* ----- Elenco allenatori ----- */
+.allenatori-lista{ display:flex; flex-direction:column; }
+.allenatore-voce{
+  display:flex; align-items:center; gap:14px; min-height:76px; width:100%; padding:8px 0;
+  background:none; border:none; border-top:1px solid var(--filo-lieve); cursor:pointer;
+  color:var(--ink); font:inherit; text-align:left;
+}
+.allenatore-voce:first-child{ border-top:none; }
+.allenatore-voce > svg{ flex:0 0 auto; opacity:.5; }
+.allenatore-voce .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.allenatore-voce .nome{
+  display:flex; align-items:center; gap:8px;
+  font-family:'Anton',sans-serif; font-size:21px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere;
+}
+.allenatore-voce .sei-tu{
+  flex:0 0 auto; padding:3px 9px; border-radius:var(--r-pill); background:var(--ink); color:var(--paper-input);
+  font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em;
+}
+.allenatore-voce .squadra{
+  display:flex; align-items:center; gap:7px; min-width:0;
+  font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.04em; text-transform:uppercase;
+}
+.allenatore-voce .squadra > span:not(.dettaglio){ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ----- Diario ----- */
+.diario{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.diario li + li{ border-top:1px solid var(--filo-lieve); }
+.diario-voce{
+  display:flex; align-items:flex-start; gap:12px; width:100%; padding:12px 0;
+  background:none; border:none; cursor:pointer; color:var(--ink); font:inherit; text-align:left;
+}
+.diario-voce .testo{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; font-size:16px; line-height:1.45; }
+.diario-voce .testo b{ font-family:'Oswald',sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }

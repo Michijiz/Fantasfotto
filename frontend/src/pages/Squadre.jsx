@@ -45,6 +45,9 @@ export default function Squadre() {
           })}
         </section>
       )}
+      <button type="button" className="bottone-contorno" onClick={() => navigate('/allenatori')}>
+        Gli allenatori
+      </button>
     </div>
   );
 }

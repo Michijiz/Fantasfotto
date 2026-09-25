@@ -182,3 +182,8 @@ label .facoltativo{ text-transform:none; letter-spacing:.02em; color:var(--ink-s
   position:absolute; top:6px; left:calc(50% + 8px); width:10px; height:10px; border-radius:50%;
   background:var(--stamp-red); box-shadow:0 0 0 2px var(--vetro);
 }
+
+/* Anteprime di ImageUpload: forma a seconda di cosa si carica. */
+.img-preview.forma-tonda{ border-radius:50%; }
+.img-preview.forma-larga{ width:92px; }
+.img-preview.di-riserva{ opacity:.55; }

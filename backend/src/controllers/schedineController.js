@@ -2,6 +2,7 @@ const Schedina = require('../models/Schedina');
 const Giornata = require('../models/Giornata');
 const Squadra = require('../models/Squadra');
 const User = require('../models/User');
+const { registra } = require('../services/attivita');
 const {
   arricchisciGiornata, arricchisciConQuote, calcolaClassifica, esitoSchedina,
   calcolaQuoteGiornata, quoteDaForma
@@ -171,6 +172,8 @@ const salva = async (req, res) => {
   const utente = await User.findById(req.utente.id).lean();
   if (!utente) return res.status(401).json({ errore: 'Utente non trovato' });
 
+  const esisteva = await Schedina.exists({ utente: req.utente.id, giornataNumero });
+
   const schedina = await Schedina.findOneAndUpdate(
     { utente: req.utente.id, giornataNumero },
     {
@@ -179,6 +182,13 @@ const salva = async (req, res) => {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+
+  // Nel diario: che l'ha giocata, non cosa ha giocato (i pronostici restano suoi).
+  await registra({
+    autore: req.utente.id, tipo: 'schedina', squadra: utente.squadra,
+    dati: { giornata: giornataNumero, rigiocata: Boolean(esisteva) },
+    chiave: `g${giornataNumero}`, unisci: 'tieni'
+  });
 
   res.json({ schedina });
 };

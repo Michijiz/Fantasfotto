@@ -1,23 +1,19 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from '@phosphor-icons/react';
 
-// Pannello che sale dal basso (bottom sheet), usato per "tutti gli scontri della
-// giornata", per il form "Nuova edizione" e per gli scontri di giornata dell'admin.
+// Pannello che sale dal basso (bottom sheet): scontri della giornata, "Si va in
+// stampa", "Componi la tua pagina", la scheda squadra e gli altri moduli.
 //
-// Lo sheet si monta SEMPRE dentro #appScreen, non dove viene scritto nel JSX.
-// Motivo: .sheet è position:absolute e si ancora al primo antenato posizionato.
-// Dentro una pagina finisce dentro .contenuto, che è a sua volta absolute ed è il
-// contenitore di scroll: lì "bottom:0" vuol dire fondo del contenuto scorribile,
-// non fondo dello schermo, e lo sheet chiuso si impilava in coda alla pagina
-// invece di restare fuori campo. Gli sheet di AppShell funzionavano solo perché
-// erano già figli diretti di #appScreen.
+// Lo sheet si monta nel <body>, non dentro l'app. Prima viveva in #appScreen, che
+// è alto --app-h e ritaglia tutto ai bordi: con la tastiera aperta, a seconda di
+// come iOS ridimensiona la finestra, il foglio finiva tagliato sotto la testata e
+// sotto si vedeva il fondo della pagina. Ora è position:fixed e si aggancia
+// all'area davvero visibile (--vv-basso, --vv-h: vedi utils/altezzaApp.js), che
+// nessun contenitore può ritagliare. Il <body> esiste già al primo render, quindi
+// non c'è più l'ancora da cercare dopo il paint: il contenuto nasce subito nel
+// posto giusto e non si rimonta (i campi non perdono quello che c'è scritto).
 export default function Sheet({ aperto, onChiudi, titolo, sottotitolo, grande = false, children }) {
-  // L'ancora si cerca DOPO il primo paint, non durante il render: al primo giro
-  // #appScreen non è ancora nel DOM, quindi risolverla in render dava null e il
-  // contenuto nasceva in linea per poi spostarsi nel portale al render successivo
-  // — cioè si smontava e si rimontava, perdendo lo stato dei campi che contiene.
-  const [ancora, setAncora] = useState(null);
   const corpoRef = useRef(null);
 
   // Quando si tocca un campo, il foglio si alza sopra la tastiera e si accorcia:
@@ -36,31 +32,37 @@ export default function Sheet({ aperto, onChiudi, titolo, sottotitolo, grande = 
       }
     }, 320);
   };
-  // Lo stato scritto dentro l'effetto è proprio il punto: il nodo del portale
-  // esiste solo dopo il primo commit, quindi prima non c'è niente da leggere.
-  // oxlint-disable-next-line react/set-state-in-effect
-  useLayoutEffect(() => { setAncora(document.getElementById('appScreen')); }, []);
 
-  const contenuto = (
+  // Chiudendo il foglio con la tastiera ancora su, il campo resterebbe attivo
+  // fuori schermo e la tastiera non scenderebbe: si toglie il fuoco.
+  useEffect(() => {
+    if (aperto) return;
+    const attivo = document.activeElement;
+    if (attivo && corpoRef.current?.contains(attivo)) attivo.blur();
+  }, [aperto]);
+
+  return createPortal(
     <>
       <div className={`sheet-overlay${aperto ? ' aperto' : ''}`} onClick={onChiudi} />
-      <div className={`sheet${grande ? ' grande' : ''}${aperto ? ' aperto' : ''}`}>
+      <div
+        className={`sheet${grande ? ' grande' : ''}${aperto ? ' aperto' : ''}`}
+        aria-hidden={!aperto}
+        role="dialog"
+        aria-label={typeof titolo === 'string' ? titolo : undefined}
+      >
         <div className="maniglia" />
         <div className="sheet-header">
           <div>
             <h3>{titolo}</h3>
             {sottotitolo && <span className="sotto">{sottotitolo}</span>}
           </div>
-          <button className="chiudi-sheet" onClick={onChiudi} aria-label="Chiudi">
+          <button type="button" className="chiudi-sheet" onClick={onChiudi} aria-label="Chiudi">
             <X size={18} />
           </button>
         </div>
         <div className="sheet-body" ref={corpoRef} onFocus={suFocus}>{children}</div>
       </div>
-    </>
+    </>,
+    document.body
   );
-
-  // Finché l'ancora non c'è non si rende niente: un frame senza lo sheet chiuso
-  // non si vede, mentre montarlo nel posto sbagliato sì.
-  return ancora ? createPortal(contenuto, ancora) : null;
 }

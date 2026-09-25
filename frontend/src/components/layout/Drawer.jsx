@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
-import { User, BookOpen, SignOut, X, Key, DownloadSimple } from '@phosphor-icons/react';
+import { User, UsersThree, BookOpen, SignOut, X, Key, DownloadSimple } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { useTema } from '../../context/TemaContext';
 import { sfondoTema } from '../../temi';
@@ -56,8 +56,13 @@ export default function Drawer({ aperto, onChiudi }) {
   const voci = [
     {
       chiave: 'profilo', label: 'Il mio profilo', tipo: 'link',
-      attiva: pathname.startsWith('/profilo'), onClick: () => vai('/profilo'),
-      mattonella: <User size={20} weight={pathname.startsWith('/profilo') ? 'fill' : 'regular'} />
+      attiva: pathname === '/profilo', onClick: () => vai('/profilo'),
+      mattonella: <User size={20} weight={pathname === '/profilo' ? 'fill' : 'regular'} />
+    },
+    {
+      chiave: 'allenatori', label: 'Gli allenatori', sotto: 'Profili e notizie dal ritiro', tipo: 'link',
+      attiva: pathname.startsWith('/allenatori') || /^\/profilo\/./.test(pathname), onClick: () => vai('/allenatori'),
+      mattonella: <UsersThree size={20} weight={pathname.startsWith('/allenatori') ? 'fill' : 'regular'} />
     },
     {
       chiave: 'regolamento', label: 'Regolamento e FAQ', tipo: 'link',

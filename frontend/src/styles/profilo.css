@@ -207,3 +207,9 @@
   align-self:flex-start; margin-top:4px; padding:0; border:none; background:none; cursor:pointer;
   font-family:'Libre Baskerville',serif; font-size:17px; font-style:italic; color:var(--ink-soft);
 }
+
+/* Profilo di un altro allenatore: al posto di "Il personaggio" il ritorno. */
+.profilo-indietro{
+  display:inline-flex; align-items:center; gap:6px; padding:0; border:none; background:none; cursor:pointer;
+  color:inherit; font:inherit; letter-spacing:inherit; text-transform:inherit;
+}

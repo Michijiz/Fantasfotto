@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PencilSimple, BookOpen, CaretRight, Key } from '@phosphor-icons/react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { PencilSimple, BookOpen, CaretRight, CaretLeft, Key } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { useTema } from '../context/TemaContext';
@@ -15,7 +15,7 @@ import ComponiProfilo from '../components/ui/ComponiProfilo';
 import { etichettaRuolo, puoRedigere, puoCancellare } from '../ruoli';
 import { avatarUtente } from '../avatar';
 import { coloreSfondo, profiloDi } from '../profilo';
-import { sfondoTema } from '../temi';
+import { sfondoTema, temaPerId } from '../temi';
 import { magliaSquadra } from '../loghi';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, formaRecente, menzioni, rosaPerRuolo } from '../utils/lega';
@@ -45,21 +45,75 @@ function Occhiello({ children }) {
   );
 }
 
+// /profilo è il tuo, /profilo/:id quello di un altro allenatore (sola lettura).
+// La pagina è la stessa: così il ritaglio ha lo stesso aspetto per tutti.
 export default function Profilo() {
-  const { utente, logout } = useAuth();
+  const { id } = useParams();
+  const { utente } = useAuth();
+
+  if (id && String(id) === String(utente.id)) return <Navigate to="/profilo" replace />;
+  if (id) return <ProfiloAltrui key={id} id={id} />;
+  return <PaginaProfilo persona={utente} mio />;
+}
+
+// Carica il profilo di un altro utente e lo passa alla pagina in modalità ospite.
+function ProfiloAltrui({ id }) {
+  const navigate = useNavigate();
+  const [dati, setDati] = useState(null);
+  const [errore, setErrore] = useState('');
+
+  useEffect(() => {
+    let vivo = true;
+    api.get(`/api/utenti/${id}`)
+      .then((r) => { if (vivo) setDati(r); })
+      .catch((err) => { if (vivo) setErrore(err.message || 'Profilo non trovato'); });
+    return () => { vivo = false; };
+  }, [id]);
+
+  if (errore) {
+    return (
+      <div className="profilo">
+        <section className="ritaglio">
+          <p className="ritaglio-vuoto">{errore}</p>
+          <button type="button" className="bottone-contorno" onClick={() => navigate(-1)}>Torna indietro</button>
+        </section>
+      </div>
+    );
+  }
+
+  if (!dati) {
+    return (
+      <div className="profilo">
+        <section className="ritaglio"><div className="skeleton-line w-60" /></section>
+      </div>
+    );
+  }
+
+  return <PaginaProfilo persona={dati.utente} schedineOspite={dati.schedine} />;
+}
+
+function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
+  const { logout } = useAuth();
   const { squadre, tabellone, giornate, edizioni, albo } = useDati();
-  const { temaId, tema, cambiaTema } = useTema();
+  const { temaId, tema: temaMio, cambiaTema } = useTema();
   const navigate = useNavigate();
 
   const [componi, setComponi] = useState(false);
   const [bozza, setBozza] = useState(null);
   const [temaAperto, setTemaAperto] = useState(false);
   const [pinAperto, setPinAperto] = useState(false);
-  const [schedine, setSchedine] = useState(null);
+  const [schedineMie, setSchedineMie] = useState(null);
 
   useEffect(() => {
-    api.get('/api/schedine/mie').then(setSchedine).catch(() => setSchedine(null));
-  }, []);
+    if (!mio) return;
+    api.get('/api/schedine/mie').then(setSchedineMie).catch(() => setSchedineMie(null));
+  }, [mio]);
+
+  // Da qui in giù "utente" è la persona di cui si guarda la pagina: tu o un altro.
+  const utente = persona;
+  const schedine = mio ? schedineMie : schedineOspite;
+  // Il cuore dell'ospite è la sua squadra tifata, non il tema con cui guardi tu.
+  const tema = mio ? temaMio : temaPerId(persona.tema);
 
   const squadraId = idDi(utente.squadra);
   const miaSquadra = squadre.find((s) => s._id === squadraId);
@@ -84,24 +138,35 @@ export default function Profilo() {
   const oggi = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
   const maglia = miaSquadra?.maglia || magliaSquadra(miaSquadra?.nome);
 
+  // Sfondo "Come il tema": a casa d'altri è la carta della *sua* squadra.
+  const sfondoFoto = !mio && p.sfondo === 'tema' ? (tema.vars?.['--paper-dark'] || coloreSfondo('tema')) : coloreSfondo(p.sfondo);
+
   const apriComponi = () => { setBozza(bozzaDa(utente)); setComponi(true); };
   const chiudiComponi = () => { setComponi(false); setBozza(null); };
 
   return (
     <div className="profilo">
       <div className="profilo-testatina">
-        <span>Il personaggio</span>
+        {mio ? (
+          <span>Il personaggio</span>
+        ) : (
+          <button type="button" className="profilo-indietro" onClick={() => navigate(-1)}>
+            <CaretLeft size={16} weight="bold" /> Indietro
+          </button>
+        )}
         <span>{oggi}</span>
       </div>
 
       {/* Il ritaglio d'apertura: foto, timbro del ruolo e i testi dell'utente. */}
       <article className="ritaglio ritaglio-apertura">
-        <div className="profilo-foto" style={{ background: coloreSfondo(p.sfondo) }}>
+        <div className="profilo-foto" style={{ background: sfondoFoto }}>
           <Avatar id={vista.avatar} nome={vista.nomeVisualizzato} size={250} tondo={false} className="profilo-avatar" />
           <span className="profilo-timbro">{etichettaRuolo(utente)}</span>
-          <button type="button" className="profilo-matita" onClick={apriComponi} aria-label="Componi la tua pagina">
-            <PencilSimple size={20} />
-          </button>
+          {mio && (
+            <button type="button" className="profilo-matita" onClick={apriComponi} aria-label="Componi la tua pagina">
+              <PencilSimple size={20} />
+            </button>
+          )}
         </div>
         {p.didascalia.trim() && <div className="profilo-didascalia">{p.didascalia}</div>}
         <div className="profilo-testi">
@@ -112,7 +177,7 @@ export default function Profilo() {
           {p.sottotitolo.trim() && <div className="profilo-sottotitolo">{p.sottotitolo}</div>}
           {p.motto.trim()
             ? <p className="profilo-motto">{p.motto}</p>
-            : <button type="button" className="profilo-invito" onClick={apriComponi}>Scrivi il tuo motto →</button>}
+            : mio && <button type="button" className="profilo-invito" onClick={apriComponi}>Scrivi il tuo motto →</button>}
         </div>
       </article>
 
@@ -189,9 +254,11 @@ export default function Profilo() {
             <span className="cuore-disco" style={{ background: sfondoTema(tema.colori) }} />
             <span className="cuore-nome">{tema.nome}</span>
           </div>
-          <button type="button" className="bottone-contorno" onClick={() => setTemaAperto(true)}>
-            Cambia squadra
-          </button>
+          {mio && (
+            <button type="button" className="bottone-contorno" onClick={() => setTemaAperto(true)}>
+              Cambia squadra
+            </button>
+          )}
         </section>
       )}
 
@@ -234,6 +301,7 @@ export default function Profilo() {
         </section>
       )}
 
+      {mio && (<>
       <section className="ritaglio ritaglio-impostazioni">
         <button type="button" className="impostazione" onClick={apriComponi}>
           <PencilSimple size={22} />
@@ -254,11 +322,13 @@ export default function Profilo() {
       </section>
 
       {puoCancellare(utente) && <NomeLega />}
+      </>)}
 
       <p className="profilo-colophon">
         La Gazzetta dello Sfottò — ogni riferimento a fatti o allenatori reali è puramente voluto.
       </p>
 
+      {mio && (<>
       <Sheet aperto={componi} onChiudi={chiudiComponi} titolo="Componi la tua pagina" grande>
         {componi && bozza && (
           <ComponiProfilo bozza={bozza} onCambia={setBozza} onFatto={chiudiComponi} />
@@ -273,6 +343,7 @@ export default function Profilo() {
       <Sheet aperto={pinAperto} onChiudi={() => setPinAperto(false)} titolo="Cambia PIN">
         {pinAperto && <CambiaPin onFatto={() => setPinAperto(false)} />}
       </Sheet>
+      </>)}
 
     </div>
   );

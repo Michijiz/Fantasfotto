@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gazzetta-shell-v9';
+const CACHE_NAME = 'gazzetta-shell-v11';
 const ASSET_DA_CACHARE = ['/', '/manifest.json'];
 
 self.addEventListener('install', (event) => {

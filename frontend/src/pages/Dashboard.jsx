@@ -4,6 +4,7 @@ import { ArrowRight } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
 import Sheet from '../components/ui/Sheet';
 import Stemma from '../components/ui/Stemma';
+import BannerAttivita from '../components/ui/BannerAttivita';
 import '../styles/home.css';
 
 const idDi = (v) => (v && typeof v === 'object' ? v._id : v);
@@ -81,6 +82,9 @@ export default function Dashboard() {
 
   return (
     <div className="ritagli home">
+      {/* 0 · Cosa succede in lega: una notizia alla volta dal diario */}
+      <BannerAttivita />
+
       {/* 1 · Cosa si gioca adesso */}
       {!prossimaGiornata ? (
         <section className="ritaglio">

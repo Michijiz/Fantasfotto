@@ -104,4 +104,16 @@ function caricaBuffer(buffer, cartella = 'fantasfotto') {
   });
 }
 
-module.exports = { caricaBuffer, configurato, variabiliMancanti, diagnosi, ping };
+// Un indirizzo d'immagine salvato nel database deve venire dal nostro Cloudinary:
+// altrimenti chiunque potrebbe mettere come stemma o in album un'immagine presa
+// da un sito qualsiasi (che poi sparisce, o cambia contenuto). Senza nome del
+// cloud configurato si accetta qualunque indirizzo di res.cloudinary.com.
+function urlDelNostroCloud(url) {
+  if (typeof url !== 'string') return false;
+  const base = credenziali.cloud_name
+    ? `https://res.cloudinary.com/${credenziali.cloud_name}/`
+    : 'https://res.cloudinary.com/';
+  return url.trim().startsWith(base);
+}
+
+module.exports = { caricaBuffer, configurato, variabiliMancanti, diagnosi, ping, urlDelNostroCloud };

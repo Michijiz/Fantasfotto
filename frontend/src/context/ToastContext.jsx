@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 const ToastContext = createContext(null);
 
@@ -21,7 +22,9 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={mostraToast}>
       {children}
-      <div className={`toast${visibile ? ' show' : ''}`}>{messaggio}</div>
+      {/* Nel <body>, come i fogli (Sheet): dentro #root finirebbe sotto un foglio
+          aperto e gli errori di un modulo non si vedrebbero. */}
+      {createPortal(<div className={`toast${visibile ? ' show' : ''}`} role="status">{messaggio}</div>, document.body)}
     </ToastContext.Provider>
   );
 }
