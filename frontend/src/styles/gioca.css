@@ -113,3 +113,14 @@
 .barra-voto .pieno.primo{ background:var(--ink); color:var(--paper-input); }
 .barra-voto .pieno.mio{ background:var(--stamp-red); color:#fff; }
 .barra-voto .pct{ width:46px; text-align:right; font-family:'Anton',sans-serif; font-size:20px; }
+
+/* Avviso "com'è andata" della giornata appena chiusa */
+.esito-precedente .cedolino-esito{ display:block; margin:6px 0 2px; }
+.esito-azioni{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.esito-riga{
+  display:flex; justify-content:space-between; align-items:center; width:calc(100% - 32px); margin:0 16px;
+  padding:10px 14px; border:1.5px solid var(--filo-lieve); border-radius:12px; background:var(--superficie-piena);
+  color:var(--ink); font-family:'Oswald',sans-serif; font-size:13.5px; letter-spacing:.04em; text-transform:uppercase; cursor:pointer;
+}
+.esito-azioni .bottone-contorno{ display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:1 1 auto; margin-top:0; }
+.esito-azioni .bottone-contorno svg{ margin-right:0; vertical-align:baseline; }

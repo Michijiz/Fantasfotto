@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, X as Croce } from '@phosphor-icons/react';
+import { Check, X as Croce, CaretDown, CaretUp } from '@phosphor-icons/react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -293,19 +293,57 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
   );
 }
 
-// Com'è andata la giornata appena chiusa, in cima alla pagina: chi ha vinto lo deve
-// vedere subito, senza scorrere. Compare solo se quella schedina l'hai giocata.
-function EsitoPrecedente({ precedente }) {
+// "Visto" per giornata, ricordato su questo dispositivo: l'esito è un avviso che arriva
+// quando i risultati sono dentro, non un blocco fisso della pagina.
+const chiaveVisto = (g) => `gazzetta_esito_visto_${g.stagione ?? ''}_${g.numero}`;
+const leggiVisto = (g) => { try { return localStorage.getItem(chiaveVisto(g)) === '1'; } catch { return false; } };
+const segnaVisto = (g) => { try { localStorage.setItem(chiaveVisto(g), '1'); } catch { /* storage non disponibile */ } };
+
+// Com'è andata la giornata appena chiusa, in cima alla pagina. Appena i risultati sono
+// inseriti l'esito compare in evidenza; con "Visto" si riduce a una riga, e il cedolino
+// completo (pronostici, fantapunti, gli altri gufi) resta a un tocco. L'esito non si
+// può segnare come visto finché è "in attesa": sarebbe sparito prima di sapere com'è andata.
+function EsitoPrecedente({ precedente, onSalvato }) {
   const { giornata, miaSchedina } = precedente || {};
-  if (!giornata || !miaSchedina) return null;
+  const [visto, setVisto] = useState(() => (giornata ? leggiVisto(giornata) : true));
+  const [aperto, setAperto] = useState(false);
+  if (!giornata) return null;
+
+  const risolta = miaSchedina && miaSchedina.esito !== 'attesa';
+  const esito = miaSchedina ? esitoTesto(giornata, miaSchedina) : 'Non giocata';
+  const evidenza = miaSchedina && (!visto || !risolta);
+  const Freccia = aperto ? CaretUp : CaretDown;
+  const chiudiAvviso = () => { segnaVisto(giornata); setVisto(true); };
+
   return (
-    <section className="ritaglio">
-      <div className="ritaglio-testa">
-        <span className="occhiello-oro">Giornata {giornata.numero} · com&apos;è andata</span>
-      </div>
-      <span className={`cedolino-esito ${miaSchedina.esito || ''}`}>{esitoTesto(giornata, miaSchedina)}</span>
-      <span className="dettaglio">Quota giocata {formattaQuota(miaSchedina.quotaTotale)}</span>
-    </section>
+    <>
+      {evidenza ? (
+        <section className="ritaglio esito-precedente">
+          <div className="ritaglio-testa">
+            <span className="occhiello-oro">Giornata {giornata.numero} · com&apos;è andata</span>
+          </div>
+          <span className={`cedolino-esito ${miaSchedina.esito || ''}`}>{esito}</span>
+          <span className="dettaglio">Quota giocata {formattaQuota(miaSchedina.quotaTotale)}</span>
+          <div className="esito-azioni">
+            <button type="button" className="bottone-contorno" aria-expanded={aperto} onClick={() => setAperto(!aperto)}>
+              <Freccia size={16} weight="bold" /> {aperto ? 'Nascondi il cedolino' : 'Vedi il cedolino'}
+            </button>
+            {risolta && <button type="button" className="bottone-contorno" onClick={chiudiAvviso}>Visto</button>}
+          </div>
+        </section>
+      ) : (
+        <button type="button" className="esito-riga" aria-expanded={aperto} onClick={() => setAperto(!aperto)}>
+          <span>Giornata {giornata.numero} · {esito}</span>
+          <Freccia size={16} weight="bold" />
+        </button>
+      )}
+      {aperto && (
+        <>
+          <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa onSalvato={onSalvato} />
+          <AltriGufi giornata={giornata} chiusa />
+        </>
+      )}
+    </>
   );
 }
 
@@ -342,22 +380,20 @@ export default function Schedina() {
   if (motivo === 'calendario-mancante' || !giornata.accoppiamenti?.length) {
     return (
       <div className="ritagli">
-        <EsitoPrecedente precedente={precedente} />
+        <EsitoPrecedente key={precedente?.giornata?._id} precedente={precedente} onSalvato={ricaricaSchedina} />
         <section className="ritaglio">
           <h2 className="ritaglio-titolo medio">Giornata {giornata.numero}</h2>
           <p className="ritaglio-vuoto">Il banco apre quando il direttore di turno imposta gli scontri.</p>
         </section>
-        <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
       </div>
     );
   }
 
   return (
     <div className="ritagli">
-      <EsitoPrecedente precedente={precedente} />
+      <EsitoPrecedente key={precedente?.giornata?._id} precedente={precedente} onSalvato={ricaricaSchedina} />
       <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} onSalvato={ricaricaSchedina} />
       <AltriGufi giornata={giornata} chiusa={chiusa} />
-      <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
     </div>
   );
 }
