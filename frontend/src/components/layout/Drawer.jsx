@@ -65,7 +65,7 @@ export default function Drawer({ aperto, onChiudi, onApriGuida }) {
       mattonella: <UsersThree size={20} weight={pathname.startsWith('/allenatori') ? 'fill' : 'regular'} />
     },
     {
-      chiave: 'guida', label: 'Come si gioca', sotto: 'Il giro della redazione in 5 schede', tipo: 'azione',
+      chiave: 'guida', label: 'Come si gioca', sotto: 'L\'app sezione per sezione', tipo: 'azione',
       onClick: () => { onChiudi(); onApriGuida?.(); },
       mattonella: <Question size={20} />
     },
