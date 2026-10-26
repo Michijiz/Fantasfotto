@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
-import { User, UsersThree, BookOpen, SignOut, X, Key, DownloadSimple } from '@phosphor-icons/react';
+import { User, UsersThree, BookOpen, SignOut, X, Key, DownloadSimple, Question } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { useTema } from '../../context/TemaContext';
 import { sfondoTema } from '../../temi';
@@ -22,7 +22,7 @@ import '../../styles/drawer.css';
 
 const MOLLA_PANNELLO = { type: 'spring', stiffness: 320, damping: 30 };
 
-export default function Drawer({ aperto, onChiudi }) {
+export default function Drawer({ aperto, onChiudi, onApriGuida }) {
   const { utente, logout } = useAuth();
   const { temaId, tema, cambiaTema } = useTema();
   const navigate = useNavigate();
@@ -63,6 +63,11 @@ export default function Drawer({ aperto, onChiudi }) {
       chiave: 'allenatori', label: 'Gli allenatori', sotto: 'Profili e notizie dal ritiro', tipo: 'link',
       attiva: pathname.startsWith('/allenatori') || /^\/profilo\/./.test(pathname), onClick: () => vai('/allenatori'),
       mattonella: <UsersThree size={20} weight={pathname.startsWith('/allenatori') ? 'fill' : 'regular'} />
+    },
+    {
+      chiave: 'guida', label: 'Come si gioca', sotto: 'Il giro della redazione in 5 schede', tipo: 'azione',
+      onClick: () => { onChiudi(); onApriGuida?.(); },
+      mattonella: <Question size={20} />
     },
     {
       chiave: 'regolamento', label: 'Regolamento e FAQ', tipo: 'link',

@@ -62,6 +62,9 @@ export function AuthProvider({ children }) {
     const { token, utente } = await api.post('/api/auth/registrati', dati);
     impostaToken(token);
     setSessioneScaduta(false);
+    // Solo chi si iscrive adesso vede la guida di benvenuto (AppShell la apre e poi
+    // segna "visto"): chi aveva già un account non se la ritrova all'improvviso.
+    try { localStorage.setItem(`gazzetta_guida_${utente.id}`, 'da-mostrare'); } catch { /* storage non disponibile */ }
     setUtente(utente);
     return utente;
   }, []);

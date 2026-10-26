@@ -36,8 +36,16 @@ function haToken(req) {
 // una): nome, avatar e tema, quanto serve a elenco e interno squadra.
 const lista = async (req, res) => {
   if (!haToken(req)) {
-    const squadre = await Squadra.find().sort('nome').select('nome stemma').lean();
-    return res.json({ squadre });
+    // Senza token solo nome, stemma e QUANTI allenatori ha già la squadra (mai chi
+    // sono): serve alla schermata di iscrizione per dire se la squadra è libera.
+    const [squadre, conteggi] = await Promise.all([
+      Squadra.find().sort('nome').select('nome stemma').lean(),
+      User.aggregate([{ $match: { attivo: true } }, { $group: { _id: '$squadra', n: { $sum: 1 } } }])
+    ]);
+    const perSquadra = new Map(conteggi.map((c) => [String(c._id), c.n]));
+    return res.json({
+      squadre: squadre.map((s) => ({ ...s, allenatoriCount: perSquadra.get(String(s._id)) || 0 }))
+    });
   }
 
   const [squadre, utenti] = await Promise.all([
