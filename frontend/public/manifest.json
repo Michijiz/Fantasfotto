@@ -12,13 +12,13 @@
   "theme_color": "#241b1e",
   "categories": ["sports", "entertainment"],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icons/gs-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/gs-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/gs-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Ultima edizione", "short_name": "Gazzetta", "url": "/gazzetta", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Gioca la schedina", "short_name": "Gioca", "url": "/gioca", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "La lega", "short_name": "Lega", "url": "/lega", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Ultima edizione", "short_name": "Gazzetta", "url": "/gazzetta", "icons": [{ "src": "/icons/gs-192.png", "sizes": "192x192" }] },
+    { "name": "Gioca la schedina", "short_name": "Gioca", "url": "/gioca", "icons": [{ "src": "/icons/gs-192.png", "sizes": "192x192" }] },
+    { "name": "La lega", "short_name": "Lega", "url": "/lega", "icons": [{ "src": "/icons/gs-192.png", "sizes": "192x192" }] }
   ]
 }
