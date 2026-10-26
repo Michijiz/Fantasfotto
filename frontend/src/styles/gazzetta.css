@@ -144,3 +144,9 @@ select.filtro{ width:auto; padding-right:18px; background-image:none; }
 .scrivi-barra .stato.errore{ color:var(--stamp-red); }
 .scrivi-barra .bottone-grande:disabled{ opacity:.5; cursor:default; }
 .contenuto.scrivendo{ padding-bottom:0; }
+
+/* Tastiera aperta sulla pagina di scrittura: via barra e testata, e sotto il
+   contenuto lo spazio della tastiera, così anche l'ultimo campo si raggiunge. */
+.con-tastiera .scrivi-barra{ display:none; }
+.con-tastiera #appScreen.scrivendo .app-header{ display:none; }
+.con-tastiera #appScreen.scrivendo .contenuto{ padding-top:12px; padding-bottom:calc(var(--tastiera, 0px) + 24px); }

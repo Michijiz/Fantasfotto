@@ -28,7 +28,7 @@ function ShellInterno({ utente }) {
   }, [pathname]);
 
   return (
-    <div id="appScreen">
+    <div id="appScreen" className={scrivendo ? 'scrivendo' : undefined}>
       <InstallBanner />
       <RistampaBanner />
       <div className="area-scroll">

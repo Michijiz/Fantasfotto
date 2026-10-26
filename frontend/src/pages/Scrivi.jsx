@@ -218,6 +218,20 @@ function Editor({ edizione }) {
     }
   };
 
+  // Scrivendo dal telefono la tastiera copre la metà bassa dello schermo: il
+  // campo toccato si porta in cima all'area visibile (la testata si nasconde, vedi
+  // gazzetta.css), così si vede quello che si scrive.
+  const alFuoco = (e) => {
+    const campo = e.target;
+    if (!campo.matches?.('input, textarea')) return;
+    setTimeout(() => {
+      const area = document.querySelector('.contenuto');
+      if (!area || !area.contains(campo)) return;
+      const dentro = campo.getBoundingClientRect().top - area.getBoundingClientRect().top;
+      area.scrollTo({ top: area.scrollTop + dentro - 12, behavior: 'smooth' });
+    }, 350);
+  };
+
   const scartaRipresa = () => {
     scartaBozza();
     const proposta = giornataDaStampare(giornate, edizioni);
@@ -253,7 +267,7 @@ function Editor({ edizione }) {
           : { testo: modifica ? 'Pronta da correggere' : 'Pronta per la stampa' };
 
   return (
-    <div className="ritagli scrivi">
+    <div className="ritagli scrivi" onFocus={alFuoco}>
       <header className="testa-sotto">
         <button type="button" className="indietro" onClick={indietro} aria-label="Indietro">
           <CaretLeft size={22} weight="bold" />
