@@ -25,17 +25,8 @@
 .giornata-testa{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .giornata-testa .titolo{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
 .giornata-testa .dettaglio{ text-transform:none; }
-.scontro{
-  display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:center; gap:10px;
-  min-height:60px; border-top:1px solid var(--filo-lieve);
-}
-.scontro .lato{ display:flex; align-items:center; gap:8px; min-width:0; }
-.scontro .casa{ justify-content:flex-end; text-align:right; }
-.scontro .nome{ font-family:'Anton',sans-serif; font-size:16px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
-.scontro .vince .nome{ color:var(--ink); text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; }
-.scontro .vs{ font-family:'Anton',sans-serif; font-size:18px; color:var(--ink-soft); }
-.scontro .risultato{ display:flex; flex-direction:column; align-items:center; gap:2px; }
-.scontro .risultato b{ font-family:'Anton',sans-serif; font-weight:400; font-size:24px; line-height:1; }
+/* Il separatore sotto l'intestazione della giornata; gli scontri stanno in giornata.css. */
+.giornata .scontri .scontro:first-child{ border-top:1px solid var(--filo-lieve); }
 
 .albo{ display:flex; flex-direction:column; }
 .albo-riga{

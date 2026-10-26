@@ -7,8 +7,8 @@ import { fantapuntiInGol } from '../../utils/regolamento';
 import BottoneElimina from './BottoneElimina';
 import { useAuth } from '../../context/AuthContext';
 import { puoCancellare } from '../../ruoli';
+import { idDi } from '../../utils/lega';
 
-const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 
 let contatoreRighe = 0;
 const rigaId = () => `riga-${++contatoreRighe}`;
@@ -38,14 +38,14 @@ export default function GiornataForm({ giornata, onFatto }) {
   const [scontri, setScontri] = useState(() => {
     const esistenti = (giornata?.accoppiamenti || []).map((a) => ({
       id: rigaId(),
-      casa: idDi(a.squadraCasa),
-      trasferta: idDi(a.squadraTrasferta)
+      casa: (idDi(a.squadraCasa) || ''),
+      trasferta: (idDi(a.squadraTrasferta) || '')
     }));
     return esistenti.length ? esistenti : [rigaVuota()];
   });
   const [punteggi, setPunteggi] = useState(() => {
     const iniziali = {};
-    for (const p of giornata?.punteggi || []) iniziali[idDi(p.squadra)] = String(p.punti);
+    for (const p of giornata?.punteggi || []) iniziali[(idDi(p.squadra) || '')] = String(p.punti);
     return iniziali;
   });
   const [errore, setErrore] = useState('');

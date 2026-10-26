@@ -115,10 +115,32 @@ select.filtro{ width:auto; padding-right:18px; background-image:none; }
 .partite{ display:flex; flex-direction:column; gap:12px; padding-top:18px; border-top:1px solid var(--filo-lieve); }
 .partita{ display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:20px; background:var(--paper-dark); min-width:0; }
 .partita.mia{ box-shadow:0 0 0 2px var(--stamp-red); }
-.partita-mia{ align-self:flex-start; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--stamp-red); }
-.partita-testa{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:start; gap:8px; }
-.partita .lato{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; min-width:0; }
-.partita .nome{ font-family:'Anton',sans-serif; font-size:15px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
-.partita .punti{ font-size:13px; color:var(--ink-soft); }
-.partita .esito{ align-self:center; font-family:'Anton',sans-serif; font-size:26px; line-height:1; white-space:nowrap; }
 .partita-testo{ margin:0; font-size:17px; line-height:1.6; }
+
+/* Pagina di scrittura (pages/Scrivi.jsx). */
+.scrivi-ripresa{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-radius:16px;
+  background:var(--paper-dark); font-size:15px;
+}
+.scrivi-ripresa .bottone-link{ align-self:auto; }
+#s-pezzo{ min-height:220px; resize:vertical; }
+.scrivi-form .nota-form .bottone-link{ font-size:13px; padding:0; }
+.scrivi-dettagli{ margin-top:14px; border-top:1px solid var(--filo-lieve); padding-top:4px; }
+.scrivi-dettagli summary{
+  list-style:none; cursor:pointer; padding:12px 0; font-family:'Oswald',sans-serif; font-size:15px;
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.scrivi-dettagli summary::-webkit-details-marker{ display:none; }
+.scrivi-dettagli summary::after{ content:' ▾'; }
+.scrivi-dettagli[open] summary::after{ content:' ▴'; }
+
+/* Barra fissa in fondo: cosa manca e il tasto per mandare in stampa. */
+.scrivi-barra{
+  position:sticky; bottom:0; z-index:5; margin:0 -16px; padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  display:flex; flex-direction:column; gap:8px;
+  background:var(--superficie-piena); border-top:1px solid var(--filo-luce); box-shadow:var(--ombra-media);
+}
+.scrivi-barra .stato{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.04em; color:var(--ink-soft); text-align:center; }
+.scrivi-barra .stato.errore{ color:var(--stamp-red); }
+.scrivi-barra .bottone-grande:disabled{ opacity:.5; cursor:default; }
+.contenuto.scrivendo{ padding-bottom:0; }

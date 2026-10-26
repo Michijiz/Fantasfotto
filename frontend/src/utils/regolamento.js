@@ -33,3 +33,8 @@ export function formattaFantapunti(n) {
   if (n == null || Number.isNaN(Number(n))) return '—';
   return Number(n).toLocaleString('it-IT', { maximumFractionDigits: 1 });
 }
+
+// 4.6 → "4,60" · senza quota "—"
+export function formattaQuota(n) {
+  return n == null ? '—' : Number(n).toFixed(2).replace('.', ',');
+}

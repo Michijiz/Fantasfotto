@@ -6,8 +6,8 @@ import BottoneElimina from './BottoneElimina';
 import ImageUpload from './ImageUpload';
 import { useAuth } from '../../context/AuthContext';
 import { puoCancellare } from '../../ruoli';
+import { idDi } from '../../utils/lega';
 
-const idDi = (ref) => (ref && typeof ref === 'object' ? ref._id : ref) || '';
 
 // Una voce dell'albo d'oro: stagione + squadra vincitrice, con punti e note
 // facoltativi. Serve sia a crearne una nuova sia a correggerne una esistente
@@ -19,11 +19,11 @@ export default function AlboForm({ voce = null, onFatto }) {
   const inviandoRef = useRef(false);
 
   const [stagione, setStagione] = useState(voce?.stagione || '');
-  const [squadra, setSquadra] = useState(idDi(voce?.squadra));
+  const [squadra, setSquadra] = useState((idDi(voce?.squadra) || ''));
   const [punti, setPunti] = useState(voce?.punti == null ? '' : String(voce.punti));
   const [note, setNote] = useState(voce?.note || '');
-  const [secondo, setSecondo] = useState(idDi(voce?.secondo));
-  const [terzo, setTerzo] = useState(idDi(voce?.terzo));
+  const [secondo, setSecondo] = useState((idDi(voce?.secondo) || ''));
+  const [terzo, setTerzo] = useState((idDi(voce?.terzo) || ''));
   const [foto, setFoto] = useState(voce?.foto || '');
   const [errore, setErrore] = useState('');
   const [inviando, setInviando] = useState(false);

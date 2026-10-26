@@ -4,24 +4,13 @@ import { ArrowRight } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
 import Sheet from '../components/ui/Sheet';
 import Stemma from '../components/ui/Stemma';
+import Scontri, { Scontro } from '../components/ui/Scontro';
 import BannerAttivita from '../components/ui/BannerAttivita';
+import { conRisultato, esitoPer, idDi, scontriGiocabili, scontroDi, tempoGiornata } from '../utils/lega';
+import { formattaQuota } from '../utils/regolamento';
 import '../styles/home.css';
 
-const idDi = (v) => (v && typeof v === 'object' ? v._id : v);
-const formattaQuota = (n) => Number(n).toFixed(2).replace('.', ',');
-
-// "fischio d'inizio tra 2g 14h" prima, "in campo" durante, "fischio finale" a
-// giornata conclusa. Senza data impostata non si mostra niente.
-function statoTempo(giornata) {
-  if (!giornata) return null;
-  if (giornata.conclusa) return 'fischio finale';
-  if (!giornata.data) return null;
-  const diffMs = new Date(giornata.data).getTime() - Date.now();
-  if (diffMs <= 0) return 'in campo';
-  const giorni = Math.floor(diffMs / 86400000);
-  const ore = Math.floor((diffMs % 86400000) / 3600000);
-  return `fischio d'inizio tra ${giorni}g ${ore}h`;
-}
+const ESITO_TUO = { V: 'Hai vinto', N: 'Pareggio', P: 'Hai perso' };
 
 // Lo stato della schedina in parole semplici, e il bottone che le corrisponde.
 function statoSchedina({ miaSchedina, chiusa }) {
@@ -48,21 +37,23 @@ function Lato({ squadra, info }) {
 export default function Dashboard() {
   const { utente } = useOutletContext();
   const {
-    ultimaEdizione, prossimaGiornata, tabellone, risultatiVoti, categorieVoto, schedina
+    ultimaEdizione, prossimaGiornata, giornate, tabellone, risultatiVoti, categorieVoto, schedina
   } = useDati();
   const [scontriAperti, setScontriAperti] = useState(false);
   const navigate = useNavigate();
 
   const miaSquadraId = idDi(utente.squadra);
 
-  // Una squadra cancellata lascia il riferimento a null: si scartano quegli scontri
-  // invece di far cadere la pagina.
-  const accoppiamenti = (prossimaGiornata?.accoppiamenti || []).filter((a) => a.squadraCasa && a.squadraTrasferta);
-  const mioMatch = accoppiamenti.find(
-    (a) => idDi(a.squadraCasa) === miaSquadraId || idDi(a.squadraTrasferta) === miaSquadraId
-  );
+  const accoppiamenti = scontriGiocabili(prossimaGiornata);
+  const mioMatch = scontroDi(prossimaGiornata, miaSquadraId);
   const riposo = accoppiamenti.length > 0 && !mioMatch;
-  const tempo = statoTempo(prossimaGiornata);
+  const tempo = tempoGiornata(prossimaGiornata);
+
+  // Com'è andata la tua partita nella giornata dell'ultima edizione, se è già
+  // stata giocata: la prima cosa che un giocatore vuole sapere aprendo la Gazzetta.
+  const giornataEdizione = ultimaEdizione ? giornate.find((g) => g.numero === ultimaEdizione.giornataNumero) : null;
+  const miaUltima = scontroDi(giornataEdizione, miaSquadraId);
+  const esitoUltima = miaUltima && conRisultato(miaUltima) ? esitoPer(miaUltima, miaSquadraId) : null;
 
   const infoClassifica = (squadra) => {
     const i = tabellone.findIndex((s) => s._id === idDi(squadra));
@@ -166,6 +157,15 @@ export default function Dashboard() {
             {ultimaEdizione.immagineUrl && <img src={ultimaEdizione.immagineUrl} alt="" />}
             <span className="timbro">Prima pagina · G{ultimaEdizione.giornataNumero}</span>
           </div>
+          {esitoUltima && (
+            <div className="home-tua">
+              <div className="ritaglio-testa">
+                <span className="occhiello-oro">La tua G{ultimaEdizione.giornataNumero}</span>
+                <span className="dettaglio">{ESITO_TUO[esitoUltima]}</span>
+              </div>
+              <Scontro scontro={miaUltima} />
+            </div>
+          )}
           <h2 className="ritaglio-titolo">{ultimaEdizione.titolo}</h2>
           {attacco && <p className="home-attacco">{attacco}</p>}
           <button type="button" className="bottone-contorno" onClick={() => navigate('/gazzetta')}>
@@ -181,19 +181,7 @@ export default function Dashboard() {
           titolo={`Giornata ${prossimaGiornata.numero}`}
           sottotitolo="Tutti gli scontri"
         >
-          {accoppiamenti.map((a) => (
-            <div className="match-row" key={a._id}>
-              <div className="sq casa">
-                <span>{a.squadraCasa.nome}</span>
-                <Stemma src={a.squadraCasa.stemma} nome={a.squadraCasa.nome} size={20} className="stemma-mini" />
-              </div>
-              <span className="vs-mini">VS</span>
-              <div className="sq trasferta">
-                <Stemma src={a.squadraTrasferta.stemma} nome={a.squadraTrasferta.nome} size={20} className="stemma-mini" />
-                <span>{a.squadraTrasferta.nome}</span>
-              </div>
-            </div>
-          ))}
+          <Scontri giornata={prossimaGiornata} />
         </Sheet>
       )}
     </div>

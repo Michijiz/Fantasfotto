@@ -4,8 +4,6 @@ import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import Article from '../components/ui/Article';
-import Sheet from '../components/ui/Sheet';
-import EdizioneForm from '../components/ui/EdizioneForm';
 import BottoneElimina from '../components/ui/BottoneElimina';
 import { puoRedigere, puoCancellare } from '../ruoli';
 import '../styles/gazzetta.css';
@@ -18,7 +16,6 @@ export default function Ultima() {
   const location = useLocation();
   // Dal Profilo o dall'archivio si arriva qui con l'edizione da aprire.
   const [selezionataId, setSelezionataId] = useState(() => location.state?.edizioneId || null);
-  const [inModifica, setInModifica] = useState(false);
 
   const sonoRedazione = puoRedigere(utente);
   const possoCancellare = puoCancellare(utente);
@@ -87,7 +84,7 @@ export default function Ultima() {
 
       {sonoRedazione && (
         <div className="azioni-redazione">
-          <button type="button" className="bottone-contorno" onClick={() => setInModifica(true)}>Modifica</button>
+          <button type="button" className="bottone-contorno" onClick={() => navigate(`/gazzetta/scrivi/${mostrata._id}`)}>Modifica</button>
           {possoCancellare && (
             <BottoneElimina onConferma={elimina} etichetta="Elimina" conferma="Tocca di nuovo per eliminare" />
           )}
@@ -102,16 +99,6 @@ export default function Ultima() {
           {successiva ? `G${successiva.giornataNumero} →` : `G${mostrata.giornataNumero + 1} · in stampa`}
         </button>
       </div>
-
-      <Sheet
-        aperto={inModifica}
-        onChiudi={() => setInModifica(false)}
-        titolo="Correggi le bozze"
-        sottotitolo={`Giornata ${mostrata.giornataNumero}`}
-        grande
-      >
-        {inModifica && <EdizioneForm edizione={mostrata} onFatto={() => setInModifica(false)} />}
-      </Sheet>
     </div>
   );
 }

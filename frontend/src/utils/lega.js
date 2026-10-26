@@ -4,10 +4,24 @@
 
 export const idDi = (v) => (v && typeof v === 'object' ? v._id : v);
 
-const conRisultato = (a) => a.golCasa != null && a.golTrasferta != null;
+export const conRisultato = (a) => a.golCasa != null && a.golTrasferta != null;
+
+// Gli scontri con entrambe le squadre ancora esistenti: una squadra cancellata
+// lascia il riferimento a null, e quello scontro non si può mostrare.
+export const scontriGiocabili = (g) => (g?.accoppiamenti || []).filter((a) => a.squadraCasa && a.squadraTrasferta);
+
+// Lo scontro di `squadraId` in quella giornata (null se riposa o non c'è).
+export function scontroDi(g, squadraId) {
+  if (!squadraId) return null;
+  return scontriGiocabili(g).find((a) => idDi(a.squadraCasa) === squadraId || idDi(a.squadraTrasferta) === squadraId) || null;
+}
+
+// La giornata ha almeno un fantapunteggio inserito.
+export const haPunteggi = (g) => (g?.accoppiamenti || [])
+  .some((a) => a.fantapuntiCasa != null || a.fantapuntiTrasferta != null);
 
 // Esito di uno scontro dal punto di vista di `squadraId`: 'V', 'N', 'P' o null.
-function esitoPer(a, squadraId) {
+export function esitoPer(a, squadraId) {
   const casa = idDi(a.squadraCasa) === squadraId;
   const trasferta = idDi(a.squadraTrasferta) === squadraId;
   if ((!casa && !trasferta) || !conRisultato(a)) return null;
@@ -68,6 +82,28 @@ export function statoGiornata(g) {
   if (g.conclusa) return 'conclusa';
   if (g.data && new Date(g.data).getTime() <= Date.now()) return 'in campo';
   return 'da giocare';
+}
+
+// Lo stato a parole, con il conto alla rovescia prima del fischio d'inizio:
+// "fischio d'inizio tra 2g 14h", "in campo", "fischio finale". Senza data
+// impostata e a giornata non conclusa non c'è niente da dire (null).
+export function tempoGiornata(g) {
+  if (!g) return null;
+  if (g.conclusa) return 'fischio finale';
+  if (!g.data) return null;
+  const diffMs = new Date(g.data).getTime() - Date.now();
+  if (diffMs <= 0) return 'in campo';
+  const giorni = Math.floor(diffMs / 86400000);
+  const ore = Math.floor((diffMs % 86400000) / 3600000);
+  return `fischio d'inizio tra ${giorni}g ${ore}h`;
+}
+
+// Quale giornata raccontare per prima: la più recente già giocata (conclusa o con
+// punteggi) che non ha ancora la sua edizione. Null se non c'è nulla da scrivere.
+export function giornataDaStampare(giornate, edizioni) {
+  const scritte = new Set(edizioni.map((e) => e.giornataNumero));
+  const candidate = giornate.filter((g) => !scritte.has(g.numero) && (g.conclusa || haPunteggi(g)));
+  return candidate.length ? Math.max(...candidate.map((g) => g.numero)) : null;
 }
 
 // Le menzioni di una squadra: titoli dall'albo d'oro, premi automatici dalle

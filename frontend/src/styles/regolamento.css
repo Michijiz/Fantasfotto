@@ -115,19 +115,6 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
   margin:12px 0 0;letter-spacing:.02em;
 }
 
-/* ---------- Risultati nel calendario ---------- */
-.match-row .risultato{
-  display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:66px;gap:1px;
-}
-.match-row .risultato .gol{
-  font-family:'Anton',sans-serif;font-size:18.5px;line-height:1.1;font-variant-numeric:tabular-nums;
-}
-.match-row .risultato .fp{
-  font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-.match-row .sq .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.match-row .sq.vince .nome{font-weight:700;}
-
 /* ---------- Regolamento ---------- */
 .faq-voce{border-bottom:1px solid var(--filo-lieve);scroll-margin-top:12px;}
 .faq-voce:last-child{border-bottom:none;}

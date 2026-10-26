@@ -3,7 +3,8 @@ import { CaretRight } from '@phosphor-icons/react';
 import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import Stemma from './Stemma';
-import { estremiGiornata, idDi } from '../../utils/lega';
+import { Scontro } from './Scontro';
+import { estremiGiornata, idDi, scontriGiocabili } from '../../utils/lega';
 import { formattaFantapunti } from '../../utils/regolamento';
 
 function Premio({ etichetta, squadre, punti, vuoto, largo }) {
@@ -29,27 +30,12 @@ function Premio({ etichetta, squadre, punti, vuoto, largo }) {
 
 const chiaveScontro = (casa, trasferta) => `${idDi(casa)}>${idDi(trasferta)}`;
 
-// Uno scontro con le sue due righe: squadre, risultato e commento del direttore.
+// Uno scontro con le sue due righe di commento. Il tuo si riconosce dal bordo
+// rosso, senza etichette.
 function Partita({ scontro, testo, mia }) {
-  const { squadraCasa: casa, squadraTrasferta: trasferta } = scontro;
-  const risultato = scontro.golCasa != null && scontro.golTrasferta != null;
-
   return (
     <div className={`partita${mia ? ' mia' : ''}`}>
-      {mia && <span className="partita-mia">La tua partita</span>}
-      <div className="partita-testa">
-        <span className="lato">
-          <Stemma src={casa?.stemma} nome={casa?.nome} size={30} />
-          <span className="nome">{casa?.nome || 'Casa'}</span>
-          {scontro.fantapuntiCasa != null && <span className="punti">{formattaFantapunti(scontro.fantapuntiCasa)}</span>}
-        </span>
-        <span className="esito">{risultato ? `${scontro.golCasa}–${scontro.golTrasferta}` : 'vs'}</span>
-        <span className="lato">
-          <Stemma src={trasferta?.stemma} nome={trasferta?.nome} size={30} />
-          <span className="nome">{trasferta?.nome || 'Trasferta'}</span>
-          {scontro.fantapuntiTrasferta != null && <span className="punti">{formattaFantapunti(scontro.fantapuntiTrasferta)}</span>}
-        </span>
-      </div>
+      <Scontro scontro={scontro} />
       <p className="partita-testo">{testo}</p>
     </div>
   );
@@ -75,7 +61,7 @@ export default function Article({ edizione }) {
   const miaSquadra = idDi(utente?.squadra);
   const testiPerScontro = new Map((edizione.commenti || [])
     .map((c) => [chiaveScontro(c.squadraCasa, c.squadraTrasferta), c.testo]));
-  const partite = (giornata?.accoppiamenti || [])
+  const partite = scontriGiocabili(giornata)
     .map((a) => ({ a, testo: testiPerScontro.get(chiaveScontro(a.squadraCasa, a.squadraTrasferta)) }))
     .filter((p) => p.testo);
 

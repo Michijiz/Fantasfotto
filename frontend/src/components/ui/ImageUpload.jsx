@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 
@@ -198,29 +198,51 @@ export async function caricaImmagine(file, cartella) {
 //                  redazione): così si vede cosa comparirà togliendo la propria
 //   etichettaTogli testo del link che svuota il campo ("Togli" di default)
 //   forma          'quadrata' (default) | 'tonda' | 'larga' per l'anteprima
+//   onOccupato     chiamata con true/false quando il caricamento parte e finisce:
+//                  serve al form per non mandare in stampa mentre la foto è ancora
+//                  in viaggio (usciva l'edizione senza foto, "a volte")
 export default function ImageUpload({
-  label, value, onChange, cartella, anteprima = '', etichettaTogli = 'Togli', forma = 'quadrata'
+  label, value, onChange, cartella, anteprima = '', etichettaTogli = 'Togli', forma = 'quadrata', onOccupato
 }) {
   const [caricando, setCaricando] = useState(false);
+  // Il file che non è riuscito a salire resta qui: "Riprova" lo rimanda senza
+  // doverlo riscegliere dalla galleria.
+  const [fallito, setFallito] = useState(null);
   const mostraToast = useToast();
+  const attivo = useRef(true);
 
-  const onFile = async (e) => {
+  useEffect(() => {
+    attivo.current = true;
+    return () => { attivo.current = false; };
+  }, []);
+
+  const carica = async (file) => {
+    setCaricando(true);
+    setFallito(null);
+    onOccupato?.(true);
+    try {
+      const url = await caricaImmagine(file, cartella);
+      // onChange anche a componente smontato: l'URL appartiene al form, non a noi.
+      onChange(url);
+    } catch (err) {
+      if (attivo.current) {
+        setFallito(file);
+        mostraToast(err.message || 'Upload fallito');
+      }
+    } finally {
+      onOccupato?.(false);
+      if (attivo.current) setCaricando(false);
+    }
+  };
+
+  const onFile = (e) => {
     const input = e.target;
     const file = input.files?.[0];
     // L'input si azzera subito: su iOS, riscegliendo *lo stesso* file, l'evento
     // change non scatta se il valore non è cambiato — e dopo un errore sembrava
     // che il secondo tentativo non facesse nulla. `file` è già in mano nostra.
     input.value = '';
-    if (!file) return;
-
-    setCaricando(true);
-    try {
-      onChange(await caricaImmagine(file, cartella));
-    } catch (err) {
-      mostraToast(err.message || 'Upload fallito');
-    } finally {
-      setCaricando(false);
-    }
+    if (file) carica(file);
   };
 
   const mostrata = value || anteprima;
@@ -234,6 +256,9 @@ export default function ImageUpload({
           {caricando ? 'Sviluppo il rullino…' : value ? 'Cambia' : 'Carica foto'}
           <input type="file" accept="image/*" onChange={onFile} disabled={caricando} hidden />
         </label>
+        {fallito && !caricando && (
+          <button type="button" className="bottone-link" onClick={() => carica(fallito)}>Riprova</button>
+        )}
         {value && !caricando && (
           <button type="button" className="bottone-link" onClick={() => onChange('')}>{etichettaTogli}</button>
         )}
