@@ -142,6 +142,7 @@ function calcolaCulo(squadre, giornate) {
     indice: {
       valore: arrotonda(valoreIndice, 1),
       giudizio: giudizioIndice(valoreIndice),
+      soglie: SOGLIE_INDICE,
       campionePiccolo: giornateConDati.size < GIORNATE_MINIME_INDICE
     },
     sculato: sintesi(perTrofeo[0]),
