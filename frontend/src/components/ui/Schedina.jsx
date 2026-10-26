@@ -285,6 +285,36 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
   );
 }
 
+// Com'è andata la giornata appena chiusa, in cima alla pagina: chi ha vinto lo deve
+// vedere subito, senza scorrere. Compare solo se quella schedina l'hai giocata.
+function EsitoPrecedente({ precedente }) {
+  const { giornata, miaSchedina } = precedente || {};
+  if (!giornata || !miaSchedina) return null;
+  return (
+    <section className="ritaglio">
+      <div className="ritaglio-testa">
+        <span className="occhiello-oro">Giornata {giornata.numero} · com&apos;è andata</span>
+      </div>
+      <span className={`cedolino-esito ${miaSchedina.esito || ''}`}>{esitoTesto(giornata, miaSchedina)}</span>
+      <span className="dettaglio">Quota giocata {formattaQuota(miaSchedina.quotaTotale)}</span>
+    </section>
+  );
+}
+
+// Il cedolino completo della giornata appena chiusa, con i pronostici degli altri.
+// Prima compariva solo quando non c'era nessuna giornata aperta: con il calendario
+// caricato per tutta la stagione c'è sempre la successiva, e l'esito della schedina
+// appena chiusa spariva dalla pagina senza che nessuno la vedesse come vinta.
+function Precedente({ precedente, onSalvato }) {
+  if (!precedente?.giornata) return null;
+  return (
+    <>
+      <Cedolino giornata={precedente.giornata} miaSchedina={precedente.miaSchedina} chiusa onSalvato={onSalvato} />
+      <AltriGufi giornata={precedente.giornata} chiusa />
+    </>
+  );
+}
+
 export default function Schedina() {
   const { schedina, ricaricaSchedina } = useDati();
   const { giornata, miaSchedina, chiusa, motivo, precedente } = schedina;
@@ -296,12 +326,7 @@ export default function Schedina() {
           <h2 className="ritaglio-titolo medio">Banco chiuso</h2>
           <p className="ritaglio-vuoto">Si torna a gufare alla prossima giornata.</p>
         </section>
-        {precedente?.giornata && (
-          <>
-            <Cedolino giornata={precedente.giornata} miaSchedina={precedente.miaSchedina} chiusa onSalvato={ricaricaSchedina} />
-            <AltriGufi giornata={precedente.giornata} chiusa />
-          </>
-        )}
+        <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
       </div>
     );
   }
@@ -309,18 +334,22 @@ export default function Schedina() {
   if (motivo === 'calendario-mancante' || !giornata.accoppiamenti?.length) {
     return (
       <div className="ritagli">
+        <EsitoPrecedente precedente={precedente} />
         <section className="ritaglio">
           <h2 className="ritaglio-titolo medio">Giornata {giornata.numero}</h2>
           <p className="ritaglio-vuoto">Il banco apre quando il direttore di turno imposta gli scontri.</p>
         </section>
+        <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
       </div>
     );
   }
 
   return (
     <div className="ritagli">
+      <EsitoPrecedente precedente={precedente} />
       <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} onSalvato={ricaricaSchedina} />
       <AltriGufi giornata={giornata} chiusa={chiusa} />
+      <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
     </div>
   );
 }
