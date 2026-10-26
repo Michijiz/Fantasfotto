@@ -1,0 +1,39 @@
+/* ===== Lega › Culo: fortuna del calendario ===== */
+
+/* Segno e colore non bastano da soli: il segno (+/−) è sempre nel testo. */
+.culo-pos{ color:var(--verde); }
+.culo-neg{ color:var(--stamp-red); }
+
+.culo-indice{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.culo-indice-valore{ font-family:'Anton',sans-serif; font-size:44px; line-height:1; }
+.culo-indice-giudizio{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+
+.culo-trofei{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+.culo-trofeo{
+  display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; min-width:0;
+  padding:12px 8px; border:1px solid var(--filo-lieve); border-radius:16px;
+}
+.culo-trofeo-titolo{ font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); }
+.culo-trofeo-nome{ font-family:'Anton',sans-serif; font-size:16px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.culo-trofeo-valore{ font-family:'Anton',sans-serif; font-size:26px; line-height:1; }
+
+.culo-riga{ cursor:default; }
+.culo-valore{ font-size:24px; text-align:right; min-width:64px; }
+
+.culo-spiega{ margin-top:10px; font-size:14px; line-height:1.45; color:var(--ink-soft); }
+.culo-spiega summary{ cursor:pointer; font-family:'Oswald',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); padding:6px 0; }
+.culo-spiega p{ margin:6px 0 0; }
+
+.culo-ese{ gap:10px; }
+.culo-ese-campi{ display:flex; flex-direction:column; align-items:stretch; gap:4px; }
+.culo-ese-campi select{ width:100%; min-width:0; }
+.culo-ese-scambio{ align-self:center; font-size:20px; line-height:1; color:var(--ink-soft); transform:rotate(90deg); }
+.culo-ese-lista{ display:flex; flex-direction:column; }
+.culo-ese-riga{
+  display:flex; align-items:center; gap:10px; padding:8px 6px; border-top:1px solid var(--filo-lieve); border-radius:10px;
+}
+.culo-ese-riga:first-child{ border-top-color:transparent; }
+.culo-ese-riga.mia{ box-shadow:inset 0 0 0 2px var(--stamp-red); border-top-color:transparent; }
+.culo-ese-riga .nome{ flex:1 1 auto; min-width:0; font-family:'Anton',sans-serif; font-size:15px; text-transform:uppercase; overflow-wrap:anywhere; }
+.culo-ese-riga .dettaglio{ white-space:nowrap; }
+.culo-pos-cambio{ font-family:'Anton',sans-serif; font-size:15px; white-space:nowrap; min-width:64px; text-align:right; }

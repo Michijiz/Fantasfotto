@@ -2,7 +2,7 @@ const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const { verificaToken } = require('../middleware/auth');
 const {
-  lista, classifica, aggiornaMiaSquadra, aggiungiFoto, didascaliaFoto, togliFoto
+  lista, classifica, culo, culoInvertiti, aggiornaMiaSquadra, aggiungiFoto, didascaliaFoto, togliFoto
 } = require('../controllers/squadreController');
 
 const router = express.Router();
@@ -11,6 +11,8 @@ const router = express.Router();
 // quindi non richiede autenticazione: senza token risponde solo nome e stemma.
 router.get('/', asyncHandler(lista));
 router.get('/classifica', verificaToken, asyncHandler(classifica));
+router.get('/culo', verificaToken, asyncHandler(culo));
+router.get('/culo/invertiti', verificaToken, asyncHandler(culoInvertiti));
 router.patch('/mia', verificaToken, asyncHandler(aggiornaMiaSquadra));
 
 // Album della squadra
