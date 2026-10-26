@@ -6,7 +6,8 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     const campo = Object.keys(err.keyPattern || {})[0] || 'valore';
     const messaggi = {
       username: 'Username già preso: qualcuno è arrivato prima',
-      nome: 'Esiste già una squadra con questo nome: siate originali'
+      nome: 'Esiste già una squadra con questo nome: siate originali',
+      stagione: 'Esiste già una giornata con questo numero in questa stagione'
     };
     return res.status(409).json({ errore: messaggi[campo] || `${campo} già in uso` });
   }

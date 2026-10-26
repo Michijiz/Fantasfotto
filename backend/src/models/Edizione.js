@@ -1,28 +1,31 @@
 const mongoose = require('mongoose');
+const { stagioneCorrente } = require('../utils/stagione');
 
-// L'edizione è l'articolo mandato in stampa. giornataNumero è un'etichetta (per il
-// timbro/byline), non necessariamente un riferimento a un documento Giornata.
+// L'edizione è l'articolo mandato in stampa, una per giornata di ogni stagione.
+// giornataNumero è un'etichetta (per il timbro/byline), non un riferimento a un
+// documento Giornata.
+//
+// I premi del tabellino NON stanno qui: miglior e peggior punteggio si calcolano
+// dai fantapunti della giornata e il Re dei Gufi dalle schedine vinte (vedi
+// edizioniController). Salvarli sull'articolo voleva dire una copia che restava
+// indietro appena si correggeva un punteggio.
+//
+// createdBy è l'autore vero (un utente); `direttore` è solo la firma stampata,
+// libera, con pseudonimi ammessi.
 const edizioneSchema = new mongoose.Schema({
-  giornataNumero: { type: Number, required: true },
-  direttore: { type: String, required: true },
-  occhiello: { type: String, required: true },
-  titolo: { type: String, required: true },
+  stagione: { type: String, required: true, trim: true, default: () => stagioneCorrente() },
+  giornataNumero: { type: Number, required: true, min: 1 },
+  direttore: { type: String, required: true, trim: true },
+  occhiello: { type: String, required: true, trim: true },
+  titolo: { type: String, required: true, trim: true },
   corpo: [{ type: String }],
   immagineUrl: { type: String, default: '' },
   didascalia: { type: String, default: '', trim: true, maxlength: 140 },
-  stats: {
-    vincitore: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
-    puntiVincitore: Number,
-    ultimo: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
-    puntiUltimo: Number,
-    fenomeno: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
-    bidone: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' },
-
-    // Premio automatico, non scelto dal direttore: le squadre di chi ha azzeccato
-    // tutta la schedina di quella giornata. Vuoto se non ha vinto nessuno.
-    reDeiGufi: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Squadra' }]
-  },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
+
+// Una sola edizione per giornata: la seconda stampa della G9 farebbe sparire dalla
+// schermata i voti dati alla prima.
+edizioneSchema.index({ stagione: 1, giornataNumero: 1 }, { unique: true });
 
 module.exports = mongoose.model('Edizione', edizioneSchema);

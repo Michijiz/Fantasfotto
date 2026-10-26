@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Squadra = require('../models/Squadra');
 const Giornata = require('../models/Giornata');
+const { filtroStagione } = require('../utils/stagione');
 const User = require('../models/User');
 const { calcolaClassifica } = require('../utils/regolamento');
 const { urlDelNostroCloud } = require('../services/cloudinary');
@@ -66,7 +67,7 @@ const lista = async (req, res) => {
 const classifica = async (req, res) => {
   const [squadre, giornate] = await Promise.all([
     Squadra.find().sort('nome').lean(),
-    Giornata.find({ conclusa: true }).sort('numero').lean()
+    Giornata.find({ ...filtroStagione(req), conclusa: true }).sort('numero').lean()
   ]);
 
   res.json({ tabellone: calcolaClassifica(squadre, giornate) });

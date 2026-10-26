@@ -3,12 +3,13 @@ const Edizione = require('../models/Edizione');
 const Giornata = require('../models/Giornata');
 const User = require('../models/User');
 const { registra } = require('../services/attivita');
+const { stagioneCorrente } = require('../utils/stagione');
 
 // Le votazioni su un'edizione restano aperte fino al fischio d'inizio della
 // giornata dopo. Senza data impostata su quella giornata, restano aperte finché
 // non viene conclusa.
 async function votazioniChiuse(edizione) {
-  const dopo = await Giornata.findOne({ numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
+  const dopo = await Giornata.findOne({ stagione: edizione.stagione || stagioneCorrente(), numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
   if (!dopo) return false;
   if (dopo.conclusa) return true;
   return Boolean(dopo.data && new Date(dopo.data).getTime() <= Date.now());
@@ -48,7 +49,7 @@ const vota = async (req, res) => {
 
   // Senza questo si potevano registrare voti su un'edizione qualsiasi (anche
   // inesistente): righe che nessuna schermata mostra più e che restano lì.
-  const edizione = await Edizione.findById(edizioneId).select('giornataNumero').lean();
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione').lean();
   if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
   if (await votazioniChiuse(edizione)) {
     return res.status(403).json({ errore: 'Votazioni chiuse: il tribunale ha già emesso le sentenze' });
@@ -80,7 +81,7 @@ const vota = async (req, res) => {
 // non solo nell'app, altrimenti basterebbe aprire l'indirizzo della pagina.
 const risultati = async (req, res) => {
   const { edizioneId } = req.params;
-  const edizione = await Edizione.findById(edizioneId).select('giornataNumero').lean();
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione').lean();
   if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
 
   const [voti, chiuse, utentiTotali] = await Promise.all([

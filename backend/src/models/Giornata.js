@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { stagioneCorrente } = require('../utils/stagione');
 
 const accoppiamentoSchema = new mongoose.Schema({
   squadraCasa: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
@@ -29,7 +30,10 @@ const punteggioSquadraSchema = new mongoose.Schema({
 }, { _id: false });
 
 const giornataSchema = new mongoose.Schema({
-  numero: { type: Number, required: true, unique: true },
+  // Il numero ricomincia da 1 a ogni stagione: l'identità di una giornata è la coppia
+  // (stagione, numero), non il numero da solo.
+  stagione: { type: String, required: true, trim: true, default: () => stagioneCorrente() },
+  numero: { type: Number, required: true },
   serieANumero: { type: Number }, // giornata corrispondente del campionato reale
   data: { type: Date },
   accoppiamenti: [accoppiamentoSchema],
@@ -44,5 +48,7 @@ const giornataSchema = new mongoose.Schema({
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
+
+giornataSchema.index({ stagione: 1, numero: 1 }, { unique: true });
 
 module.exports = mongoose.model('Giornata', giornataSchema);
