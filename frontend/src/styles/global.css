@@ -705,14 +705,16 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
    restava tagliato: il bottone "Iscriviti" era fuori schermo e irraggiungibile.
    Qui lo scroll ce l'ha la schermata stessa. */
 .auth-screen{
-  max-width:420px;margin:0 auto;
-  height: var(--app-h, 100dvh);
+  /* Agganciata all'area VISIBILE (misurata in utils/altezzaApp.js): quando sale la
+     tastiera finisce appena sopra di lei, anche se iOS fa scorrere la pagina. Il
+     campo toccato ha sempre spazio per restare in vista e non serve nessun
+     padding "di riserva" che si muove mentre si scrive. */
+  position:fixed; left:0; right:0; top:var(--vv-top, 0px);
+  width:min(100%, 420px); margin:0 auto;
+  height: var(--vv-h, var(--app-h, 100dvh));
   overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
-  /* Lo spazio per la tastiera c'è sempre, non compare quando sale: se il padding
-     cambia mentre il browser sta già scorrendo verso il campo, la pagina "salta".
-     Così l'area scorribile è già abbastanza alta quando si tocca un campo. */
-  padding:40px 16px calc(32px + env(safe-area-inset-bottom, 0px) + min(46vh, 340px));
-  scroll-padding:120px 0 120px;
+  padding:40px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  scroll-padding:24px 0 24px;
 }
 .masthead-auth{ padding:0 0 12px; margin-bottom:18px; }
 /* Tab = controllo segmentato: binario di vetro chiaro, scheda attiva come
@@ -843,6 +845,7 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
    in basso): si lascia che il browser faccia scorrere la pagina da sé, senza la
    compensazione che sulle altre schermate la contrasta a ogni frame. */
 :root:has(.auth-screen) #root{ transform:none; }
+/* Il fondo della schermata di accesso non deve restare scoperto sotto di lei. */
 .sheet-body form{padding-bottom:6px;}
 
 /* ============ SPLASH DI APERTURA ============

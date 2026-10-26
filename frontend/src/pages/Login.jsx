@@ -142,11 +142,10 @@ export default function Login() {
     setTimeout(() => {
       const schermo = schermoRef.current;
       if (!schermo || document.activeElement !== campo) return;
-      const vv = window.visualViewport;
       const r = campo.getBoundingClientRect();
       const b = schermo.getBoundingClientRect();
-      const basso = vv ? vv.offsetTop + vv.height : window.innerHeight;
-      if (r.top < b.top + 70 || r.bottom > basso - 24) {
+      // La schermata finisce sopra la tastiera: il campo deve stare tra i suoi bordi.
+      if (r.top < b.top + 70 || r.bottom > b.bottom - 24) {
         schermo.scrollTo({ top: schermo.scrollTop + (r.top - b.top) - 110, behavior: 'smooth' });
       }
     }, 350);
