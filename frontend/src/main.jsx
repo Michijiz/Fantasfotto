@@ -1,5 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+// Font self-hosted (prima venivano da Google Fonts): finiscono nel precache del service
+// worker e l'app ha lo stesso aspetto anche offline o con la rete lenta. Solo il
+// subset latin: copre le lettere accentate italiane.
+import '@fontsource/anton/latin-400.css';
+import '@fontsource/libre-baskerville/latin-400.css';
+import '@fontsource/libre-baskerville/latin-400-italic.css';
+import '@fontsource/libre-baskerville/latin-700.css';
+import '@fontsource/oswald/latin-400.css';
+import '@fontsource/oswald/latin-500.css';
+import '@fontsource/oswald/latin-600.css';
 import './index.css';
 import './styles/global.css';
 import './styles/ritagli.css';

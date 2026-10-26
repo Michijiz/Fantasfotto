@@ -1,14 +1,24 @@
 {
+  "id": "/",
   "name": "La Gazzetta dello Sfottò",
   "short_name": "Gazzetta",
   "description": "Organo ufficiale (non richiesto) della vostra lega di fantacalcio",
+  "lang": "it",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f1cdda",
   "theme_color": "#241b1e",
-  "orientation": "portrait",
+  "categories": ["sports", "entertainment"],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ultima edizione", "short_name": "Gazzetta", "url": "/gazzetta", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Gioca la schedina", "short_name": "Gioca", "url": "/gioca", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "La lega", "short_name": "Lega", "url": "/lega", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }
