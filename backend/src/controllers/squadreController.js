@@ -5,6 +5,7 @@ const Giornata = require('../models/Giornata');
 const { filtroStagione } = require('../utils/stagione');
 const User = require('../models/User');
 const { calcolaClassifica } = require('../utils/regolamento');
+const { calcolaCulo, calcolaInvertiti } = require('../utils/culo');
 const { urlDelNostroCloud } = require('../services/cloudinary');
 const { registra } = require('../services/attivita');
 
@@ -74,6 +75,33 @@ const classifica = async (req, res) => {
 };
 
 const errore = (status, messaggio) => Object.assign(new Error(messaggio), { status, esposto: true });
+
+// Classifica del culo: stesse giornate concluse della classifica vera, così le due
+// tabelle si leggono insieme. Logica in utils/culo.js.
+const culo = async (req, res) => {
+  const [squadre, giornate] = await Promise.all([
+    Squadra.find().sort('nome').lean(),
+    Giornata.find({ ...filtroStagione(req), conclusa: true }).sort('numero').lean()
+  ]);
+  res.json(calcolaCulo(squadre, giornate));
+};
+
+// "E se ...": ?a=<idSquadra>&b=<idSquadra>, le due squadre si scambiano le avversarie
+// in tutte le giornate concluse. Non scrive nulla: è un calcolo a freddo.
+const culoInvertiti = async (req, res) => {
+  const { a, b } = req.query;
+  if (!mongoose.isValidObjectId(a) || !mongoose.isValidObjectId(b)) throw errore(400, 'Scegli due squadre');
+  if (String(a) === String(b)) throw errore(400, 'Scegli due squadre diverse');
+
+  const [squadre, giornate] = await Promise.all([
+    Squadra.find().sort('nome').lean(),
+    Giornata.find({ ...filtroStagione(req), conclusa: true }).sort('numero').lean()
+  ]);
+  const esiste = (id) => squadre.some((s) => String(s._id) === String(id));
+  if (!esiste(a) || !esiste(b)) throw errore(404, 'Squadra non trovata');
+
+  res.json(calcolaInvertiti(squadre, giornate, String(a), String(b)));
+};
 
 // Testo facoltativo con tetto di lunghezza: si taglia invece di rifiutare, così
 // un incolla troppo lungo non fa perdere tutto il resto del modulo.
@@ -264,4 +292,4 @@ const togliFoto = async (req, res) => {
   res.json({ squadra });
 };
 
-module.exports = { lista, classifica, aggiornaMiaSquadra, aggiungiFoto, didascaliaFoto, togliFoto };
+module.exports = { lista, classifica, culo, culoInvertiti, aggiornaMiaSquadra, aggiungiFoto, didascaliaFoto, togliFoto };

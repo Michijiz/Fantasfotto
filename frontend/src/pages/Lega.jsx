@@ -6,6 +6,7 @@ import Scontri from '../components/ui/Scontro';
 import Sheet from '../components/ui/Sheet';
 import AlboForm from '../components/ui/AlboForm';
 import AlboDOro from '../components/ui/AlboDOro';
+import Culo from '../components/ui/Culo';
 import GiornataForm from '../components/ui/GiornataForm';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, statoGiornata } from '../utils/lega';
@@ -15,6 +16,7 @@ import '../styles/lega.css';
 const LINGUETTE = [
   { id: 'classifica', nome: 'Classifica' },
   { id: 'calendario', nome: 'Calendario' },
+  { id: 'culo', nome: 'Culo' },
   { id: 'albo', nome: 'Albo' }
 ];
 
@@ -136,7 +138,7 @@ function Calendario({ sonoRedazione, onModifica }) {
   );
 }
 
-// La lega in tre linguette: classifica, calendario e albo d'oro.
+// La lega in quattro linguette: classifica, calendario, culo e albo d'oro.
 export default function Lega() {
   const { utente } = useOutletContext();
   const location = useLocation();
@@ -164,6 +166,7 @@ export default function Lega() {
 
       {tab === 'classifica' && <Classifica miaSquadraId={idDi(utente.squadra)} />}
       {tab === 'calendario' && <Calendario sonoRedazione={sonoRedazione} onModifica={setGiornata} />}
+      {tab === 'culo' && <Culo miaSquadraId={idDi(utente.squadra)} />}
       {tab === 'albo' && <AlboDOro sonoRedazione={sonoRedazione} onModifica={setVoceAlbo} />}
 
       {sonoRedazione && (
