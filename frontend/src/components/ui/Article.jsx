@@ -37,6 +37,12 @@ export default function Article({ edizione }) {
 
   const { migliore, peggiore } = estremiGiornata(giornate, edizione.giornataNumero);
   const gufi = edizione.stats?.reDeiGufi || [];
+  // Il Re dei Gufi si decide a giornata conclusa: finché è aperta, "nessuno" non è
+  // una notizia ma solo una cosa che non si sa ancora.
+  const giornata = giornate.find((g) => g.numero === edizione.giornataNumero);
+  const vuotoGufi = giornata && !giornata.conclusa
+    ? 'Si decide a giornata conclusa'
+    : 'Nessuno: tutti gufi a vuoto';
 
   return (
     <article className="ritaglio articolo">
@@ -59,7 +65,7 @@ export default function Article({ edizione }) {
         <div className="tabellino-premi">
           <Premio etichetta="Miglior punteggio" squadre={migliore ? [migliore.squadra] : []} punti={migliore?.fp} vuoto="Punteggi in arrivo" />
           <Premio etichetta="Peggior punteggio" squadre={peggiore ? [peggiore.squadra] : []} punti={peggiore?.fp} vuoto="Punteggi in arrivo" />
-          <Premio etichetta="Re dei Gufi · schedina" squadre={gufi} vuoto="Nessuno: tutti gufi a vuoto" largo />
+          <Premio etichetta="Re dei Gufi · schedina" squadre={gufi} vuoto={vuotoGufi} largo />
         </div>
         <button type="button" className="tabellino-verdetti" onClick={() => navigate('/gioca', { state: { tab: 'verdetti' } })}>
           <span className="testi">

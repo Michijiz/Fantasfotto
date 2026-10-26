@@ -7,6 +7,7 @@ const {
   arricchisciGiornata, arricchisciConQuote, calcolaClassifica, esitoSchedina,
   calcolaQuoteGiornata, quoteDaForma
 } = require('../utils/regolamento');
+const { stagioneCorrente } = require('../utils/stagione');
 
 const POPOLA_SQUADRE = [
   { path: 'accoppiamenti.squadraCasa', select: 'nome stemma' },
@@ -15,15 +16,15 @@ const POPOLA_SQUADRE = [
 
 // La giornata su cui si gioca: la prima non ancora conclusa. Se il calendario non
 // è stato caricato (nessun accoppiamento) non c'è niente da pronosticare.
-async function giornataAperta() {
-  return Giornata.findOne({ conclusa: false }).sort('numero').populate(POPOLA_SQUADRE).lean();
+async function giornataAperta(stagione) {
+  return Giornata.findOne({ stagione, conclusa: false }).sort('numero').populate(POPOLA_SQUADRE).lean();
 }
 
 // Classifica corrente, usata solo per calcolare le quote.
-async function tabelloneCorrente() {
+async function tabelloneCorrente(stagione) {
   const [squadre, giornate] = await Promise.all([
     Squadra.find().sort('nome').lean(),
-    Giornata.find({ conclusa: true }).sort('numero').lean()
+    Giornata.find({ stagione, conclusa: true }).sort('numero').lean()
   ]);
   return calcolaClassifica(squadre, giornate);
 }
@@ -40,14 +41,14 @@ async function tabelloneCorrente() {
 // gli scontri che ne sono sprovvisti, così uno scontro aggiunto dopo prende le
 // sue senza rifare quelle degli altri.
 // Torna true se ha scritto, così chi chiama sa se deve rileggere la giornata.
-async function assicuraQuote(numero) {
-  const giornata = await Giornata.findOne({ numero });
+async function assicuraQuote(numero, stagione = stagioneCorrente()) {
+  const giornata = await Giornata.findOne({ stagione, numero });
   if (!giornata || giornata.accoppiamenti.length === 0) return false;
 
   const scoperti = giornata.accoppiamenti.filter((a) => a.quote?.casa == null);
   if (scoperti.length === 0) return false;
 
-  const tabellone = await tabelloneCorrente();
+  const tabellone = await tabelloneCorrente(stagione);
   const calcolate = calcolaQuoteGiornata(giornata.toObject(), tabellone);
 
   giornata.accoppiamenti.forEach((a, i) => {
@@ -65,10 +66,10 @@ async function assicuraQuote(numero) {
 // Gira all'apertura della pagina, costa una query quando non c'è niente da fare
 // e non scrive nulla se nessun esito è cambiato (risolviSchedine è idempotente).
 // Le cinque più recenti bastano: più indietro di così non c'è niente di aperto.
-async function risolviArretrate() {
-  const numeri = await Schedina.distinct('giornataNumero', { esito: 'attesa' });
+async function risolviArretrate(stagione) {
+  const numeri = await Schedina.distinct('giornataNumero', { stagione, esito: 'attesa' });
   const recenti = numeri.sort((a, b) => b - a).slice(0, 5);
-  for (const numero of recenti) await risolviSchedine(numero);
+  for (const numero of recenti) await risolviSchedine(numero, stagione);
 }
 
 // Una schedina si può compilare finché la giornata non è conclusa e, se ha una
@@ -82,27 +83,28 @@ function chiusa(giornata) {
 // L'ultima giornata già archiviata, con la mia schedina: serve a far vedere com'è
 // andata. Senza, appena la giornata si chiude la schedina sparisce dalla pagina e
 // nessuno vede più se l'aveva azzeccata.
-async function giornataPrecedente(utenteId) {
-  const grezza = await Giornata.findOne({ conclusa: true })
+async function giornataPrecedente(utenteId, stagione) {
+  const grezza = await Giornata.findOne({ stagione, conclusa: true })
     .sort('-numero').populate(POPOLA_SQUADRE).lean();
   if (!grezza) return null;
 
   const giornata = arricchisciGiornata(grezza);
   const miaSchedina = await Schedina.findOne({
-    utente: utenteId, giornataNumero: giornata.numero
+    utente: utenteId, stagione, giornataNumero: giornata.numero
   }).lean();
   return { giornata, miaSchedina };
 }
 
 const apertura = async (req, res) => {
-  await risolviArretrate();
+  const stagione = stagioneCorrente();
+  await risolviArretrate(stagione);
 
-  let grezza = await giornataAperta();
+  let grezza = await giornataAperta(stagione);
   // Il banco si apre alla prima richiesta della giornata: è il momento in cui
   // qualcuno potrebbe giocarla, quindi è lì che le quote devono cristallizzarsi.
-  if (grezza && await assicuraQuote(grezza.numero)) grezza = await giornataAperta();
+  if (grezza && await assicuraQuote(grezza.numero, stagione)) grezza = await giornataAperta(stagione);
 
-  const precedente = await giornataPrecedente(req.utente.id);
+  const precedente = await giornataPrecedente(req.utente.id, stagione);
 
   if (!grezza) {
     return res.json({
@@ -115,6 +117,7 @@ const apertura = async (req, res) => {
 
   const miaSchedina = await Schedina.findOne({
     utente: req.utente.id,
+    stagione,
     giornataNumero: giornata.numero
   }).lean();
 
@@ -128,6 +131,7 @@ const apertura = async (req, res) => {
 };
 
 const salva = async (req, res) => {
+  const stagione = stagioneCorrente();
   const { giornataNumero, pronostici } = req.body;
   if (!giornataNumero || !Array.isArray(pronostici) || pronostici.length === 0) {
     return res.status(400).json({ errore: 'Schedina vuota' });
@@ -137,9 +141,9 @@ const salva = async (req, res) => {
   // senza passare dalla pagina), lo si apre adesso. Le quote restano comunque
   // quelle fissate una volta sola: qui non si ricalcola niente, ed è il motivo per
   // cui il numero che vedi a schermo è lo stesso che ti viene salvato.
-  await assicuraQuote(giornataNumero);
+  await assicuraQuote(giornataNumero, stagione);
 
-  const grezza = await Giornata.findOne({ numero: giornataNumero }).populate(POPOLA_SQUADRE).lean();
+  const grezza = await Giornata.findOne({ stagione, numero: giornataNumero }).populate(POPOLA_SQUADRE).lean();
   if (!grezza) return res.status(404).json({ errore: 'Giornata non trovata' });
   if (chiusa(grezza)) return res.status(400).json({ errore: 'Schedine chiuse per questa giornata' });
 
@@ -172,13 +176,13 @@ const salva = async (req, res) => {
   const utente = await User.findById(req.utente.id).lean();
   if (!utente) return res.status(401).json({ errore: 'Utente non trovato' });
 
-  const esisteva = await Schedina.exists({ utente: req.utente.id, giornataNumero });
+  const esisteva = await Schedina.exists({ utente: req.utente.id, stagione, giornataNumero });
 
   const schedina = await Schedina.findOneAndUpdate(
-    { utente: req.utente.id, giornataNumero },
+    { utente: req.utente.id, stagione, giornataNumero },
     {
       $set: { pronostici: daSalvare, quotaTotale, esito: 'attesa', squadra: utente.squadra },
-      $setOnInsert: { utente: req.utente.id, giornataNumero }
+      $setOnInsert: { utente: req.utente.id, stagione, giornataNumero }
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
@@ -195,12 +199,12 @@ const salva = async (req, res) => {
 
 // Ricalcola l'esito di tutte le schedine di una giornata. Idempotente: si può
 // richiamare a ogni pubblicazione senza fare danni. Torna le schedine vinte.
-async function risolviSchedine(giornataNumero) {
-  const grezza = await Giornata.findOne({ numero: giornataNumero }).lean();
+async function risolviSchedine(giornataNumero, stagione = stagioneCorrente()) {
+  const grezza = await Giornata.findOne({ stagione, numero: giornataNumero }).lean();
   if (!grezza) return [];
 
   const giornata = arricchisciGiornata(grezza);
-  const schedine = await Schedina.find({ giornataNumero });
+  const schedine = await Schedina.find({ stagione, giornataNumero });
 
   const vinte = [];
   for (const s of schedine) {
@@ -218,11 +222,12 @@ async function risolviSchedine(giornataNumero) {
 // consegnato e con che quota, ma non i pronostici: lo scontrino resta segreto
 // fino alla chiusura, così nessuno copia.
 const perGiornata = async (req, res) => {
+  const stagione = stagioneCorrente();
   const numero = Number(req.params.numero);
-  const grezza = await Giornata.findOne({ numero }).lean();
+  const grezza = await Giornata.findOne({ stagione, numero }).lean();
   if (!grezza) return res.status(404).json({ errore: 'Giornata non trovata' });
 
-  const schedine = await Schedina.find({ giornataNumero: numero })
+  const schedine = await Schedina.find({ stagione, giornataNumero: numero })
     .populate('squadra', 'nome stemma')
     .populate('utente', 'nomeVisualizzato')
     .populate('pronostici.squadraCasa', 'nome stemma')

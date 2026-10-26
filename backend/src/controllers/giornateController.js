@@ -2,6 +2,7 @@ const Giornata = require('../models/Giornata');
 const Schedina = require('../models/Schedina');
 const { arricchisciGiornata, chiaveCoppia } = require('../utils/regolamento');
 const { risolviSchedine } = require('./schedineController');
+const { stagioneCorrente, filtroStagione } = require('../utils/stagione');
 
 // Le giornate in uscita hanno, per ogni accoppiamento, i campi calcolati
 // fantapuntiCasa/fantapuntiTrasferta e golCasa/golTrasferta (null finché manca
@@ -14,16 +15,17 @@ const POPOLA = [
 ];
 
 const lista = async (req, res) => {
-  const giornate = await Giornata.find()
+  const giornate = await Giornata.find(filtroStagione(req))
     .sort('-numero')
     .populate(POPOLA)
     .lean();
   res.json({ giornate: giornate.map(arricchisciGiornata) });
 };
 
-// La prossima giornata non ancora conclusa, usata per il derby-preview in Home.
+// La prossima giornata non ancora conclusa della stagione in corso, usata per il
+// derby-preview in Home.
 const prossima = async (req, res) => {
-  const giornata = await Giornata.findOne({ conclusa: false })
+  const giornata = await Giornata.findOne({ stagione: stagioneCorrente(), conclusa: false })
     .sort('numero')
     .populate(POPOLA)
     .lean();
@@ -39,8 +41,10 @@ const prossima = async (req, res) => {
 // $set mirato (non sostituzione del documento) per non perdere i campi non inviati.
 const salva = async (req, res) => {
   const numero = Number(req.params.numero ?? req.body.numero);
+  // Si scrive sempre sulla stagione in corso: le passate non si riaprono da qui.
+  const stagione = stagioneCorrente();
   const { serieANumero, data, accoppiamenti, punteggi, conclusa } = req.body;
-  if (!numero) return res.status(400).json({ errore: 'Numero giornata richiesto' });
+  if (!Number.isInteger(numero) || numero < 1) return res.status(400).json({ errore: 'Numero giornata richiesto' });
 
   const aggiornamenti = { createdBy: req.utente.id };
 
@@ -66,7 +70,7 @@ const salva = async (req, res) => {
     // sempre. Qui l'id si riprende da quello che c'è già, riconoscendo lo scontro
     // dalle due squadre. Se la coppia cambia (anche solo invertendo campo e
     // trasferta) è un altro scontro e un id nuovo è giusto.
-    const esistente = await Giornata.findOne({ numero }).select('accoppiamenti').lean();
+    const esistente = await Giornata.findOne({ stagione, numero }).select('accoppiamenti').lean();
     const perCoppia = new Map(
       (esistente?.accoppiamenti || []).map((a) => [chiaveCoppia(a.squadraCasa, a.squadraTrasferta), a])
     );
@@ -105,14 +109,14 @@ const salva = async (req, res) => {
   if (conclusa !== undefined) aggiornamenti.conclusa = Boolean(conclusa);
 
   const giornata = await Giornata.findOneAndUpdate(
-    { numero },
-    { $set: aggiornamenti, $setOnInsert: { numero } },
+    { stagione, numero },
+    { $set: aggiornamenti, $setOnInsert: { stagione, numero } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
   // I risultati possono essere cambiati (anche in correzione): le schedine di quella
   // giornata vanno ricalcolate subito, non alla prossima pubblicazione.
-  await risolviSchedine(numero);
+  await risolviSchedine(numero, stagione);
 
   res.json({ giornata });
 };
@@ -125,14 +129,14 @@ const elimina = async (req, res) => {
   const giornata = await Giornata.findById(req.params.id);
   if (!giornata) return res.status(404).json({ errore: 'Giornata non trovata' });
 
-  await Schedina.deleteMany({ giornataNumero: giornata.numero });
+  await Schedina.deleteMany({ stagione: giornata.stagione, giornataNumero: giornata.numero });
   await giornata.deleteOne();
 
   res.json({ ok: true, numero: giornata.numero });
 };
 
 // `salva` è l'unica via di scrittura: fa da creazione e da correzione (upsert per
-// numero) ed è l'unica che controlla i doppioni e la scala dei punteggi. Le vecchie
+// stagione e numero) ed è l'unica che controlla i doppioni e la scala dei punteggi. Le vecchie
 // POST / e PATCH /:id non le usava nessuna schermata e scrivevano senza quei
 // controlli: una rotta che nessuno chiama ma che accetta numeri fuori scala.
 module.exports = { lista, prossima, salva, elimina };

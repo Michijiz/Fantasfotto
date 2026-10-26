@@ -7,8 +7,17 @@ import '../styles/gazzetta.css';
 
 const MESE = { month: 'long', year: 'numeric' };
 
+// L'autore è l'utente che ha stampato l'edizione, non la firma: la firma è libera
+// (pseudonimi, refusi) e lo stesso autore con due firme finiva in due voci del
+// filtro. Le edizioni senza autore (vecchie) ripiegano sulla firma.
+function autoreDi(e) {
+  const u = e.createdBy;
+  if (u && typeof u === 'object' && u.nomeVisualizzato) return { id: u._id, nome: u.nomeVisualizzato };
+  return { id: `firma:${e.direttore || ''}`, nome: e.direttore || '' };
+}
+
 // Tutte le edizioni, raggruppate per mese, con i filtri per squadra e per
-// direttore. Una squadra "compare" in un'edizione se ha giocato quella giornata
+// autore. Una squadra "compare" in un'edizione se ha giocato quella giornata
 // o se ha preso un premio.
 export default function Archivio() {
   const { edizioni, giornate, squadre } = useDati();
@@ -16,10 +25,14 @@ export default function Archivio() {
   const [squadra, setSquadra] = useState('');
   const [direttore, setDirettore] = useState('');
 
-  const direttori = useMemo(
-    () => [...new Set(edizioni.map((e) => e.direttore).filter(Boolean))].sort(),
-    [edizioni]
-  );
+  const direttori = useMemo(() => {
+    const perId = new Map();
+    for (const e of edizioni) {
+      const { id, nome } = autoreDi(e);
+      if (nome && !perId.has(id)) perId.set(id, nome);
+    }
+    return [...perId].sort((a, b) => a[1].localeCompare(b[1], 'it'));
+  }, [edizioni]);
 
   const compare = (e, id) => {
     const g = giornate.find((x) => x.numero === e.giornataNumero);
@@ -30,7 +43,7 @@ export default function Archivio() {
 
   const filtrate = edizioni
     .filter((e) => !squadra || compare(e, squadra))
-    .filter((e) => !direttore || e.direttore === direttore)
+    .filter((e) => !direttore || autoreDi(e).id === direttore)
     .sort((a, b) => b.giornataNumero - a.giornataNumero);
 
   const gruppi = [];
@@ -64,9 +77,9 @@ export default function Archivio() {
           <option value="">Squadra ▾</option>
           {squadre.map((s) => <option key={s._id} value={s._id}>{s.nome}</option>)}
         </select>
-        <select className={`filtro${direttore ? ' attivo' : ''}`} value={direttore} onChange={(e) => setDirettore(e.target.value)} aria-label="Filtra per direttore">
-          <option value="">Direttore ▾</option>
-          {direttori.map((d) => <option key={d} value={d}>{d}</option>)}
+        <select className={`filtro${direttore ? ' attivo' : ''}`} value={direttore} onChange={(e) => setDirettore(e.target.value)} aria-label="Filtra per autore">
+          <option value="">Autore ▾</option>
+          {direttori.map(([id, nome]) => <option key={id} value={id}>{nome}</option>)}
         </select>
       </div>
 

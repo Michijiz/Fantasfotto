@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { stagioneCorrente } = require('../utils/stagione');
 
 // Un pronostico per ogni scontro della giornata. La quota viene congelata al
 // momento del salvataggio: la classifica cambia, ma "cosa avevi previsto e a
@@ -14,6 +15,7 @@ const pronosticoSchema = new mongoose.Schema({
 const schedinaSchema = new mongoose.Schema({
   utente: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   squadra: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
+  stagione: { type: String, required: true, trim: true, default: () => stagioneCorrente() },
   giornataNumero: { type: Number, required: true },
   pronostici: [pronosticoSchema],
   quotaTotale: { type: Number, default: 1 },
@@ -22,7 +24,9 @@ const schedinaSchema = new mongoose.Schema({
   esito: { type: String, enum: ['attesa', 'vinta', 'persa'], default: 'attesa' }
 }, { timestamps: true });
 
-// Una sola schedina per utente per giornata: rigiocarla è un update, non un insert.
-schedinaSchema.index({ utente: 1, giornataNumero: 1 }, { unique: true });
+// Una sola schedina per utente per giornata di una stagione: rigiocarla è un
+// update, non un insert.
+schedinaSchema.index({ utente: 1, stagione: 1, giornataNumero: 1 }, { unique: true });
+schedinaSchema.index({ stagione: 1, giornataNumero: 1, esito: 1 });
 
 module.exports = mongoose.model('Schedina', schedinaSchema);
