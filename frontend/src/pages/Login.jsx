@@ -142,11 +142,10 @@ export default function Login() {
     setTimeout(() => {
       const schermo = schermoRef.current;
       if (!schermo || document.activeElement !== campo) return;
-      const vv = window.visualViewport;
       const r = campo.getBoundingClientRect();
       const b = schermo.getBoundingClientRect();
-      const basso = vv ? vv.offsetTop + vv.height : window.innerHeight;
-      if (r.top < b.top + 70 || r.bottom > basso - 24) {
+      // La schermata finisce sopra la tastiera: il campo deve stare tra i suoi bordi.
+      if (r.top < b.top + 70 || r.bottom > b.bottom - 24) {
         schermo.scrollTo({ top: schermo.scrollTop + (r.top - b.top) - 110, behavior: 'smooth' });
       }
     }, 350);
@@ -309,7 +308,7 @@ export default function Login() {
                   senza, la redazione resta chiusa.
                 </p>
                 <Campo id="r-invito" etichetta="Codice invito della lega">
-                  <input id="r-invito" type="text" autoCapitalize="characters" autoComplete="off" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
+                  <input id="r-invito" type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
                 </Campo>
                 <button className="bottone-grande" type="submit" disabled={caricando}>
                   {caricando ? 'Controllo…' : 'Avanti'}
