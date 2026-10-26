@@ -1,3 +1,4 @@
+import { senzaFormato } from '../utils/formato';
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowRight } from '@phosphor-icons/react';
@@ -69,7 +70,7 @@ export default function Dashboard() {
   const votate = Object.keys(risultatiVoti.mioVoto || {}).length;
   const mancano = Math.max(0, categorie - votate);
 
-  const attacco = ultimaEdizione?.corpo?.[0] || '';
+  const attacco = senzaFormato(ultimaEdizione?.corpo?.[0] || '');
 
   return (
     <div className="ritagli home">
@@ -155,7 +156,6 @@ export default function Dashboard() {
         <section className="ritaglio home-prima">
           <div className={`home-foto${ultimaEdizione.immagineUrl ? '' : ' vuota'}`}>
             {ultimaEdizione.immagineUrl && <img src={ultimaEdizione.immagineUrl} alt="" />}
-            <span className="etichetta-g">G{ultimaEdizione.giornataNumero}</span>
           </div>
           {esitoUltima && (
             <div className="tua-giornata">
