@@ -22,6 +22,8 @@
 .classifica-riga .punti{ font-family:'Anton',sans-serif; font-size:30px; line-height:1; }
 
 .giornata{ gap:12px; }
+/* Quando si salta alla prossima giornata, deve fermarsi sotto la testata compatta. */
+.giornata.prossima{ scroll-margin-top:calc(var(--barra-compatta, 52px) + env(safe-area-inset-top, 0px) + 12px); }
 .giornata-testa{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .giornata-testa .titolo{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
 .giornata-testa .dettaglio{ text-transform:none; }
