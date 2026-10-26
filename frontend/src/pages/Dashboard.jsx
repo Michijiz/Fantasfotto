@@ -155,7 +155,6 @@ export default function Dashboard() {
         <section className="ritaglio home-prima">
           <div className={`home-foto${ultimaEdizione.immagineUrl ? '' : ' vuota'}`}>
             {ultimaEdizione.immagineUrl && <img src={ultimaEdizione.immagineUrl} alt="" />}
-            <span className="etichetta-g">G{ultimaEdizione.giornataNumero}</span>
           </div>
           {esitoUltima && (
             <div className="tua-giornata">
