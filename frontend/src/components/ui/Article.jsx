@@ -5,6 +5,7 @@ import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import Stemma from './Stemma';
 import { Scontro } from './Scontro';
+import { Corpo, Inline } from './Formattato';
 import { conRisultato, esitoPer, estremiGiornata, idDi, scontriGiocabili, scontroDi } from '../../utils/lega';
 import { formattaFantapunti } from '../../utils/regolamento';
 import { formattaVoto, squadreConPunti } from '../../utils/spunti';
@@ -38,7 +39,7 @@ function Partita({ scontro, testo, mia }) {
   return (
     <div className={`partita${mia ? ' mia' : ''}`}>
       <Scontro scontro={scontro} impilato />
-      <p className="partita-testo">{testo}</p>
+      <p className="partita-testo"><Inline testo={testo} /></p>
     </div>
   );
 }
@@ -144,7 +145,7 @@ export default function Article({ edizione }) {
       <div className="articolo-firma">di <b>{edizione.direttore}</b> · direttore di turno</div>
 
       <div className="articolo-corpo">
-        {edizione.corpo.map((p, i) => <p key={i}>{p}</p>)}
+        <Corpo paragrafi={edizione.corpo} />
       </div>
 
       {partite.length > 0 && (

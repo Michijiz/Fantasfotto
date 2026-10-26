@@ -1,3 +1,4 @@
+import { senzaFormato } from '../utils/formato';
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowRight } from '@phosphor-icons/react';
@@ -69,7 +70,7 @@ export default function Dashboard() {
   const votate = Object.keys(risultatiVoti.mioVoto || {}).length;
   const mancano = Math.max(0, categorie - votate);
 
-  const attacco = ultimaEdizione?.corpo?.[0] || '';
+  const attacco = senzaFormato(ultimaEdizione?.corpo?.[0] || '');
 
   return (
     <div className="ritagli home">

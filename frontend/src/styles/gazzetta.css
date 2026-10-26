@@ -37,6 +37,16 @@
 .articolo-firma{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
 .articolo-firma b{ color:var(--ink); font-weight:600; }
 .articolo-corpo p{ margin:0 0 14px; font-size:18px; line-height:1.7; }
+.articolo-corpo > :last-child{ margin-bottom:0; }
+.articolo-corpo strong, .partita-testo strong{ font-weight:700; }
+.articolo-corpo s, .partita-testo s{ text-decoration-thickness:1.5px; opacity:.75; }
+.articolo-sottotitolo{ margin:22px 0 10px; font-family:'Anton',sans-serif; font-weight:400; font-size:22px; line-height:1.15; text-transform:uppercase; }
+.articolo-corpo blockquote{
+  margin:0 0 14px; padding:4px 0 4px 16px; border-left:4px solid var(--gold);
+  font-size:19px; font-style:italic; line-height:1.55; color:var(--ink-soft);
+}
+.articolo-corpo ul{ margin:0 0 14px; padding-left:22px; font-size:18px; line-height:1.6; }
+.articolo-corpo li + li{ margin-top:4px; }
 .articolo-corpo p:last-child{ margin-bottom:0; }
 .articolo-corpo p:first-child::first-letter{
   float:left; font-family:'Anton',sans-serif; font-size:64px; line-height:.9; padding:4px 8px 0 0;
@@ -200,3 +210,16 @@ select.filtro{ width:auto; padding-right:18px; background-image:none; }
 .pagella .tag{ font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
 .pagella .battuta{ font-size:15.5px; line-height:1.45; font-style:italic; }
 .tabellino-verdetti .votanti{ font-size:13px; opacity:.8; }
+
+/* Barra di formattazione della scrittura: resta in vista mentre scorri. */
+.barra-formato{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:4px; padding:6px;
+  border-radius:16px; border:1px solid var(--filo-lieve); background:var(--paper-input); width:fit-content; max-width:100%;
+}
+.barra-formato button{
+  width:40px; height:40px; border-radius:12px; border:none; background:transparent; color:var(--ink);
+  display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.barra-formato button:active:not(:disabled){ background:var(--paper-dark); }
+.barra-formato button:disabled{ opacity:.3; cursor:default; }
+.barra-formato .sep{ width:1px; height:22px; background:var(--filo-lieve); margin:0 4px; }

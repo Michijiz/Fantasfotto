@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { CaretLeft } from '@phosphor-icons/react';
+import BarraFormato from '../components/ui/BarraFormato';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
@@ -350,9 +351,13 @@ function Editor({ edizione }) {
   // Scrivendo dal telefono la tastiera copre la metà bassa dello schermo: il
   // campo toccato si porta in cima all'area visibile (la testata si nasconde, vedi
   // gazzetta.css), così si vede quello che si scrive.
+  const campoFormato = useRef(null);
+  const [formatoAttivo, setFormatoAttivo] = useState('blocco');
+
   const alFuoco = (e) => {
     const campo = e.target;
     if (!campo.matches?.('input, textarea')) return;
+    if (campo.dataset?.formato) { campoFormato.current = campo; setFormatoAttivo(campo.dataset.formato); }
     setTimeout(() => {
       const area = document.querySelector('.contenuto');
       if (!area || !area.contains(campo)) return;
@@ -480,13 +485,15 @@ function Editor({ edizione }) {
           )}
 
           <label htmlFor="s-pezzo">Il pezzo</label>
+          <BarraFormato campoRef={campoFormato} tipo={formatoAttivo} />
           <textarea
             id="s-pezzo"
+            data-formato="blocco"
             rows={10}
             value={campi.corpo}
             onChange={(e) => { posizione.current = e.target.selectionStart; set('corpo')(e); }}
             onSelect={(e) => { posizione.current = e.target.selectionStart; }}
-            placeholder="Scrivi qui. Lascia una riga vuota tra un paragrafo e l'altro."
+            placeholder="Scrivi qui. Lascia una riga vuota tra un paragrafo e l'altro. Per il grassetto o il corsivo usa i tasti sopra."
           />
 
           {numeroValido && (
@@ -534,6 +541,7 @@ function Editor({ edizione }) {
                         </label>
                         <textarea
                           id={`s-partita-${i}`}
+                          data-formato="riga"
                           rows={2}
                           maxLength={MAX_COMMENTO}
                           value={c.testo}
