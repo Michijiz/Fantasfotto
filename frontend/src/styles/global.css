@@ -708,7 +708,11 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
   max-width:420px;margin:0 auto;
   height: var(--app-h, 100dvh);
   overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
-  padding:40px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+  /* Lo spazio per la tastiera c'è sempre, non compare quando sale: se il padding
+     cambia mentre il browser sta già scorrendo verso il campo, la pagina "salta".
+     Così l'area scorribile è già abbastanza alta quando si tocca un campo. */
+  padding:40px 16px calc(32px + env(safe-area-inset-bottom, 0px) + min(46vh, 340px));
+  scroll-padding:120px 0 120px;
 }
 .masthead-auth{ padding:0 0 12px; margin-bottom:18px; }
 /* Tab = controllo segmentato: binario di vetro chiaro, scheda attiva come
@@ -835,7 +839,10 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
 .con-tastiera .sheet,
 .con-tastiera .sheet.grande{ max-height:calc(var(--vv-h, 100dvh) - env(safe-area-inset-top, 0px) - 10px); }
 .con-tastiera .sheet .sheet-body{ padding-bottom:24px; }
-.con-tastiera .auth-screen{ padding-bottom:calc(var(--tastiera, 0px) + 24px); }
+/* Sulla schermata di accesso non c'è nessuna shell da tenere ferma (testata e barra
+   in basso): si lascia che il browser faccia scorrere la pagina da sé, senza la
+   compensazione che sulle altre schermate la contrasta a ogni frame. */
+:root:has(.auth-screen) #root{ transform:none; }
 .sheet-body form{padding-bottom:6px;}
 
 /* ============ SPLASH DI APERTURA ============

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTema } from '../context/TemaContext';
@@ -56,6 +56,10 @@ function Progresso({ passo }) {
   );
 }
 
+// Minuscolo e senza spazi, ma solo a campo finito: riscrivere il valore a ogni
+// tasto fa saltare il cursore con le tastiere che correggono la parola in corso.
+const pulisciUsername = (v) => v.toLowerCase().replace(/\s/g, '');
+
 // Dove riportare chi riceve un errore dal server al momento dell'iscrizione: se è
 // sbagliato il codice si torna al primo passo, se è colpa dei dati (username già
 // preso, PIN, squadra, codice redazione) al secondo. Rete e errori del server
@@ -84,6 +88,7 @@ export default function Login() {
   const [tentativoSquadre, setTentativoSquadre] = useState(0);
   const [errore, setErrore] = useState('');
   const [caricando, setCaricando] = useState(false);
+  const schermoRef = useRef(null);
 
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPin, setLoginPin] = useState('');
@@ -126,6 +131,26 @@ export default function Login() {
   }, [passo, tab]);
 
   if (utente) return <Navigate to="/" replace />;
+
+  // Toccando un campo la tastiera sale e copre il fondo. Il campo lo portiamo in
+  // vista noi, una volta sola e dopo che la tastiera ha finito di salire, invece
+  // di lasciare che browser, padding e compensazione di iOS si correggano a
+  // vicenda (era quello a far "ballare" la pagina mentre si scriveva).
+  const suFocus = (e) => {
+    const campo = e.target;
+    if (!campo.matches?.('input, select, textarea')) return;
+    setTimeout(() => {
+      const schermo = schermoRef.current;
+      if (!schermo || document.activeElement !== campo) return;
+      const vv = window.visualViewport;
+      const r = campo.getBoundingClientRect();
+      const b = schermo.getBoundingClientRect();
+      const basso = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      if (r.top < b.top + 70 || r.bottom > basso - 24) {
+        schermo.scrollTo({ top: schermo.scrollTop + (r.top - b.top) - 110, behavior: 'smooth' });
+      }
+    }, 350);
+  };
 
   const cambiaTab = (nuovo) => {
     if (nuovo === tab) return;
@@ -180,7 +205,9 @@ export default function Login() {
   const submitGeneralita = (e) => {
     e.preventDefault();
     setErrore('');
-    if (!/^\S{3,20}$/.test(regUsername)) {
+    const username = pulisciUsername(regUsername);
+    setRegUsername(username);
+    if (!/^\S{3,20}$/.test(username)) {
       setErrore('Username: da 3 a 20 caratteri, senza spazi');
       return;
     }
@@ -232,7 +259,7 @@ export default function Login() {
   const occupate = squadraScelta?.allenatoriCount || 0;
 
   return (
-    <div className="auth-screen accesso">
+    <div className="auth-screen accesso" ref={schermoRef} onFocus={suFocus}>
       <Masthead
         className="masthead-auth"
         sub={
@@ -301,7 +328,8 @@ export default function Login() {
                   <input
                     id="r-username" type="text" autoComplete="username" autoCapitalize="none" maxLength={20}
                     value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                    onChange={(e) => setRegUsername(e.target.value)}
+                    onBlur={() => setRegUsername((v) => pulisciUsername(v))}
                     placeholder="scegline uno"
                   />
                 </Campo>
@@ -309,10 +337,10 @@ export default function Login() {
                   <input id="r-nome" type="text" className="campo-anton" maxLength={30} value={regNome} onChange={(e) => setRegNome(e.target.value)} placeholder="es. Michelangelo" />
                 </Campo>
                 <Campo id="r-pin" etichetta="PIN" nota="4-6 cifre">
-                  <input id="r-pin" type={mostraPin ? 'text' : 'password'} inputMode="numeric" autoComplete="new-password" maxLength={6} value={regPin} onChange={(e) => setRegPin(e.target.value.replace(/\D/g, ''))} placeholder="il tuo PIN segreto" />
+                  <input id="r-pin" type={mostraPin ? 'text' : 'password'} inputMode="numeric" autoComplete="new-password" maxLength={6} value={regPin} onChange={(e) => setRegPin(e.target.value)} placeholder="il tuo PIN segreto" />
                 </Campo>
                 <Campo id="r-pin2" etichetta="Ripeti il PIN">
-                  <input id="r-pin2" type={mostraPin ? 'text' : 'password'} inputMode="numeric" autoComplete="new-password" maxLength={6} value={regPin2} onChange={(e) => setRegPin2(e.target.value.replace(/\D/g, ''))} placeholder="ancora una volta" />
+                  <input id="r-pin2" type={mostraPin ? 'text' : 'password'} inputMode="numeric" autoComplete="new-password" maxLength={6} value={regPin2} onChange={(e) => setRegPin2(e.target.value)} placeholder="ancora una volta" />
                 </Campo>
                 <button type="button" className="bottone-link" onClick={() => setMostraPin((v) => !v)}>
                   {mostraPin ? 'Nascondi il PIN' : 'Mostra il PIN'}
@@ -378,10 +406,8 @@ export default function Login() {
                     <input id="r-codice-redazione" type="text" value={regCodiceRedazione} onChange={(e) => setRegCodiceRedazione(e.target.value)} placeholder="facoltativo" />
                   </Campo>
                 )}
-                <div className="passo-azioni">
-                  <button type="button" className="bottone-contorno" onClick={() => vaiAlPasso(1)}>Indietro</button>
-                  <button className="bottone-grande" type="submit" disabled={caricandoSquadre || erroreSquadre}>Avanti</button>
-                </div>
+                <button className="bottone-grande" type="submit" disabled={caricandoSquadre || erroreSquadre}>Avanti</button>
+                <button type="button" className="bottone-contorno" onClick={() => vaiAlPasso(1)}>Indietro</button>
                 {errore && <div className="errore-msg" role="alert">{errore}</div>}
               </section>
             </form>
@@ -404,12 +430,10 @@ export default function Login() {
                   toccato={Boolean(regAvatar)}
                 />
                 <p className="campo-nota centro">Niente di tutto questo è definitivo: lo cambi dal profilo.</p>
-                <div className="passo-azioni">
-                  <button type="button" className="bottone-contorno" onClick={() => vaiAlPasso(2)} disabled={caricando}>Indietro</button>
-                  <button className="bottone-grande" type="submit" disabled={caricando}>
-                    {caricando ? 'Ti stampiamo la tessera…' : 'Iscriviti'}
-                  </button>
-                </div>
+                <button className="bottone-grande" type="submit" disabled={caricando}>
+                  {caricando ? 'Ti stampiamo la tessera…' : 'Iscriviti'}
+                </button>
+                <button type="button" className="bottone-contorno" onClick={() => vaiAlPasso(2)} disabled={caricando}>Indietro</button>
                 {errore && <div className="errore-msg" role="alert">{errore}</div>}
               </section>
               <p className="colophon">La Gazzetta dello Sfottò — ogni riferimento a fatti o allenatori reali è puramente voluto.</p>
