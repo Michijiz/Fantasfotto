@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
@@ -62,9 +62,40 @@ function Classifica({ miaSquadraId }) {
   );
 }
 
+// Posizione di `el` dentro il contenitore di scroll, sommando gli offset di layout:
+// a differenza di getBoundingClientRect non risente delle animazioni di ingresso.
+function distanzaDalContenitore(el, contenitore) {
+  let y = 0;
+  for (let n = el; n && n !== contenitore; n = n.offsetParent) y += n.offsetTop;
+  return y;
+}
+
 function Calendario({ sonoRedazione, onModifica }) {
   const { giornate } = useDati();
   const prossimoNumero = giornate.length ? Math.max(...giornate.map((g) => g.numero)) + 1 : 1;
+
+  // Dalla prima all'ultima. La "prossima" è la prima non conclusa (la stessa che la
+  // schedina considera aperta); a stagione finita resta l'ultima.
+  const ordinate = useMemo(() => [...giornate].sort((a, b) => a.numero - b.numero), [giornate]);
+  const prossima = ordinate.find((g) => !g.conclusa) || ordinate[ordinate.length - 1] || null;
+  const prossimaId = prossima?._id;
+
+  // All'apertura della scheda si salta alla prossima giornata, una volta sola per
+  // apertura: un salvataggio dalla redazione ricarica le giornate e non deve
+  // riportare la pagina su mentre si sta lavorando. Lo scroll vero è quello di
+  // `.contenuto` (non quello della pagina), e scrollIntoView sposterebbe l'intera shell.
+  const riferimento = useRef(null);
+  const giaSaltato = useRef(false);
+  useLayoutEffect(() => {
+    const el = riferimento.current;
+    if (giaSaltato.current || !el) return;
+    giaSaltato.current = true;
+    if (ordinate[0]?._id === prossimaId) return; // è già la prima: si vede senza scorrere
+    const contenitore = el.closest('.contenuto');
+    if (!contenitore) return;
+    const margine = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    contenitore.scrollTo({ top: Math.max(0, distanzaDalContenitore(el, contenitore) - margine), behavior: 'auto' });
+  }, [ordinate, prossimaId]);
 
   return (
     <>
@@ -78,21 +109,29 @@ function Calendario({ sonoRedazione, onModifica }) {
           <h2 className="ritaglio-titolo medio">Il calendario è ancora in bozza</h2>
           <p className="ritaglio-vuoto">Appena il direttore di turno imposta gli scontri, li trovi qui.</p>
         </section>
-      ) : [...giornate].sort((a, b) => b.numero - a.numero).map((g) => (
-        <section className="ritaglio giornata" key={g._id}>
-          <div className="giornata-testa">
-            <span className="titolo">
-              Giornata {g.numero}
-              {g.serieANumero ? <span className="dettaglio"> · {g.serieANumero}ª di Serie A</span> : null}
-            </span>
-            <span className={`chip-tempo${statoGiornata(g) === 'conclusa' ? ' chiaro' : ''}`}>{statoGiornata(g)}</span>
-          </div>
-          <Scontri giornata={g} />
-          {sonoRedazione && (
-            <button type="button" className="bottone-link" onClick={() => onModifica(g)}>Modifica</button>
-          )}
-        </section>
-      ))}
+      ) : ordinate.map((g) => {
+        const stato = statoGiornata(g);
+        const etichetta = g._id === prossimaId && stato === 'da giocare' ? 'prossima' : stato;
+        return (
+          <section
+            className={`ritaglio giornata${g._id === prossimaId ? ' prossima' : ''}`}
+            key={g._id}
+            ref={g._id === prossimaId ? riferimento : undefined}
+          >
+            <div className="giornata-testa">
+              <span className="titolo">
+                Giornata {g.numero}
+                {g.serieANumero ? <span className="dettaglio"> · {g.serieANumero}ª di Serie A</span> : null}
+              </span>
+              <span className={`chip-tempo${stato === 'conclusa' ? ' chiaro' : ''}`}>{etichetta}</span>
+            </div>
+            <Scontri giornata={g} />
+            {sonoRedazione && (
+              <button type="button" className="bottone-link" onClick={() => onModifica(g)}>Modifica</button>
+            )}
+          </section>
+        );
+      })}
     </>
   );
 }
