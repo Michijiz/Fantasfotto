@@ -7,12 +7,17 @@ import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import Article from '../components/ui/Article';
 import ImageUpload from '../components/ui/ImageUpload';
+import Stemma from '../components/ui/Stemma';
 import { giornataDaStampare, haPunteggi, idDi, scontriGiocabili } from '../utils/lega';
 import { formattaFantapunti } from '../utils/regolamento';
+import {
+  commentoScontro, formattaVoto, pagellaAuto, spuntiGiornata, squadreConPunti, titoliSuggeriti
+} from '../utils/spunti';
 import { puoRedigere } from '../ruoli';
 import '../styles/gazzetta.css';
 
 const MAX_COMMENTO = 280;
+const MAX_BATTUTA = 140;
 const CHIAVE_BOZZA = 'gazzetta_bozza_edizione';
 
 const vuoto = { giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '', immagineUrl: '', didascalia: '' };
@@ -21,9 +26,18 @@ const vuoto = { giornataNumero: '', direttore: '', occhiello: '', titolo: '', co
 // calendario può essere risalvato senza che i commenti perdano il loro scontro.
 const chiaveScontro = (a) => `${idDi(a.squadraCasa)}>${idDi(a.squadraTrasferta)}`;
 
-function commentiDa(ed) {
+// Righe già salvate nell'edizione, nella forma dello stato del modulo. `auto` dice
+// se la riga è ancora quella del generatore (e quindi "Aggiorna dai dati" può
+// rigenerarla) o è stata scritta o ritoccata da una persona.
+function vociDa(ed) {
   const per = {};
-  for (const c of ed?.commenti || []) per[chiaveScontro(c)] = c.testo;
+  for (const c of ed?.commenti || []) per[chiaveScontro(c)] = { testo: c.testo, auto: c.auto === true, v: 0 };
+  return per;
+}
+
+function pagDa(ed) {
+  const per = {};
+  for (const p of ed?.pagelle || []) per[idDi(p.squadra)] = { voto: p.voto, battuta: p.battuta || '', auto: p.auto === true, v: 0 };
   return per;
 }
 
@@ -52,7 +66,12 @@ function leggiBozza(utenteId) {
   try {
     const bozza = JSON.parse(localStorage.getItem(CHIAVE_BOZZA) || 'null');
     // La bozza di un altro utente sullo stesso telefono non è mia.
-    return bozza && bozza.utenteId === utenteId && bozza.campi ? bozza : null;
+    if (!bozza || bozza.utenteId !== utenteId || !bozza.campi) return null;
+    // Le prime bozze salvavano i commenti come semplici testi.
+    const voci = bozza.voci || Object.fromEntries(
+      Object.entries(bozza.commenti || {}).map(([k, testo]) => [k, { testo, auto: false, v: 0 }])
+    );
+    return { ...bozza, voci, pag: bozza.pag || {}, conPagelle: bozza.conPagelle !== false };
   } catch {
     return null;
   }
@@ -66,9 +85,11 @@ function scartaBozza() {
   try { localStorage.removeItem(CHIAVE_BOZZA); } catch { /* storage non disponibile */ }
 }
 
-// Solo giornata e firma non bastano a fare una bozza: partono da sole.
-const bozzaVuota = (campi, commenti) => !campi.occhiello.trim() && !campi.titolo.trim() && !campi.corpo.trim()
-  && !campi.immagineUrl && !campi.didascalia.trim() && !Object.values(commenti).some((t) => t.trim());
+// Solo giornata, firma e righe automatiche non bastano a fare una bozza: partono
+// da sole, e se restano tali non c'è nulla da salvare.
+const bozzaVuota = (campi, voci, pag) => !campi.occhiello.trim() && !campi.titolo.trim() && !campi.corpo.trim()
+  && !campi.immagineUrl && !campi.didascalia.trim()
+  && !Object.values(voci).some((o) => !o.auto) && !Object.values(pag).some((o) => !o.auto);
 
 const oraDi = (ms) => new Date(ms).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
@@ -86,10 +107,29 @@ function notaGiornata(numero, giornata, esistente) {
   return { avviso: false, testo: `G${numero} · ${scontri} ${scontri === 1 ? 'scontro' : 'scontri'}, punteggi inseriti.` };
 }
 
+// Il "tuo / automatico" sotto un campo precompilato, con il suo tasto.
+function PiedeAuto({ auto, haTesto, onAltra, onTorna, conta }) {
+  return (
+    <div className="campo-piede">
+      <span className={`etichetta-auto${auto ? ' auto' : ''}`}>{auto ? 'automatico' : 'tuo'}</span>
+      {auto
+        ? haTesto && <button type="button" className="bottone-link" onClick={onAltra}>Altra versione</button>
+        : <button type="button" className="bottone-link" onClick={onTorna}>{haTesto ? 'Torna automatico' : 'Genera in automatico'}</button>}
+      <span className="conta">{conta}</span>
+    </div>
+  );
+}
+
+const limitaVoto = (v) => Math.min(10, Math.max(0, Math.round(v * 2) / 2));
+
 // "Si va in stampa": la pagina di scrittura, per scrivere una nuova edizione o
-// correggerne una uscita. Il tabellino non si compila a mano: miglior e peggior
-// punteggio li calcola la Gazzetta dai fantapunti della giornata, il Re dei Gufi
-// arriva dalle schedine. La firma è libera (pseudonimi ammessi).
+// correggerne una uscita. I blocchi della Gazzetta (due righe per scontro, pagelle)
+// nascono già compilati dai punteggi e restano modificabili: ogni riga è
+// "automatica" finché non la tocchi, poi diventa "tua". Alla stampa il testo si
+// congela: ricalcolare un punteggio dopo non cambia quello che i lettori hanno già
+// letto (in correzione c'è "Aggiorna dai dati" per rigenerare le righe automatiche).
+// Il tabellino resta calcolato: il Re dei Gufi arriva dalle schedine. La firma è
+// libera (pseudonimi ammessi).
 function Editor({ edizione }) {
   const { utente } = useAuth();
   const { giornate, edizioni, ricaricaTutto } = useDati();
@@ -101,19 +141,33 @@ function Editor({ edizione }) {
   const firma = utente?.nomeVisualizzato || '';
 
   const [iniziale] = useState(() => {
-    if (modifica) return { campi: daEdizione(edizione, firma), commenti: commentiDa(edizione), ripresa: null };
+    if (modifica) {
+      return {
+        campi: daEdizione(edizione, firma), voci: vociDa(edizione), pag: pagDa(edizione),
+        conPagelle: (edizione.pagelle || []).length > 0, ripresa: null
+      };
+    }
     const richiesta = params.get('giornata') || '';
     const bozza = leggiBozza(utente?.id);
     // Se si arriva da "Scrivila" su una giornata precisa, la bozza di un'altra
     // giornata non si riprende (resta lì finché non la si sovrascrive).
     if (bozza && (!richiesta || String(bozza.campi.giornataNumero) === richiesta)) {
-      return { campi: { ...vuoto, ...bozza.campi }, commenti: bozza.commenti || {}, ripresa: bozza.salvataIl || Date.now() };
+      return {
+        campi: { ...vuoto, ...bozza.campi }, voci: bozza.voci, pag: bozza.pag,
+        conPagelle: bozza.conPagelle, ripresa: bozza.salvataIl || Date.now()
+      };
     }
-    return { campi: { ...vuoto, direttore: firma, giornataNumero: richiesta }, commenti: {}, ripresa: null };
+    return {
+      campi: { ...vuoto, direttore: firma, giornataNumero: richiesta }, voci: {}, pag: {}, conPagelle: true, ripresa: null
+    };
   });
 
   const [campi, setCampi] = useState(iniziale.campi);
-  const [commenti, setCommenti] = useState(iniziale.commenti);
+  // Le righe che qualcuno ha toccato (o congelato). Una riga assente è "viva":
+  // segue i dati e si genera da sola finché non la si tocca.
+  const [voci, setVoci] = useState(iniziale.voci);
+  const [pag, setPag] = useState(iniziale.pag);
+  const [conPagelle, setConPagelle] = useState(iniziale.conPagelle);
   const [ripresa, setRipresa] = useState(iniziale.ripresa);
   const [anteprima, setAnteprima] = useState(false);
   const [errore, setErrore] = useState('');
@@ -122,6 +176,7 @@ function Editor({ edizione }) {
   const inviandoRef = useRef(false);
   const pubblicata = useRef(false);
   const numeroToccato = useRef(Boolean(iniziale.campi.giornataNumero));
+  const posizione = useRef(null);
 
   const set = (chiave) => (e) => setCampi((c) => ({ ...c, [chiave]: e.target.value }));
 
@@ -137,21 +192,21 @@ function Editor({ edizione }) {
 
   // Salvataggio automatico della bozza, un attimo dopo l'ultimo tasto. All'uscita
   // dalla pagina si salva subito quello che c'è, senza aspettare il timer.
-  const ultimo = useRef({ campi, commenti });
-  ultimo.current = { campi, commenti };
+  const ultimo = useRef({ campi, voci, pag, conPagelle });
+  ultimo.current = { campi, voci, pag, conPagelle };
 
   const scrivi = () => {
     if (modifica || pubblicata.current) return;
-    const { campi: c, commenti: cm } = ultimo.current;
-    if (bozzaVuota(c, cm)) scartaBozza();
-    else salvaBozza({ utenteId: utente?.id, campi: c, commenti: cm, salvataIl: Date.now() });
+    const { campi: c, voci: v, pag: p, conPagelle: cp } = ultimo.current;
+    if (bozzaVuota(c, v, p)) scartaBozza();
+    else salvaBozza({ utenteId: utente?.id, campi: c, voci: v, pag: p, conPagelle: cp, salvataIl: Date.now() });
   };
 
   useEffect(() => {
     const t = setTimeout(scrivi, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campi, commenti]);
+  }, [campi, voci, pag, conPagelle]);
 
   useEffect(() => scrivi, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -164,15 +219,88 @@ function Editor({ edizione }) {
   const scontri = scontriGiocabili(giornata);
   const corpo = useMemo(() => campi.corpo.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean), [campi.corpo]);
 
-  // Solo gli scontri della giornata scelta e solo quelli con del testo: se hai
-  // cambiato numero di giornata, i commenti scritti per l'altra non partono.
-  const commentiDaInviare = scontri
-    .map((a) => ({
-      squadraCasa: idDi(a.squadraCasa),
-      squadraTrasferta: idDi(a.squadraTrasferta),
-      testo: (commenti[chiaveScontro(a)] || '').trim()
-    }))
-    .filter((c) => c.testo);
+  // --- righe per scontro -----------------------------------------------------
+  // Nuova edizione: una riga mai toccata è viva e si compila da sola. In
+  // correzione no: uno scontro lasciato senza commento resta senza, finché non lo
+  // chiedi con "Genera in automatico".
+  const vivo = !modifica;
+  const commentiMostrati = scontri.map((a) => {
+    const chiave = chiaveScontro(a);
+    const o = voci[chiave];
+    return {
+      a, chiave, v: o?.v || 0,
+      testo: o ? o.testo : (vivo ? commentoScontro(a, 0) : ''),
+      auto: o ? o.auto : vivo
+    };
+  });
+  const scriviCommento = (c, testo) => setVoci((x) => ({ ...x, [c.chiave]: { testo, auto: false, v: c.v } }));
+  const altroCommento = (c) => setVoci((x) => ({ ...x, [c.chiave]: { testo: commentoScontro(c.a, c.v + 1), auto: true, v: c.v + 1 } }));
+  const commentoAutomatico = (c) => setVoci((x) => ({ ...x, [c.chiave]: { testo: commentoScontro(c.a, 0), auto: true, v: 0 } }));
+
+  // --- pagelle ---------------------------------------------------------------
+  const pagelleMostrate = (giornata ? squadreConPunti(giornata) : []).map(({ squadra, fp }) => {
+    const id = idDi(squadra);
+    const o = pag[id];
+    const generata = pagellaAuto(id, fp, numero, o?.v || 0);
+    return {
+      id, squadra, fp, v: o?.v || 0,
+      voto: o ? o.voto : generata.voto,
+      battuta: o ? o.battuta : generata.battuta,
+      auto: o ? o.auto : true
+    };
+  });
+  const pagelleAttive = conPagelle && pagelleMostrate.length > 0;
+  const cambiaVoto = (p, passo) => setPag((x) => ({ ...x, [p.id]: { voto: limitaVoto(p.voto + passo), battuta: p.battuta, auto: false, v: p.v } }));
+  const scriviBattuta = (p, battuta) => setPag((x) => ({ ...x, [p.id]: { voto: p.voto, battuta, auto: false, v: p.v } }));
+  const altraBattuta = (p) => setPag((x) => ({ ...x, [p.id]: { ...pagellaAuto(p.id, p.fp, numero, p.v + 1), auto: true, v: p.v + 1 } }));
+  const pagellaAutomatica = (p) => setPag((x) => { const resto = { ...x }; delete resto[p.id]; return resto; });
+
+  // In correzione: rigenera dai punteggi di oggi tutte le righe ancora automatiche.
+  // Quelle scritte o ritoccate a mano restano come sono.
+  const haAutomatiche = modifica && (commentiMostrati.some((c) => c.auto && c.testo) || pagelleMostrate.some((p) => p.auto));
+  const aggiornaDaiDati = () => {
+    setVoci((x) => {
+      const nuovo = { ...x };
+      for (const c of commentiMostrati) if (c.auto && c.testo) nuovo[c.chiave] = { testo: commentoScontro(c.a, c.v), auto: true, v: c.v };
+      return nuovo;
+    });
+    setPag((x) => {
+      const nuovo = { ...x };
+      for (const p of pagelleMostrate) if (p.auto) nuovo[p.id] = { ...pagellaAuto(p.id, p.fp, numero, p.v), auto: true, v: p.v };
+      return nuovo;
+    });
+    mostraToast('Righe automatiche aggiornate ai punteggi di oggi');
+  };
+
+  // --- spunti ----------------------------------------------------------------
+  const spunti = useMemo(() => (numeroValido ? spuntiGiornata(giornate, numero) : []), [giornate, numero, numeroValido]);
+  const titoli = useMemo(() => (numeroValido ? titoliSuggeriti(giornate, numero) : []), [giornate, numero, numeroValido]);
+
+  // Inserisce la frase nel punto in cui eri nel pezzo (o in fondo), tra due righe vuote.
+  const inserisci = (testo) => {
+    const attuale = campi.corpo;
+    const pos = Math.min(posizione.current ?? attuale.length, attuale.length);
+    const prima = attuale.slice(0, pos);
+    const dopo = attuale.slice(pos);
+    const sepPrima = !prima || prima.endsWith('\n\n') ? '' : prima.endsWith('\n') ? '\n' : '\n\n';
+    const sepDopo = !dopo || dopo.startsWith('\n\n') ? '' : dopo.startsWith('\n') ? '\n' : '\n\n';
+    const inserto = sepPrima + testo + sepDopo;
+    setCampi((c) => ({ ...c, corpo: prima + inserto + dopo }));
+    posizione.current = pos + inserto.length;
+    mostraToast('Inserito nel pezzo');
+  };
+
+  const commentiDaInviare = commentiMostrati
+    .filter((c) => c.testo.trim())
+    .map((c) => ({
+      squadraCasa: idDi(c.a.squadraCasa),
+      squadraTrasferta: idDi(c.a.squadraTrasferta),
+      testo: c.testo.trim(),
+      auto: c.auto
+    }));
+  const pagelleDaInviare = pagelleAttive
+    ? pagelleMostrate.map((p) => ({ squadra: p.id, voto: p.voto, battuta: p.battuta.trim(), auto: p.auto }))
+    : [];
 
   const mancanti = [];
   if (!numeroValido) mancanti.push('giornata');
@@ -198,7 +326,8 @@ function Editor({ edizione }) {
       corpo,
       immagineUrl: campi.immagineUrl || '',
       didascalia: campi.didascalia.trim(),
-      commenti: commentiDaInviare
+      commenti: commentiDaInviare,
+      pagelle: pagelleDaInviare
     };
 
     try {
@@ -236,7 +365,9 @@ function Editor({ edizione }) {
     scartaBozza();
     const proposta = giornataDaStampare(giornate, edizioni);
     setCampi({ ...vuoto, direttore: firma, giornataNumero: proposta ? String(proposta) : '' });
-    setCommenti({});
+    setVoci({});
+    setPag({});
+    setConPagelle(true);
     setRipresa(null);
     numeroToccato.current = false;
   };
@@ -256,6 +387,9 @@ function Editor({ edizione }) {
     immagineUrl: campi.immagineUrl,
     didascalia: campi.didascalia.trim(),
     commenti: commentiDaInviare,
+    pagelle: pagelleAttive
+      ? pagelleMostrate.map((p) => ({ squadra: p.squadra, voto: p.voto, battuta: p.battuta.trim() }))
+      : [],
     stats: edizione?.stats
   };
 
@@ -327,20 +461,52 @@ function Editor({ edizione }) {
             </p>
           )}
 
+          {haAutomatiche && (
+            <button type="button" className="bottone-contorno" onClick={aggiornaDaiDati}>Aggiorna dai dati</button>
+          )}
+
           <label htmlFor="s-occhiello">Occhiello</label>
           <input id="s-occhiello" type="text" value={campi.occhiello} onChange={set('occhiello')} placeholder="Es. Il caso" />
 
           <label htmlFor="s-titolo">Titolo</label>
           <input id="s-titolo" type="text" value={campi.titolo} onChange={set('titolo')} placeholder="Es. Sono i re di questa giornata!" />
+          {titoli.length > 0 && !campi.titolo.trim() && (
+            <div className="idee-titolo">
+              <span className="nota-form">Idee:</span>
+              {titoli.map((t) => (
+                <button key={t} type="button" className="idea" onClick={() => setCampi((c) => ({ ...c, titolo: t }))}>{t}</button>
+              ))}
+            </div>
+          )}
 
           <label htmlFor="s-pezzo">Il pezzo</label>
           <textarea
             id="s-pezzo"
             rows={10}
             value={campi.corpo}
-            onChange={set('corpo')}
+            onChange={(e) => { posizione.current = e.target.selectionStart; set('corpo')(e); }}
+            onSelect={(e) => { posizione.current = e.target.selectionStart; }}
             placeholder="Scrivi qui. Lascia una riga vuota tra un paragrafo e l'altro."
           />
+
+          {numeroValido && (
+            <details className="scrivi-dettagli scrivi-spunti">
+              <summary>Spunti della giornata{spunti.length > 0 ? ` · ${spunti.length}` : ''}</summary>
+              {spunti.length === 0 ? (
+                <p className="nota-form">Appena ci sono i punteggi della G{numero}, qui compaiono gli spunti: strisce, colpacci e distacchi.</p>
+              ) : (
+                <ul className="spunti">
+                  {spunti.map((s) => (
+                    <li key={s.id}>
+                      <span className="etichetta">{s.etichetta}</span>
+                      <span className="testo">{s.testo}</span>
+                      <button type="button" className="bottone-link" onClick={() => inserisci(s.testo)}>Inserisci nel pezzo</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </details>
+          )}
 
           {numeroValido && (
             <fieldset className="partita-per-partita">
@@ -348,19 +514,18 @@ function Editor({ edizione }) {
                 Partita per partita <span className="facoltativo">facoltativo</span>
               </legend>
               {scontri.length === 0 ? (
-                <p className="nota-form">Appena il calendario della G{numero} è pronto, qui compaiono gli scontri e puoi scrivere due righe su ognuno.</p>
+                <p className="nota-form">Appena il calendario della G{numero} è pronto, qui compaiono gli scontri con due righe già pronte su ognuno.</p>
               ) : (
                 <>
                   <p className="nota-form">
-                    Due righe per scontro, solo dove hai qualcosa da dire.
+                    Due righe per scontro, già pronte dai risultati: tienile, cambiale o svuotale.
                     {scontriCommentati > 0 && ` Finora ${scontriCommentati} su ${scontri.length}.`}
                   </p>
-                  {scontri.map((a, i) => {
-                    const chiave = chiaveScontro(a);
-                    const testo = commenti[chiave] || '';
+                  {commentiMostrati.map((c, i) => {
+                    const { a } = c;
                     const gol = a.golCasa != null && a.golTrasferta != null ? ` (${a.golCasa}–${a.golTrasferta})` : '';
                     return (
-                      <div className="partita-campo" key={a._id || chiave}>
+                      <div className="partita-campo" key={a._id || c.chiave}>
                         <label htmlFor={`s-partita-${i}`}>
                           {a.squadraCasa.nome} – {a.squadraTrasferta.nome}{gol}
                           {a.fantapuntiCasa != null && a.fantapuntiTrasferta != null && (
@@ -371,14 +536,71 @@ function Editor({ edizione }) {
                           id={`s-partita-${i}`}
                           rows={2}
                           maxLength={MAX_COMMENTO}
-                          value={testo}
-                          onChange={(ev) => setCommenti((c) => ({ ...c, [chiave]: ev.target.value }))}
+                          value={c.testo}
+                          onChange={(ev) => scriviCommento(c, ev.target.value)}
                           placeholder="Es. Un derby da tregua armata: pareggio che non fa male a nessuno"
                         />
-                        <span className="conta">{testo.length}/{MAX_COMMENTO}</span>
+                        <PiedeAuto
+                          auto={c.auto}
+                          haTesto={Boolean(c.testo)}
+                          onAltra={() => altroCommento(c)}
+                          onTorna={() => commentoAutomatico(c)}
+                          conta={`${c.testo.length}/${MAX_COMMENTO}`}
+                        />
                       </div>
                     );
                   })}
+                </>
+              )}
+            </fieldset>
+          )}
+
+          {numeroValido && pagelleMostrate.length > 0 && (
+            <fieldset className="partita-per-partita">
+              <legend>
+                Pagelle <span className="facoltativo">facoltativo</span>
+              </legend>
+              {!conPagelle ? (
+                <>
+                  <p className="nota-form">Un voto e una battuta per ogni squadra, dai punteggi della giornata. Al posto del tabellino dei premi.</p>
+                  <button type="button" className="bottone-contorno" onClick={() => setConPagelle(true)}>Aggiungi le pagelle</button>
+                </>
+              ) : (
+                <>
+                  <p className="nota-form">
+                    Voto dai fantapunti (sotto 60 è 4, mezzo voto ogni 4 punti) e una battuta. Si possono ritoccare entrambi.
+                  </p>
+                  {pagelleMostrate.map((p) => (
+                    <div className="pagella-campo" key={p.id}>
+                      <div className="pagella-testa">
+                        <Stemma src={p.squadra.stemma} nome={p.squadra.nome} size={28} />
+                        <span className="testi">
+                          <span className="nome">{p.squadra.nome}</span>
+                          <span className="dettaglio">{formattaFantapunti(p.fp)} fantapunti</span>
+                        </span>
+                        <span className="voto-stepper">
+                          <button type="button" aria-label={`Abbassa il voto di ${p.squadra.nome}`} onClick={() => cambiaVoto(p, -0.5)}>−</button>
+                          <b>{formattaVoto(p.voto)}</b>
+                          <button type="button" aria-label={`Alza il voto di ${p.squadra.nome}`} onClick={() => cambiaVoto(p, 0.5)}>+</button>
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        maxLength={MAX_BATTUTA}
+                        value={p.battuta}
+                        aria-label={`Battuta su ${p.squadra.nome}`}
+                        onChange={(ev) => scriviBattuta(p, ev.target.value)}
+                      />
+                      <PiedeAuto
+                        auto={p.auto}
+                        haTesto
+                        onAltra={() => altraBattuta(p)}
+                        onTorna={() => pagellaAutomatica(p)}
+                        conta={`${p.battuta.length}/${MAX_BATTUTA}`}
+                      />
+                    </div>
+                  ))}
+                  <button type="button" className="bottone-link" onClick={() => setConPagelle(false)}>Togli le pagelle</button>
                 </>
               )}
             </fieldset>

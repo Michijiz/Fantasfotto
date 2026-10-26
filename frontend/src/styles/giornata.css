@@ -14,6 +14,9 @@
 .scontro .risultato{ display:flex; flex-direction:column; align-items:center; gap:2px; }
 .scontro .risultato b{ font-family:'Anton',sans-serif; font-weight:400; font-size:24px; line-height:1; white-space:nowrap; }
 .scontro .risultato .dettaglio{ font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.scontro.impilato{ border-top:none; }
+.scontro.impilato .lato{ flex-direction:column; text-align:center; gap:4px; }
+.scontro.impilato .casa{ flex-direction:column-reverse; }
 .scontro.mia{
   padding:0 8px; border-radius:16px; border-top-color:transparent;
   background:color-mix(in srgb, var(--stamp-red) 10%, transparent);
@@ -37,7 +40,7 @@
 .archivio-azioni .bottone-link{ align-self:auto; font-size:14px; }
 .archivio-aperta{ padding:0 0 10px; }
 
-/* Dashboard: com'è andata la tua partita nell'ultima edizione. */
-.home-tua{ display:flex; flex-direction:column; gap:4px; padding-top:14px; border-top:1px solid var(--filo-lieve); }
-.home-tua .ritaglio-testa{ padding:0; }
-.home-tua .scontro{ border-top:none; }
+/* Com'è andata la tua partita: Dashboard e articolo. */
+.tua-giornata{ display:flex; flex-direction:column; gap:4px; padding-top:14px; border-top:1px solid var(--filo-lieve); }
+.tua-giornata .ritaglio-testa{ padding:0; }
+.tua-giornata .scontro{ border-top:none; }

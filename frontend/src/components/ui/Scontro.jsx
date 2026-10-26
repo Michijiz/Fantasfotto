@@ -7,12 +7,14 @@ import '../../styles/giornata.css';
 // Un solo modo di mostrare uno scontro: Calendario, Dashboard, Archivio e articolo
 // ne avevano ognuno una copia diversa. Casa a sinistra, trasferta a destra; a
 // partita giocata il risultato (con i fantapunti sotto) e il vincitore sottolineato.
-export function Scontro({ scontro, mia = false }) {
+// `impilato`: stemma sopra il nome, per gli spazi stretti (le carte dell'articolo),
+// dove con lo stemma di fianco i nomi lunghi si spezzavano a metà parola.
+export function Scontro({ scontro, mia = false, impilato = false }) {
   const { squadraCasa: casa, squadraTrasferta: trasferta } = scontro;
   const giocato = conRisultato(scontro);
 
   return (
-    <div className={`scontro${mia ? ' mia' : ''}`}>
+    <div className={`scontro${mia ? ' mia' : ''}${impilato ? ' impilato' : ''}`}>
       <span className={`lato casa${giocato && scontro.golCasa > scontro.golTrasferta ? ' vince' : ''}`}>
         <span className="nome">{casa.nome}</span>
         <Stemma src={casa.stemma} nome={casa.nome} size={30} />

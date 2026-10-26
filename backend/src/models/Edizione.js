@@ -8,7 +8,21 @@ const { stagioneCorrente } = require('../utils/stagione');
 const commentoSchema = new mongoose.Schema({
   squadraCasa: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
   squadraTrasferta: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
-  testo: { type: String, required: true, trim: true, maxlength: 280 }
+  testo: { type: String, required: true, trim: true, maxlength: 280 },
+  // true = la riga l'ha scritta il generatore e nessuno l'ha toccata: "Aggiorna
+  // dai dati" può rigenerarla. Una riga scritta o ritoccata a mano resta com'è.
+  auto: { type: Boolean, default: false }
+}, { _id: false });
+
+// La pagella di una squadra nella giornata: voto in mezzi punti e una battuta.
+// Il voto nasce dai fantapunti (scala fissa, vedi frontend/src/utils/spunti.js) ma
+// si salva come testo definitivo: ricalcolare un punteggio dopo la stampa non deve
+// cambiare retroattivamente quello che i lettori hanno già letto.
+const pagellaSchema = new mongoose.Schema({
+  squadra: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
+  voto: { type: Number, required: true, min: 0, max: 10 },
+  battuta: { type: String, default: '', trim: true, maxlength: 140 },
+  auto: { type: Boolean, default: false }
 }, { _id: false });
 
 // L'edizione è l'articolo mandato in stampa, una per giornata di ogni stagione.
@@ -30,6 +44,7 @@ const edizioneSchema = new mongoose.Schema({
   titolo: { type: String, required: true, trim: true },
   corpo: [{ type: String }],
   commenti: [commentoSchema],
+  pagelle: [pagellaSchema],
   immagineUrl: { type: String, default: '' },
   didascalia: { type: String, default: '', trim: true, maxlength: 140 },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

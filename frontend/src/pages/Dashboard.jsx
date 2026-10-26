@@ -158,7 +158,7 @@ export default function Dashboard() {
             <span className="timbro">Prima pagina · G{ultimaEdizione.giornataNumero}</span>
           </div>
           {esitoUltima && (
-            <div className="home-tua">
+            <div className="tua-giornata">
               <div className="ritaglio-testa">
                 <span className="occhiello-oro">La tua G{ultimaEdizione.giornataNumero}</span>
                 <span className="dettaglio">{ESITO_TUO[esitoUltima]}</span>
