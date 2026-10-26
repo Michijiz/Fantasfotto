@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Newspaper, SoccerBall, Gavel, Trophy, Flag } from '@phosphor-icons/react';
-import Sheet from './Sheet';
-import { idDi } from '../../utils/lega';
 import '../../styles/guida.css';
 
-// "Come si gioca": il giro della redazione in cinque schede. Si apre da solo una
+// "Come si gioca": il giro della redazione in cinque schede. Si apre da sola una
 // volta, subito dopo l'iscrizione, e poi resta nel menù per chi la vuole rivedere.
+//
+// È una finestra FISSA, come un avviso: occupa lo schermo, non scorre, non ha link
+// che portano in altre pagine e l'app dietro è bloccata (inert) finché non la si
+// chiude coi suoi bottoni. Non si chiude toccando fuori, né scorrendo.
+//
 // Le regole qui sono il riassunto di quelle del Regolamento: se cambiano là,
 // cambiano anche qui.
 const SCHEDE = [
@@ -50,16 +53,36 @@ const SCHEDE = [
     chiave: 'primi-passi',
     Icona: Trophy,
     titolo: 'Da dove cominci',
-    paragrafi: () => [
-      'Tre mosse per non restare spettatore. Ognuna si fa in meno di un minuto.'
-    ],
-    azioni: true
+    paragrafi: () => ['Tre mosse per non restare spettatore:'],
+    // Solo da leggere: la guida non porta in nessuna pagina.
+    mosse: [
+      ['Gufa la schedina', 'scheda Gioca'],
+      ['Dai un volto alla tua squadra', 'scheda Squadre, poi la matita'],
+      ['Impara il gergo', 'menù, Regolamento e FAQ']
+    ]
   }
 ];
 
 export default function Guida({ aperta, onChiudi, utente }) {
-  const navigate = useNavigate();
   const [indice, setIndice] = useState(0);
+  const bottonePrincipale = useRef(null);
+
+  // Finché la guida è aperta l'app sotto non risponde a tocchi, tastiera e lettori
+  // di schermo: è l'unica cosa con cui si può interagire. Al ritorno il fuoco
+  // torna dov'era.
+  useEffect(() => {
+    if (!aperta) return undefined;
+    const radice = document.getElementById('root');
+    const precedente = document.activeElement;
+    radice?.setAttribute('inert', '');
+    bottonePrincipale.current?.focus({ preventScroll: true });
+    return () => {
+      radice?.removeAttribute('inert');
+      if (precedente instanceof HTMLElement) precedente.focus({ preventScroll: true });
+    };
+  }, [aperta]);
+
+  if (!aperta) return null;
 
   // Alla chiusura si riparte dalla prima scheda: la prossima apertura (dal menù)
   // non deve trovarsi a metà guida.
@@ -72,57 +95,29 @@ export default function Guida({ aperta, onChiudi, utente }) {
   const ultima = indice === SCHEDE.length - 1;
   const { Icona } = scheda;
 
-  const vai = (path, opzioni) => {
-    chiudi();
-    navigate(path, opzioni);
-  };
+  return createPortal(
+    <div className="guida-velo">
+      <div className="guida" role="dialog" aria-modal="true" aria-label="Come si gioca">
+        <span className="guida-conto">{indice + 1} di {SCHEDE.length}</span>
 
-  return (
-    <Sheet aperto={aperta} onChiudi={chiudi} titolo="Come si gioca" sottotitolo={`${indice + 1} di ${SCHEDE.length}`}>
-      <div className="guida">
         <div className="guida-scheda" key={scheda.chiave}>
-          <span className="guida-icona" aria-hidden="true"><Icona size={34} weight="fill" /></span>
-          <h4 className="guida-titolo">{scheda.titolo}</h4>
+          <span className="guida-icona" aria-hidden="true"><Icona size={32} weight="fill" /></span>
+          <h2 className="guida-titolo">{scheda.titolo}</h2>
           {scheda.paragrafi(utente).map((p) => <p key={p} className="guida-testo">{p}</p>)}
-
-          {scheda.azioni && (
-            <div className="guida-azioni">
-              <button type="button" className="guida-azione" onClick={() => vai('/gioca')}>
-                <span className="n">1</span>
-                <span className="testi">
-                  <b>Gufa la schedina</b>
-                  <span>Scegli 1, X o 2 su ogni scontro</span>
-                </span>
-              </button>
-              <button type="button" className="guida-azione" onClick={() => vai(`/squadre/${idDi(utente.squadra)}`)}>
-                <span className="n">2</span>
-                <span className="testi">
-                  <b>Dai un volto alla tua squadra</b>
-                  <span>Rosa, motto e colori: tocca la matita</span>
-                </span>
-              </button>
-              <button type="button" className="guida-azione" onClick={() => vai('/regolamento', { state: { sezione: 'glossario' } })}>
-                <span className="n">3</span>
-                <span className="testi">
-                  <b>Impara il gergo</b>
-                  <span>Gufo, cedolino, culo, ristampa: il glossario</span>
-                </span>
-              </button>
-            </div>
+          {scheda.mosse && (
+            <ol className="guida-mosse">
+              {scheda.mosse.map(([titolo, dove], i) => (
+                <li key={titolo}>
+                  <span className="n">{i + 1}</span>
+                  <span className="testi"><b>{titolo}</b><span>{dove}</span></span>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
 
-        <div className="guida-punti" role="group" aria-label="Schede della guida">
-          {SCHEDE.map((s, i) => (
-            <button
-              key={s.chiave}
-              type="button"
-              className={`guida-punto${i === indice ? ' corrente' : ''}`}
-              aria-label={`Scheda ${i + 1}: ${s.titolo}`}
-              aria-current={i === indice ? 'step' : undefined}
-              onClick={() => setIndice(i)}
-            />
-          ))}
+        <div className="guida-punti" aria-hidden="true">
+          {SCHEDE.map((s, i) => <span key={s.chiave} className={`guida-punto${i === indice ? ' corrente' : ''}`} />)}
         </div>
 
         <div className="guida-nav">
@@ -132,12 +127,13 @@ export default function Guida({ aperta, onChiudi, utente }) {
             <button type="button" className="bottone-contorno" onClick={chiudi}>Salta</button>
           )}
           {ultima ? (
-            <button type="button" className="bottone-grande" onClick={chiudi}>Ho capito, entro</button>
+            <button type="button" className="bottone-grande" ref={bottonePrincipale} onClick={chiudi}>Ho capito, entro</button>
           ) : (
-            <button type="button" className="bottone-grande" onClick={() => setIndice(indice + 1)}>Avanti</button>
+            <button type="button" className="bottone-grande" ref={bottonePrincipale} onClick={() => setIndice(indice + 1)}>Avanti</button>
           )}
         </div>
       </div>
-    </Sheet>
+    </div>,
+    document.body
   );
 }

@@ -38,9 +38,9 @@
 }
 .passi li.attuale .nome{ color:var(--ink); font-weight:600; }
 
-.passo-azioni{ display:flex; gap:10px; align-items:stretch; margin-top:6px; }
-.passo-azioni .bottone-contorno{ flex:0 0 auto; margin-top:0; }
-.passo-azioni .bottone-grande{ flex:1 1 auto; margin-top:0; }
+/* "Avanti" a tutta larghezza come gli altri bottoni grandi dell'accesso, "Indietro"
+   sotto, secondario: stesso schema di tutte le schermate. */
+.accesso .ritaglio > .bottone-contorno{ width:100%; margin-top:10px; }
 
 .accesso .ruolo-carta{ padding:16px 18px; border-radius:20px; }
 .accesso .ruolo-carta .nome{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
