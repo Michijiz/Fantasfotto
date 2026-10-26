@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { CaretRight } from '@phosphor-icons/react';
 import { useDati } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import Stemma from './Stemma';
-import { estremiGiornata } from '../../utils/lega';
+import { estremiGiornata, idDi } from '../../utils/lega';
 import { formattaFantapunti } from '../../utils/regolamento';
 
 function Premio({ etichetta, squadre, punti, vuoto, largo }) {
@@ -26,12 +27,41 @@ function Premio({ etichetta, squadre, punti, vuoto, largo }) {
   );
 }
 
+const chiaveScontro = (casa, trasferta) => `${idDi(casa)}>${idDi(trasferta)}`;
+
+// Uno scontro con le sue due righe: squadre, risultato e commento del direttore.
+function Partita({ scontro, testo, mia }) {
+  const { squadraCasa: casa, squadraTrasferta: trasferta } = scontro;
+  const risultato = scontro.golCasa != null && scontro.golTrasferta != null;
+
+  return (
+    <div className={`partita${mia ? ' mia' : ''}`}>
+      {mia && <span className="partita-mia">La tua partita</span>}
+      <div className="partita-testa">
+        <span className="lato">
+          <Stemma src={casa?.stemma} nome={casa?.nome} size={30} />
+          <span className="nome">{casa?.nome || 'Casa'}</span>
+          {scontro.fantapuntiCasa != null && <span className="punti">{formattaFantapunti(scontro.fantapuntiCasa)}</span>}
+        </span>
+        <span className="esito">{risultato ? `${scontro.golCasa}–${scontro.golTrasferta}` : 'vs'}</span>
+        <span className="lato">
+          <Stemma src={trasferta?.stemma} nome={trasferta?.nome} size={30} />
+          <span className="nome">{trasferta?.nome || 'Trasferta'}</span>
+          {scontro.fantapuntiTrasferta != null && <span className="punti">{formattaFantapunti(scontro.fantapuntiTrasferta)}</span>}
+        </span>
+      </div>
+      <p className="partita-testo">{testo}</p>
+    </div>
+  );
+}
+
 // Un'edizione impaginata come pezzo di giornale: foto col timbro della giornata,
 // didascalia, occhiello, titolo, firma, testo e in fondo il tabellino.
 // Il tabellino ha solo premi calcolati: miglior e peggior punteggio dai fantapunti
 // della giornata, Re dei Gufi dalle schedine. Il resto lo giudica la lega nei verdetti.
 export default function Article({ edizione }) {
   const { giornate } = useDati();
+  const { utente } = useAuth();
   const navigate = useNavigate();
   if (!edizione) return null;
 
@@ -40,6 +70,15 @@ export default function Article({ edizione }) {
   // Il Re dei Gufi si decide a giornata conclusa: finché è aperta, "nessuno" non è
   // una notizia ma solo una cosa che non si sa ancora.
   const giornata = giornate.find((g) => g.numero === edizione.giornataNumero);
+  // Le due righe sugli scontri, nell'ordine del calendario. Si legano alla coppia
+  // di squadre: uno scontro uscito dal calendario non compare più.
+  const miaSquadra = idDi(utente?.squadra);
+  const testiPerScontro = new Map((edizione.commenti || [])
+    .map((c) => [chiaveScontro(c.squadraCasa, c.squadraTrasferta), c.testo]));
+  const partite = (giornata?.accoppiamenti || [])
+    .map((a) => ({ a, testo: testiPerScontro.get(chiaveScontro(a.squadraCasa, a.squadraTrasferta)) }))
+    .filter((p) => p.testo);
+
   const vuotoGufi = giornata && !giornata.conclusa
     ? 'Si decide a giornata conclusa'
     : 'Nessuno: tutti gufi a vuoto';
@@ -59,6 +98,20 @@ export default function Article({ edizione }) {
       <div className="articolo-corpo">
         {edizione.corpo.map((p, i) => <p key={i}>{p}</p>)}
       </div>
+
+      {partite.length > 0 && (
+        <section className="partite">
+          <div className="ritaglio-occhiello"><span>Partita per partita</span><span className="filo" /></div>
+          {partite.map(({ a, testo }) => (
+            <Partita
+              key={a._id || chiaveScontro(a.squadraCasa, a.squadraTrasferta)}
+              scontro={a}
+              testo={testo}
+              mia={Boolean(miaSquadra) && [idDi(a.squadraCasa), idDi(a.squadraTrasferta)].includes(miaSquadra)}
+            />
+          ))}
+        </section>
+      )}
 
       <div className="tabellino">
         <div className="ritaglio-occhiello"><span>Il tabellino</span><span className="filo" /></div>

@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const Edizione = require('../models/Edizione');
+const Giornata = require('../models/Giornata');
 const Schedina = require('../models/Schedina');
 const Voto = require('../models/Voto');
 const { registra } = require('../services/attivita');
@@ -68,7 +70,53 @@ const ultima = async (req, res) => {
 // voleva dire due posti in cui sbagliarli e un solo posto in cui accorgersene.
 // L'edizione è l'articolo; i premi del tabellino si calcolano.
 
-const MAX = { firma: 60, occhiello: 80, titolo: 160, didascalia: 140, paragrafo: 4000, paragrafi: 60 };
+const MAX = {
+  firma: 60, occhiello: 80, titolo: 160, didascalia: 140, paragrafo: 4000, paragrafi: 60,
+  commento: 280, commenti: 30
+};
+
+const chiaveScontro = (casa, trasferta) => `${casa}>${trasferta}`;
+
+// I commenti per scontro arrivano come [{ squadraCasa, squadraTrasferta, testo }].
+// Un testo vuoto vuol dire "nessun commento per questo scontro" e viene scartato:
+// il modulo manda un campo per ogni scontro, compilato o no.
+function leggiCommenti(grezzi) {
+  if (!Array.isArray(grezzi) || grezzi.length > MAX.commenti) {
+    throw errore(400, 'Commenti non validi');
+  }
+  const visti = new Set();
+  const commenti = [];
+  for (const c of grezzi) {
+    const testo = typeof c?.testo === 'string' ? c.testo.trim() : '';
+    if (!testo) continue;
+    const casa = String(c.squadraCasa || '');
+    const trasferta = String(c.squadraTrasferta || '');
+    if (!mongoose.isValidObjectId(casa) || !mongoose.isValidObjectId(trasferta)) {
+      throw errore(400, 'Commento su uno scontro non valido');
+    }
+    if (testo.length > MAX.commento) {
+      throw errore(400, `Un commento è troppo lungo (massimo ${MAX.commento} caratteri)`);
+    }
+    const chiave = chiaveScontro(casa, trasferta);
+    if (visti.has(chiave)) throw errore(400, 'Due commenti sullo stesso scontro');
+    visti.add(chiave);
+    commenti.push({ squadraCasa: casa, squadraTrasferta: trasferta, testo });
+  }
+  return commenti;
+}
+
+// I commenti devono riguardare scontri che esistono nel calendario di quella
+// giornata: un commento su uno scontro che non c'è non si vedrebbe da nessuna parte.
+async function verificaScontri(stagione, giornataNumero, commenti) {
+  if (!commenti || commenti.length === 0) return;
+  const giornata = await Giornata.findOne({ stagione, numero: giornataNumero })
+    .select('accoppiamenti.squadraCasa accoppiamenti.squadraTrasferta').lean();
+  const presenti = new Set((giornata?.accoppiamenti || [])
+    .map((a) => chiaveScontro(a.squadraCasa, a.squadraTrasferta)));
+  if (commenti.some((c) => !presenti.has(chiaveScontro(c.squadraCasa, c.squadraTrasferta)))) {
+    throw errore(400, `Un commento riguarda uno scontro che non è nel calendario della G${giornataNumero}`);
+  }
+}
 
 // Valida e ripulisce il corpo della richiesta. Lancia un errore 400 con il
 // messaggio da mostrare; `attuale` è l'edizione già salvata, se si sta correggendo.
@@ -106,7 +154,12 @@ function campiEdizione(body, attuale = null) {
     throw errore(400, `La didascalia è troppo lunga (massimo ${MAX.didascalia} caratteri)`);
   }
 
-  return { giornataNumero: numero, direttore, occhiello, titolo, corpo, immagineUrl, didascalia };
+  const campi = { giornataNumero: numero, direttore, occhiello, titolo, corpo, immagineUrl, didascalia };
+  // Chi non manda `commenti` (per esempio una versione dell'app rimasta in cache
+  // sul telefono) non deve cancellare quelli già scritti: il campo si tocca solo
+  // se arriva esplicito.
+  if (body.commenti !== undefined) campi.commenti = leggiCommenti(body.commenti);
+  return campi;
 }
 
 const giaStampata = (numero) => errore(
@@ -127,6 +180,8 @@ const crea = async (req, res) => {
   if (await Edizione.exists({ stagione, giornataNumero: campi.giornataNumero })) {
     throw giaStampata(campi.giornataNumero);
   }
+
+  await verificaScontri(stagione, campi.giornataNumero, campi.commenti);
 
   // L'indice unico copre la corsa tra due direttori che stampano insieme: il
   // controllo sopra dà il messaggio giusto, l'indice è la garanzia.
@@ -159,6 +214,8 @@ const aggiorna = async (req, res) => {
       throw errore(409, 'Questa edizione ha già dei verdetti: non si può spostare su un\'altra giornata');
     }
   }
+
+  await verificaScontri(edizione.stagione, campi.giornataNumero, campi.commenti);
 
   edizione.set(campi);
   await edizione.save();

@@ -1,6 +1,16 @@
 const mongoose = require('mongoose');
 const { stagioneCorrente } = require('../utils/stagione');
 
+// Due righe su uno scontro della giornata. Si lega alla COPPIA di squadre (casa,
+// trasferta) e non all'id dello scontro: la redazione può risalvare il calendario
+// senza che i commenti restino orfani. Stessa regola delle schedine: invertire casa
+// e trasferta è un altro scontro.
+const commentoSchema = new mongoose.Schema({
+  squadraCasa: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
+  squadraTrasferta: { type: mongoose.Schema.Types.ObjectId, ref: 'Squadra', required: true },
+  testo: { type: String, required: true, trim: true, maxlength: 280 }
+}, { _id: false });
+
 // L'edizione è l'articolo mandato in stampa, una per giornata di ogni stagione.
 // giornataNumero è un'etichetta (per il timbro/byline), non un riferimento a un
 // documento Giornata.
@@ -19,6 +29,7 @@ const edizioneSchema = new mongoose.Schema({
   occhiello: { type: String, required: true, trim: true },
   titolo: { type: String, required: true, trim: true },
   corpo: [{ type: String }],
+  commenti: [commentoSchema],
   immagineUrl: { type: String, default: '' },
   didascalia: { type: String, default: '', trim: true, maxlength: 140 },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

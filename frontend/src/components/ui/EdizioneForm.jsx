@@ -4,8 +4,23 @@ import { useAuth } from '../../context/AuthContext';
 import { useDati } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import ImageUpload from './ImageUpload';
+import { idDi } from '../../utils/lega';
+import { formattaFantapunti } from '../../utils/regolamento';
 
 const vuoto = { giornataNumero: '', direttore: '', occhiello: '', titolo: '', corpo: '', immagineUrl: '', didascalia: '' };
+
+const MAX_COMMENTO = 280;
+
+// Un commento si lega alla coppia casa-trasferta dello scontro, non al suo id: il
+// calendario può essere risalvato senza che i commenti perdano il loro scontro.
+const chiaveScontro = (a) => `${idDi(a.squadraCasa)}>${idDi(a.squadraTrasferta)}`;
+
+// I commenti già scritti, indicizzati per scontro, per riempire i campi.
+function commentiDa(ed) {
+  const per = {};
+  for (const c of ed?.commenti || []) per[`${idDi(c.squadraCasa)}>${idDi(c.squadraTrasferta)}`] = c.testo;
+  return per;
+}
 
 function daEdizione(ed, firma) {
   if (!ed) return { ...vuoto, direttore: firma };
@@ -29,6 +44,7 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
   const { giornate, ricaricaTutto } = useDati();
   const mostraToast = useToast();
   const [campi, setCampi] = useState(() => daEdizione(edizione, utente?.nomeVisualizzato || ''));
+  const [commenti, setCommenti] = useState(() => commentiDa(edizione));
   const [errore, setErrore] = useState('');
   const [inviando, setInviando] = useState(false);
   const inviandoRef = useRef(false);
@@ -40,6 +56,9 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
   const giornata = numero ? giornate.find((g) => g.numero === numero) : null;
   const senzaPunteggi = numero > 0 && !(giornata?.accoppiamenti || [])
     .some((a) => a.fantapuntiCasa != null || a.fantapuntiTrasferta != null);
+
+  // Gli scontri della giornata scelta, dal calendario: un campo per ognuno.
+  const scontri = giornata?.accoppiamenti || [];
 
   const submit = async (e) => {
     e.preventDefault();
@@ -61,7 +80,16 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
       titolo: campi.titolo.trim(),
       corpo,
       immagineUrl: campi.immagineUrl || '',
-      didascalia: campi.didascalia.trim()
+      didascalia: campi.didascalia.trim(),
+      // Solo gli scontri della giornata scelta e solo quelli con del testo: se hai
+      // cambiato numero di giornata, i commenti scritti per l'altra non partono.
+      commenti: scontri
+        .map((a) => ({
+          squadraCasa: idDi(a.squadraCasa),
+          squadraTrasferta: idDi(a.squadraTrasferta),
+          testo: (commenti[chiaveScontro(a)] || '').trim()
+        }))
+        .filter((c) => c.testo)
     };
 
     try {
@@ -69,7 +97,10 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
       else await api.post('/api/edizioni', dati);
       await ricaricaTutto();
       mostraToast(modifica ? 'Edizione corretta!' : 'Edizione mandata in stampa!');
-      if (!modifica) setCampi(daEdizione(null, utente?.nomeVisualizzato || ''));
+      if (!modifica) {
+        setCampi(daEdizione(null, utente?.nomeVisualizzato || ''));
+        setCommenti({});
+      }
       onFatto();
     } catch (err) {
       setErrore(err.message);
@@ -95,6 +126,45 @@ export default function EdizioneForm({ edizione = null, onFatto }) {
 
       <label htmlFor="e-pezzo">Il pezzo</label>
       <textarea id="e-pezzo" rows={9} value={campi.corpo} onChange={set('corpo')} placeholder="Scrivi qui. Lascia una riga vuota tra un paragrafo e l'altro." />
+
+      {numero > 0 && (
+        <fieldset className="partita-per-partita">
+          <legend>Partita per partita <span className="facoltativo">facoltativo</span></legend>
+          {scontri.length === 0 ? (
+            <p className="nota-form">
+              Il calendario della G{numero} non c&apos;è ancora: appena lo carichi, qui compaiono gli scontri e puoi scrivere due righe su ognuno.
+            </p>
+          ) : (
+            <>
+              <p className="nota-form">Due righe per scontro, solo dove hai qualcosa da dire. Quelli lasciati vuoti non compaiono.</p>
+              {scontri.map((a, i) => {
+                const chiave = chiaveScontro(a);
+                const testo = commenti[chiave] || '';
+                const gol = a.golCasa != null && a.golTrasferta != null ? ` (${a.golCasa}–${a.golTrasferta})` : '';
+                return (
+                  <div className="partita-campo" key={a._id || chiave}>
+                    <label htmlFor={`e-partita-${i}`}>
+                      {a.squadraCasa?.nome || 'Casa'} – {a.squadraTrasferta?.nome || 'Trasferta'}{gol}
+                      {a.fantapuntiCasa != null && a.fantapuntiTrasferta != null && (
+                        <span className="facoltativo"> · {formattaFantapunti(a.fantapuntiCasa)} a {formattaFantapunti(a.fantapuntiTrasferta)}</span>
+                      )}
+                    </label>
+                    <textarea
+                      id={`e-partita-${i}`}
+                      rows={2}
+                      maxLength={MAX_COMMENTO}
+                      value={testo}
+                      onChange={(ev) => setCommenti((c) => ({ ...c, [chiave]: ev.target.value }))}
+                      placeholder="Es. Un derby da tregua armata: pareggio che non fa male a nessuno"
+                    />
+                    <span className="conta">{testo.length}/{MAX_COMMENTO}</span>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </fieldset>
+      )}
 
       <ImageUpload
         label="Foto (facoltativa)"
