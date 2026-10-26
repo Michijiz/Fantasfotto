@@ -12,13 +12,13 @@
 // vivono in una cache a parte con un tetto di voci, così le build vecchie non si
 // accumulano all'infinito nel dispositivo.
 
-const VERSIONE = 'v13';
+const VERSIONE = 'v14';
 const CACHE_SHELL = `gazzetta-shell-${VERSIONE}`;
 const CACHE_ASSET = `gazzetta-asset-${VERSIONE}`;
 const CACHE_RUNTIME = `gazzetta-runtime-${VERSIONE}`;
 const CACHE_ATTUALI = [CACHE_SHELL, CACHE_ASSET, CACHE_RUNTIME];
 
-const SHELL = ['/', '/manifest.json', '/icons/icon-192.png'];
+const SHELL = ['/', '/manifest.json', '/icons/gs-192.png'];
 const TIMEOUT_NAVIGAZIONE_MS = 4000;
 const MAX_VOCI_RUNTIME = 80;
 const MAX_VOCI_ASSET = 40;
