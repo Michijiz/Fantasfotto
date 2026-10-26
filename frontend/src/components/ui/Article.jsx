@@ -126,7 +126,7 @@ export default function Article({ edizione }) {
     <article className="ritaglio articolo">
       <div className={`articolo-foto${edizione.immagineUrl ? '' : ' vuota'}`}>
         {edizione.immagineUrl && <img src={edizione.immagineUrl} alt="" />}
-        <span className="timbro">Giornata {edizione.giornataNumero}</span>
+        <span className="etichetta-g">G{edizione.giornataNumero}</span>
       </div>
       {edizione.didascalia && <div className="articolo-didascalia">{edizione.didascalia}</div>}
 

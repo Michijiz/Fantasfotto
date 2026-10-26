@@ -93,6 +93,12 @@
 }
 .testatina span:last-child{ text-align:right; }
 
+/* Etichetta discreta della giornata sulla foto: piccola, in un angolo, senza cornice. */
+.etichetta-g{
+  position:absolute; left:12px; bottom:10px; padding:2px 8px; border-radius:999px;
+  background:rgba(0,0,0,.42); color:#fff; font-family:'Oswald',sans-serif; font-size:11px; font-weight:500; letter-spacing:.1em;
+}
+
 /* Timbro inclinato (ruolo, giornata). */
 .timbro{
   display:inline-block; transform:rotate(-7deg); padding:6px 13px; border:3px solid var(--gold); border-radius:12px;
