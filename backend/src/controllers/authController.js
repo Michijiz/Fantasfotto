@@ -66,6 +66,10 @@ const testo = (v) => (v == null ? '' : String(v).trim());
 // assegna a mano sul database, non lo si sceglie da un menù a tendina.
 const RUOLI_ISCRIZIONE = ['giocatore', 'redattore'];
 
+// I codici (invito, redazione) si confrontano senza badare a maiuscole e minuscole:
+// sul telefono la tastiera le cambia da sola e nessuno deve sbagliare per quello.
+const codiciUguali = (a, b) => testo(a).toLowerCase() === testo(b).toLowerCase();
+
 // Se CODICE_REDAZIONE è configurato, chi si iscrive come redattore deve saperlo:
 // senza, "redattore" sarebbe una voce che chiunque può spuntare per riscrivere i
 // punteggi altrui. Se la variabile non c'è, la scelta resta libera — in una lega
@@ -75,7 +79,7 @@ function verificaRuolo(ruoloRichiesto, codiceRedazione) {
   if (ruolo !== 'redattore') return { ruolo };
 
   const atteso = testo(process.env.CODICE_REDAZIONE);
-  if (atteso && codiceRedazione !== atteso) {
+  if (atteso && !codiciUguali(codiceRedazione, atteso)) {
     return { errore: 'Codice della redazione sbagliato: la direzione non si improvvisa' };
   }
   return { ruolo };
@@ -107,7 +111,7 @@ const verificaInvito = async (req, res) => {
   }
 
   const codice = testo(req.body.codiceInvito);
-  if (!codice || codice !== process.env.CODICE_INVITO) {
+  if (!codice || !codiciUguali(codice, process.env.CODICE_INVITO)) {
     const attuale = voce && voce.fino > ora ? voce : { n: 0, fino: ora + FINESTRA_INVITO_MS };
     erroriInvito.set(ip, { n: attuale.n + 1, fino: attuale.fino });
     return res.status(403).json({ errore: 'Codice invito sbagliato: chiedilo al direttore, gentilmente' });
@@ -130,7 +134,7 @@ const registrati = async (req, res) => {
   if (!username || !nomeVisualizzato || !pin || !squadraId || !codiceInvito) {
     return res.status(400).json({ errore: 'Manca qualcosa: anche in redazione si compila tutto' });
   }
-  if (codiceInvito !== process.env.CODICE_INVITO) {
+  if (!codiciUguali(codiceInvito, process.env.CODICE_INVITO)) {
     return res.status(403).json({ errore: 'Codice invito sbagliato: chiedilo al direttore, gentilmente' });
   }
   if (!/^\d{4,6}$/.test(pin)) {

@@ -308,7 +308,7 @@ export default function Login() {
                   senza, la redazione resta chiusa.
                 </p>
                 <Campo id="r-invito" etichetta="Codice invito della lega">
-                  <input id="r-invito" type="text" autoCapitalize="characters" autoComplete="off" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
+                  <input id="r-invito" type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" value={regCodice} onChange={(e) => setRegCodice(e.target.value)} placeholder="chiedilo al direttore" />
                 </Campo>
                 <button className="bottone-grande" type="submit" disabled={caricando}>
                   {caricando ? 'Controllo…' : 'Avanti'}
