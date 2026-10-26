@@ -5,7 +5,7 @@ import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Stemma from './Stemma';
-import { formattaQuota } from '../../utils/regolamento';
+import { formattaQuota, formattaFantapunti } from '../../utils/regolamento';
 
 const SEGNI = ['1', 'X', '2'];
 
@@ -41,6 +41,8 @@ function esitoTesto(giornata, miaSchedina) {
 
 function Scontro({ a, scelta, quotaGiocata, soloLettura, onScegli }) {
   const uscito = esitoReale(a);
+  const haFantapunti = a.fantapuntiCasa != null && a.fantapuntiTrasferta != null;
+  const pariConPuntiDiversi = uscito === 'X' && haFantapunti && a.fantapuntiCasa !== a.fantapuntiTrasferta;
   return (
     <div className="cedolino-scontro">
       <div className="squadre">
@@ -74,7 +76,13 @@ function Scontro({ a, scelta, quotaGiocata, soloLettura, onScegli }) {
         })}
       </div>
       {soloLettura && uscito && (
-        <span className="dettaglio risultato">Risultato: {a.golCasa} – {a.golTrasferta}</span>
+        <span className="dettaglio risultato">
+          Risultato: {a.golCasa} – {a.golTrasferta}
+          {haFantapunti && <> · fantapunti {formattaFantapunti(a.fantapuntiCasa)} / {formattaFantapunti(a.fantapuntiTrasferta)}</>}
+          {/* L'esito si decide sui gol, non sui fantapunti: se i punti differiscono ma i gol
+              sono pari, senza questa riga sembrerebbe un errore dell'app. */}
+          {pariConPuntiDiversi && <><br />Pari sui gol: conta il risultato, non i fantapunti</>}
+        </span>
       )}
     </div>
   );
