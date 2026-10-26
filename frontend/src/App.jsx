@@ -7,6 +7,7 @@ import Splash from './components/ui/Splash';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Ultima from './pages/Ultima';
+import Scrivi from './pages/Scrivi';
 import Lega from './pages/Lega';
 import Gioca from './pages/Gioca';
 import Squadre from './pages/Squadre';
@@ -33,6 +34,8 @@ function Gate() {
         <Route element={<AppShell />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/gazzetta" element={<Ultima />} />
+          <Route path="/gazzetta/scrivi" element={<Scrivi />} />
+          <Route path="/gazzetta/scrivi/:id" element={<Scrivi />} />
           <Route path="/lega" element={<Lega />} />
           <Route path="/gioca" element={<Gioca />} />
           <Route path="/archivio" element={<Archivio />} />

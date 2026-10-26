@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const Edizione = require('../models/Edizione');
+const Giornata = require('../models/Giornata');
 const Schedina = require('../models/Schedina');
 const Voto = require('../models/Voto');
 const { registra } = require('../services/attivita');
@@ -8,6 +10,10 @@ const { stagioneCorrente, filtroStagione } = require('../utils/stagione');
 // L'autore è l'utente che ha stampato l'edizione; la firma (`direttore`) è solo
 // l'etichetta che si legge sul giornale.
 const POPOLA_AUTORE = { path: 'createdBy', select: 'nomeVisualizzato' };
+// Le pagelle portano nome e stemma della squadra: la pagina non deve incrociarli
+// da sola con la lista squadre.
+const POPOLA_PAGELLE = { path: 'pagelle.squadra', select: 'nome stemma' };
+const POPOLA = [POPOLA_AUTORE, POPOLA_PAGELLE];
 
 const errore = (status, messaggio) => Object.assign(new Error(messaggio), { status });
 
@@ -44,7 +50,7 @@ async function conReDeiGufi(edizioni) {
 const lista = async (req, res) => {
   const edizioni = await Edizione.find(filtroStagione(req))
     .sort({ stagione: -1, giornataNumero: -1 })
-    .populate(POPOLA_AUTORE)
+    .populate(POPOLA)
     .lean();
   res.json({ edizioni: await conReDeiGufi(edizioni) });
 };
@@ -57,7 +63,7 @@ const lista = async (req, res) => {
 const ultima = async (req, res) => {
   const edizione = await Edizione.findOne({ stagione: stagioneCorrente() })
     .sort({ giornataNumero: -1, createdAt: -1 })
-    .populate(POPOLA_AUTORE)
+    .populate(POPOLA)
     .lean();
   const [con] = await conReDeiGufi(edizione ? [edizione] : []);
   res.json({ edizione: con || null });
@@ -68,7 +74,75 @@ const ultima = async (req, res) => {
 // voleva dire due posti in cui sbagliarli e un solo posto in cui accorgersene.
 // L'edizione è l'articolo; i premi del tabellino si calcolano.
 
-const MAX = { firma: 60, occhiello: 80, titolo: 160, didascalia: 140, paragrafo: 4000, paragrafi: 60 };
+const MAX = {
+  firma: 60, occhiello: 80, titolo: 160, didascalia: 140, paragrafo: 4000, paragrafi: 60,
+  commento: 280, commenti: 30, battuta: 140, pagelle: 30
+};
+
+const chiaveScontro = (casa, trasferta) => `${casa}>${trasferta}`;
+
+// I commenti per scontro arrivano come [{ squadraCasa, squadraTrasferta, testo }].
+// Un testo vuoto vuol dire "nessun commento per questo scontro" e viene scartato:
+// il modulo manda un campo per ogni scontro, compilato o no.
+function leggiCommenti(grezzi) {
+  if (!Array.isArray(grezzi) || grezzi.length > MAX.commenti) {
+    throw errore(400, 'Commenti non validi');
+  }
+  const visti = new Set();
+  const commenti = [];
+  for (const c of grezzi) {
+    const testo = typeof c?.testo === 'string' ? c.testo.trim() : '';
+    if (!testo) continue;
+    const casa = String(c.squadraCasa || '');
+    const trasferta = String(c.squadraTrasferta || '');
+    if (!mongoose.isValidObjectId(casa) || !mongoose.isValidObjectId(trasferta)) {
+      throw errore(400, 'Commento su uno scontro non valido');
+    }
+    if (testo.length > MAX.commento) {
+      throw errore(400, `Un commento è troppo lungo (massimo ${MAX.commento} caratteri)`);
+    }
+    const chiave = chiaveScontro(casa, trasferta);
+    if (visti.has(chiave)) throw errore(400, 'Due commenti sullo stesso scontro');
+    visti.add(chiave);
+    commenti.push({ squadraCasa: casa, squadraTrasferta: trasferta, testo, auto: c.auto === true });
+  }
+  return commenti;
+}
+
+// Le pagelle arrivano come [{ squadra, voto, battuta, auto }]. Il voto si porta ai
+// mezzi punti, come si danno a scuola e sul campo: 6,5 sì, 6,37 no.
+function leggiPagelle(grezze) {
+  if (!Array.isArray(grezze) || grezze.length > MAX.pagelle) throw errore(400, 'Pagelle non valide');
+  const viste = new Set();
+  return grezze.map((p) => {
+    const squadra = String(p?.squadra || '');
+    if (!mongoose.isValidObjectId(squadra)) throw errore(400, 'Una pagella riguarda una squadra non valida');
+    if (viste.has(squadra)) throw errore(400, 'Due pagelle per la stessa squadra');
+    viste.add(squadra);
+    const voto = Number(p.voto);
+    if (!Number.isFinite(voto) || voto < 0 || voto > 10) throw errore(400, 'Il voto di una pagella deve stare tra 0 e 10');
+    const battuta = typeof p.battuta === 'string' ? p.battuta.trim() : '';
+    if (battuta.length > MAX.battuta) throw errore(400, `Una battuta è troppo lunga (massimo ${MAX.battuta} caratteri)`);
+    return { squadra, voto: Math.round(voto * 2) / 2, battuta, auto: p.auto === true };
+  });
+}
+
+// Commenti e pagelle devono riguardare scontri e squadre che esistono nel
+// calendario di quella giornata: altrimenti non si vedrebbero da nessuna parte.
+async function verificaCalendario(stagione, giornataNumero, { commenti, pagelle }) {
+  if ((!commenti || commenti.length === 0) && (!pagelle || pagelle.length === 0)) return;
+  const giornata = await Giornata.findOne({ stagione, numero: giornataNumero })
+    .select('accoppiamenti.squadraCasa accoppiamenti.squadraTrasferta').lean();
+  const scontri = giornata?.accoppiamenti || [];
+  const presenti = new Set(scontri.map((a) => chiaveScontro(a.squadraCasa, a.squadraTrasferta)));
+  if ((commenti || []).some((c) => !presenti.has(chiaveScontro(c.squadraCasa, c.squadraTrasferta)))) {
+    throw errore(400, `Un commento riguarda uno scontro che non è nel calendario della G${giornataNumero}`);
+  }
+  const inCampo = new Set(scontri.flatMap((a) => [String(a.squadraCasa), String(a.squadraTrasferta)]));
+  if ((pagelle || []).some((p) => !inCampo.has(String(p.squadra)))) {
+    throw errore(400, `Una pagella riguarda una squadra che non gioca nella G${giornataNumero}`);
+  }
+}
 
 // Valida e ripulisce il corpo della richiesta. Lancia un errore 400 con il
 // messaggio da mostrare; `attuale` è l'edizione già salvata, se si sta correggendo.
@@ -106,7 +180,13 @@ function campiEdizione(body, attuale = null) {
     throw errore(400, `La didascalia è troppo lunga (massimo ${MAX.didascalia} caratteri)`);
   }
 
-  return { giornataNumero: numero, direttore, occhiello, titolo, corpo, immagineUrl, didascalia };
+  const campi = { giornataNumero: numero, direttore, occhiello, titolo, corpo, immagineUrl, didascalia };
+  // Chi non manda `commenti` (per esempio una versione dell'app rimasta in cache
+  // sul telefono) non deve cancellare quelli già scritti: il campo si tocca solo
+  // se arriva esplicito.
+  if (body.commenti !== undefined) campi.commenti = leggiCommenti(body.commenti);
+  if (body.pagelle !== undefined) campi.pagelle = leggiPagelle(body.pagelle);
+  return campi;
 }
 
 const giaStampata = (numero) => errore(
@@ -115,7 +195,7 @@ const giaStampata = (numero) => errore(
 
 // Rilegge un'edizione nella forma di lista (autore e premi inclusi).
 async function leggi(id) {
-  const edizione = await Edizione.findById(id).populate(POPOLA_AUTORE).lean();
+  const edizione = await Edizione.findById(id).populate(POPOLA).lean();
   const [con] = await conReDeiGufi(edizione ? [edizione] : []);
   return con;
 }
@@ -127,6 +207,8 @@ const crea = async (req, res) => {
   if (await Edizione.exists({ stagione, giornataNumero: campi.giornataNumero })) {
     throw giaStampata(campi.giornataNumero);
   }
+
+  await verificaCalendario(stagione, campi.giornataNumero, campi);
 
   // L'indice unico copre la corsa tra due direttori che stampano insieme: il
   // controllo sopra dà il messaggio giusto, l'indice è la garanzia.
@@ -159,6 +241,8 @@ const aggiorna = async (req, res) => {
       throw errore(409, 'Questa edizione ha già dei verdetti: non si può spostare su un\'altra giornata');
     }
   }
+
+  await verificaCalendario(edizione.stagione, campi.giornataNumero, campi);
 
   edizione.set(campi);
   await edizione.save();

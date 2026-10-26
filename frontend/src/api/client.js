@@ -36,24 +36,43 @@ function messaggioPerStato(status) {
   return 'Qualcosa si è inceppato in tipografia. Riprova tra poco';
 }
 
-async function richiesta(path, { method = 'GET', body, isFormData = false } = {}) {
+// Errori che passano da soli riprovando: rete che cade, timeout, funzione
+// serverless ancora a freddo (502/503/504). Un 400 o un 401 invece non cambiano.
+const STATI_TRANSITORI = new Set([502, 503, 504]);
+
+const attendi = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function unaRichiesta(path, { method, body, isFormData, timeoutMs }) {
   const avevaToken = Boolean(token);
   const headers = {};
   if (!isFormData) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  // Senza un limite, una connessione mobile che si pianta a metà lasciava il
+  // bottone su "Sviluppo il rullino…" per sempre.
+  const controllo = timeoutMs ? new AbortController() : null;
+  const scatto = controllo ? setTimeout(() => controllo.abort(), timeoutMs) : null;
+
   let res;
+  let testo;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      signal: controllo?.signal
     });
-  } catch {
-    throw new Error('Connessione assente, riprova');
+    testo = await res.text();
+  } catch (err) {
+    const scaduto = err?.name === 'AbortError';
+    throw Object.assign(
+      new Error(scaduto ? 'La connessione è troppo lenta, riprova' : 'Connessione assente, riprova'),
+      { transitorio: true }
+    );
+  } finally {
+    if (scatto) clearTimeout(scatto);
   }
 
-  const testo = await res.text();
   let dati = {};
   if (testo) {
     try {
@@ -67,9 +86,26 @@ async function richiesta(path, { method = 'GET', body, isFormData = false } = {}
     // Solo se una sessione c'era davvero: il 401 del login sbagliato è un'altra
     // cosa e non deve far partire un "sei stato disconnesso".
     if (res.status === 401 && avevaToken) sessioneScaduta();
-    throw new Error(dati.errore || messaggioPerStato(res.status));
+    throw Object.assign(new Error(dati.errore || messaggioPerStato(res.status)), {
+      status: res.status,
+      transitorio: STATI_TRANSITORI.has(res.status)
+    });
   }
   return dati;
+}
+
+// `tentativi` > 1 solo per richieste che si possono ripetere senza danni: un
+// caricamento di foto sì (al massimo resta un file in più su Cloudinary), un
+// "manda in stampa" no.
+async function richiesta(path, { method = 'GET', body, isFormData = false, timeoutMs = 0, tentativi = 1 } = {}) {
+  for (let n = 1; ; n++) {
+    try {
+      return await unaRichiesta(path, { method, body, isFormData, timeoutMs });
+    } catch (err) {
+      if (!err.transitorio || n >= tentativi) throw err;
+      await attendi(800 * n);
+    }
+  }
 }
 
 export const api = {
@@ -78,5 +114,8 @@ export const api = {
   put: (path, body) => richiesta(path, { method: 'PUT', body }),
   patch: (path, body) => richiesta(path, { method: 'PATCH', body }),
   delete: (path) => richiesta(path, { method: 'DELETE' }),
-  upload: (path, formData) => richiesta(path, { method: 'POST', body: formData, isFormData: true })
+  // Foto: fino a 3 tentativi, 60 secondi l'uno (il primo può partire a freddo).
+  upload: (path, formData) => richiesta(path, {
+    method: 'POST', body: formData, isFormData: true, timeoutMs: 60000, tentativi: 3
+  })
 };

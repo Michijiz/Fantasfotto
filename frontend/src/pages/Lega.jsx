@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
+import Scontri from '../components/ui/Scontro';
 import Sheet from '../components/ui/Sheet';
 import AlboForm from '../components/ui/AlboForm';
 import AlboDOro from '../components/ui/AlboDOro';
@@ -86,29 +87,7 @@ function Calendario({ sonoRedazione, onModifica }) {
             </span>
             <span className={`chip-tempo${statoGiornata(g) === 'conclusa' ? ' chiaro' : ''}`}>{statoGiornata(g)}</span>
           </div>
-          {g.accoppiamenti.length === 0 ? (
-            <p className="ritaglio-vuoto">Scontri non ancora impostati: ci pensa il direttore di turno.</p>
-          ) : g.accoppiamenti.filter((a) => a.squadraCasa && a.squadraTrasferta).map((a) => {
-            const risultato = a.golCasa != null && a.golTrasferta != null;
-            return (
-              <div className="scontro" key={a._id}>
-                <span className={`lato casa${risultato && a.golCasa > a.golTrasferta ? ' vince' : ''}`}>
-                  <span className="nome">{a.squadraCasa.nome}</span>
-                  <Stemma src={a.squadraCasa.stemma} nome={a.squadraCasa.nome} size={30} />
-                </span>
-                {risultato ? (
-                  <span className="risultato">
-                    <b>{a.golCasa} – {a.golTrasferta}</b>
-                    <span className="dettaglio">{formattaFantapunti(a.fantapuntiCasa)} / {formattaFantapunti(a.fantapuntiTrasferta)}</span>
-                  </span>
-                ) : <span className="vs">VS</span>}
-                <span className={`lato trasferta${risultato && a.golTrasferta > a.golCasa ? ' vince' : ''}`}>
-                  <Stemma src={a.squadraTrasferta.stemma} nome={a.squadraTrasferta.nome} size={30} />
-                  <span className="nome">{a.squadraTrasferta.nome}</span>
-                </span>
-              </div>
-            );
-          })}
+          <Scontri giornata={g} />
           {sonoRedazione && (
             <button type="button" className="bottone-link" onClick={() => onModifica(g)}>Modifica</button>
           )}

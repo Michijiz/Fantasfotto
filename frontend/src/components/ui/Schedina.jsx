@@ -5,9 +5,9 @@ import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Stemma from './Stemma';
+import { formattaQuota } from '../../utils/regolamento';
 
 const SEGNI = ['1', 'X', '2'];
-const formattaQuota = (n) => (n == null ? '—' : Number(n).toFixed(2).replace('.', ','));
 
 // '1' | 'X' | '2' già uscito, oppure null se lo scontro non ha ancora un risultato.
 const esitoReale = (a) => {

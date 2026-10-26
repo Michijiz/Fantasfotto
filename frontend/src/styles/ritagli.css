@@ -32,7 +32,9 @@
   text-transform:uppercase; color:var(--ink); overflow-wrap:anywhere;
 }
 .ritaglio-titolo.medio{ font-size:28px; }
-.ritaglio-testa{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+/* flex-wrap: il titolo resta intero e la pillola ("fischio d'inizio tra 6g 2h") scende sotto se non c'è posto. */
+.ritaglio-testa{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; }
+.ritaglio-testa .ritaglio-titolo{ overflow-wrap:normal; }
 
 /* Livello piccolo: dettagli e note. */
 .dettaglio{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.04em; color:var(--ink-soft); }

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Plus } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
 import { DataProvider } from '../../context/DataContext';
@@ -9,13 +9,14 @@ import BottomNav from './BottomNav';
 import InstallBanner from './InstallBanner';
 import RistampaBanner from './RistampaBanner';
 import Drawer from './Drawer';
-import Sheet from '../ui/Sheet';
-import EdizioneForm from '../ui/EdizioneForm';
 
 function ShellInterno({ utente }) {
   const scrollRef = useRef(null);
   const { pathname } = useLocation();
-  const [sheetNuovaAperta, setSheetNuovaAperta] = useState(false);
+  const navigate = useNavigate();
+  // Sulla pagina di scrittura la navigazione in basso e il tasto + lasciano il
+  // posto alla barra "Manda in stampa".
+  const scrivendo = pathname.startsWith('/gazzetta/scrivi');
   const [drawerAperto, setDrawerAperto] = useState(false);
 
   // Il contenitore di scroll è unico per tutte le pagine: senza questo, passando
@@ -27,12 +28,12 @@ function ShellInterno({ utente }) {
   }, [pathname]);
 
   return (
-    <div id="appScreen">
+    <div id="appScreen" className={scrivendo ? 'scrivendo' : undefined}>
       <InstallBanner />
       <RistampaBanner />
       <div className="area-scroll">
         <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
-        <div className="contenuto" ref={scrollRef}>
+        <div className={`contenuto${scrivendo ? ' scrivendo' : ''}`} ref={scrollRef}>
           <div className="tab-content attiva">
             <Outlet context={{ utente }} />
           </div>
@@ -41,17 +42,13 @@ function ShellInterno({ utente }) {
 
       <Drawer aperto={drawerAperto} onChiudi={() => setDrawerAperto(false)} />
 
-      {puoRedigere(utente) && (
-        <button className="fab" onClick={() => setSheetNuovaAperta(true)} title="Si va in stampa" aria-label="Si va in stampa">
+      {puoRedigere(utente) && !scrivendo && (
+        <button className="fab" onClick={() => navigate('/gazzetta/scrivi')} title="Si va in stampa" aria-label="Si va in stampa">
           <Plus size={26} weight="bold" />
         </button>
       )}
 
-      <Sheet aperto={sheetNuovaAperta} onChiudi={() => setSheetNuovaAperta(false)} titolo="Si va in stampa" grande>
-        {sheetNuovaAperta && <EdizioneForm onFatto={() => setSheetNuovaAperta(false)} />}
-      </Sheet>
-
-      <BottomNav />
+      {!scrivendo && <BottomNav />}
     </div>
   );
 }

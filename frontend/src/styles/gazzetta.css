@@ -101,3 +101,103 @@ select.filtro{ width:auto; padding-right:18px; background-image:none; }
 .archivio-riga .testi{ flex:1 1 auto; display:flex; flex-direction:column; gap:3px; min-width:0; }
 .archivio-riga .titolo{ font-size:16.5px; font-weight:700; line-height:1.3; }
 .archivio-riga svg{ flex:0 0 auto; }
+
+/* Modulo edizione: due righe per scontro. */
+.partita-per-partita{ border:none; margin:18px 0 6px; padding:0; min-width:0; display:flex; flex-direction:column; gap:12px; }
+.partita-per-partita legend{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.1em; text-transform:uppercase; padding:0; margin-bottom:6px; }
+.partita-per-partita .nota-form{ margin:0; }
+.partita-campo{ display:flex; flex-direction:column; gap:6px; }
+.partita-campo label{ margin:0; }
+.partita-campo textarea{ resize:vertical; min-height:64px; }
+.partita-campo .conta{ align-self:flex-end; font-size:12px; color:var(--ink-soft); }
+
+/* Articolo: partita per partita. */
+.partite{ display:flex; flex-direction:column; gap:12px; padding-top:18px; border-top:1px solid var(--filo-lieve); }
+.partita{ display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:20px; background:var(--paper-dark); min-width:0; }
+.partita.mia{ box-shadow:0 0 0 2px var(--stamp-red); }
+.partita-testo{ margin:0; font-size:17px; line-height:1.6; }
+
+/* Pagina di scrittura (pages/Scrivi.jsx). */
+.scrivi-ripresa{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-radius:16px;
+  background:var(--paper-dark); font-size:15px;
+}
+.scrivi-ripresa .bottone-link{ align-self:auto; }
+#s-pezzo{ min-height:220px; resize:vertical; }
+.scrivi-form .nota-form .bottone-link{ font-size:13px; padding:0; }
+.scrivi-dettagli{ margin-top:14px; border-top:1px solid var(--filo-lieve); padding-top:4px; }
+.scrivi-dettagli summary{
+  list-style:none; cursor:pointer; padding:12px 0; font-family:'Oswald',sans-serif; font-size:15px;
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.scrivi-dettagli summary::-webkit-details-marker{ display:none; }
+.scrivi-dettagli summary::after{ content:' ▾'; }
+.scrivi-dettagli[open] summary::after{ content:' ▴'; }
+
+/* Barra fissa in fondo: cosa manca e il tasto per mandare in stampa. */
+.scrivi-barra{
+  position:sticky; bottom:0; z-index:5; margin:0 -16px; padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  display:flex; flex-direction:column; gap:8px;
+  background:var(--superficie-piena); border-top:1px solid var(--filo-luce); box-shadow:var(--ombra-media);
+}
+.scrivi-barra .stato{ font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.04em; color:var(--ink-soft); text-align:center; }
+.scrivi-barra .stato.errore{ color:var(--stamp-red); }
+.scrivi-barra .bottone-grande:disabled{ opacity:.5; cursor:default; }
+.contenuto.scrivendo{ padding-bottom:0; }
+
+/* Tastiera aperta sulla pagina di scrittura: via barra e testata, e sotto il
+   contenuto lo spazio della tastiera, così anche l'ultimo campo si raggiunge. */
+.con-tastiera .scrivi-barra{ display:none; }
+.con-tastiera #appScreen.scrivendo .app-header{ display:none; }
+.con-tastiera #appScreen.scrivendo .contenuto{ padding-top:12px; padding-bottom:calc(var(--tastiera, 0px) + 24px); }
+
+/* Campi precompilati: etichetta "automatico / tuo" e tasto sotto il campo. */
+.campo-piede{ display:flex; align-items:center; gap:14px; }
+.campo-piede .conta{ margin-left:auto; font-size:12px; color:var(--ink-soft); }
+.campo-piede .bottone-link{ align-self:auto; font-size:13px; padding:0; white-space:nowrap; }
+.etichetta-auto{
+  padding:2px 10px; border-radius:var(--r-pill); border:1.5px solid var(--ink); font-family:'Oswald',sans-serif;
+  font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+}
+.etichetta-auto.auto{ border-color:var(--filo-lieve); color:var(--ink-soft); }
+.partita-campo .conta{ align-self:auto; }
+
+/* Pagelle nel modulo. */
+.pagella-campo{ display:flex; flex-direction:column; gap:8px; padding:12px; border-radius:18px; background:var(--paper-dark); }
+.pagella-testa{ display:flex; align-items:center; gap:10px; }
+.pagella-testa .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+.pagella-testa .nome{ font-family:'Anton',sans-serif; font-size:16px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.voto-stepper{ display:flex; align-items:center; gap:6px; }
+.voto-stepper button{
+  width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; background:var(--superficie-piena);
+  box-shadow:var(--ombra-bassa); color:var(--ink); font-size:22px; line-height:1;
+}
+.voto-stepper b{ min-width:40px; text-align:center; font-family:'Anton',sans-serif; font-weight:400; font-size:26px; }
+.pagella-campo textarea{ min-height:56px; resize:vertical; }
+
+/* Spunti della giornata e idee per il titolo. */
+.spunti{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.spunti li{ display:flex; flex-direction:column; gap:4px; padding:12px; border-radius:16px; background:var(--paper-dark); }
+.spunti .etichetta{ font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.spunti .testo{ font-size:16px; line-height:1.5; }
+.spunti .bottone-link{ align-self:flex-start; font-size:13px; padding:2px 0; }
+.idee-titolo{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin-top:8px; }
+.idee-titolo .idea{
+  padding:8px 12px; border-radius:var(--r-pill); border:1px dashed var(--ink-soft); background:none; cursor:pointer;
+  font-family:'Oswald',sans-serif; font-size:13.5px; color:var(--ink); text-align:left;
+}
+
+/* Articolo: pagelle. */
+.pagelle{ display:flex; flex-direction:column; gap:10px; }
+.pagella{
+  display:grid; grid-template-columns:64px minmax(0, 1fr); column-gap:12px; row-gap:4px; align-items:center;
+  padding:12px 14px; border-radius:18px; background:var(--paper-dark);
+}
+.pagella.mia{ box-shadow:0 0 0 2px var(--stamp-red); }
+.pagella .voto{ grid-row:1 / span 3; min-width:54px; text-align:center; font-family:'Anton',sans-serif; font-size:38px; line-height:1; }
+.pagella .chi{ display:flex; align-items:center; gap:8px; min-width:0; }
+.pagella .nome{ font-family:'Anton',sans-serif; font-size:17px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.pagella .punti{ margin-left:auto; flex:0 0 auto; font-size:14px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+.pagella .tag{ font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.pagella .battuta{ font-size:15.5px; line-height:1.45; font-style:italic; }
+.tabellino-verdetti .votanti{ font-size:13px; opacity:.8; }
