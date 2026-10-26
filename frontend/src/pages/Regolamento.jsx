@@ -40,6 +40,25 @@ const PREMI = [
   ['Vincitore Coppa', 120]
 ];
 
+// Il gergo della Gazzetta, in ordine di apparizione per chi arriva da fuori.
+const GLOSSARIO = [
+  ['Abbonato', 'Chi gioca: legge la Gazzetta, compila la schedina e vota i verdetti.'],
+  ['Direttore di turno', 'Chi compila le giornate, manda in stampa le edizioni e tiene l\'albo d\'oro.'],
+  ['Edizione', 'L\'articolo che racconta una giornata, con titolo e scontri. Mandarla in stampa vuol dire pubblicarla.'],
+  ['Schedina e cedolino', 'La schedina è la multipla della giornata; il cedolino è il foglio su cui la compili e la consegni.'],
+  ['Gufare, gufo', 'Gufare è fare il pronostico (1, X o 2). I gufi sono quelli che hanno consegnato la schedina.'],
+  ['Banco', 'Il periodo in cui la schedina si può consegnare: apre quando gli scontri sono impostati e chiude al fischio d\'inizio.'],
+  ['Quota', 'Il moltiplicatore di ogni segno. Si fissa all\'apertura del banco e non cambia più.'],
+  ['Re dei Gufi', 'Chi vince la schedina della giornata. Finisce nel tabellino dell\'edizione.'],
+  ['Verdetti, tribunale', 'I voti della lega dopo ogni edizione: sette categorie, un voto ciascuna.'],
+  ['Fantapunti', 'La somma dei voti dei calciatori con bonus e malus. Decidono quanti gol fa una squadra.'],
+  ['Fede', 'La squadra reale che tifi: dà i colori a tutta l\'app.'],
+  ['Culo, Culo Index', 'Quanto il calendario ha aiutato (+) o penalizzato (−) una squadra rispetto alla media di tutte le avversarie. L\'indice dice quanto ha pesato in tutta la lega.'],
+  ['Dal ritiro', 'Le notizie dalla lega: chi ha cambiato lo stemma, consegnato la schedina, ritoccato il profilo.'],
+  ['Ristampa', 'È uscita una versione nuova dell\'app: tocca Aggiorna per averla.'],
+  ['Albo d\'oro', 'I campioni di ogni stagione.']
+];
+
 const euro = (n) => n.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
 function Voce({ id, titolo, apertaAllInizio, children }) {
@@ -148,7 +167,18 @@ export default function Regolamento() {
 
       <section className="ritaglio">
         <div className="ritaglio-occhiello"><span>Le regole</span><span className="filo" /></div>
-       
+
+        <Voce id="glossario" titolo="Glossario: come si parla qui" apertaAllInizio={sezione === 'glossario'}>
+          <dl className="faq-glossario">
+            {GLOSSARIO.map(([termine, significato]) => (
+              <div key={termine}>
+                <dt>{termine}</dt>
+                <dd>{significato}</dd>
+              </div>
+            ))}
+          </dl>
+        </Voce>
+
         <Voce id="rosa" titolo="Rosa e formazione" apertaAllInizio={sezione === 'rosa'}>
           <p>La rosa è di 25 calciatori: 3 portieri, 8 difensori, 8 centrocampisti e 6 attaccanti.</p>
           <p>Si schiera un modulo tra questi:</p>

@@ -81,6 +81,41 @@ function verificaRuolo(ruoloRichiesto, codiceRedazione) {
   return { ruolo };
 }
 
+// Verifica del codice invito al primo passo dell'iscrizione, così chi non lo
+// conosce lo scopre subito e non dopo aver compilato tutto il modulo. È anche un
+// "oracolo" in più per chi volesse indovinarlo: per questo si blocca per IP dopo
+// pochi errori. In memoria, quindi su serverless vale per istanza: rallenta, non
+// sostituisce un vero rate limit (il codice resta comunque verificato da registrati).
+const MAX_ERRORI_INVITO = 10;
+const FINESTRA_INVITO_MS = 10 * 60 * 1000;
+const erroriInvito = new Map();
+
+const ipDi = (req) => String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '')
+  .split(',')[0].trim() || 'sconosciuto';
+
+const verificaInvito = async (req, res) => {
+  const ip = ipDi(req);
+  const ora = Date.now();
+
+  if (erroriInvito.size > 500) {
+    for (const [chiave, v] of erroriInvito) if (v.fino <= ora) erroriInvito.delete(chiave);
+  }
+
+  const voce = erroriInvito.get(ip);
+  if (voce && voce.fino > ora && voce.n >= MAX_ERRORI_INVITO) {
+    return res.status(429).json({ errore: 'Troppi tentativi: riprova tra qualche minuto' });
+  }
+
+  const codice = testo(req.body.codiceInvito);
+  if (!codice || codice !== process.env.CODICE_INVITO) {
+    const attuale = voce && voce.fino > ora ? voce : { n: 0, fino: ora + FINESTRA_INVITO_MS };
+    erroriInvito.set(ip, { n: attuale.n + 1, fino: attuale.fino });
+    return res.status(403).json({ errore: 'Codice invito sbagliato: chiedilo al direttore, gentilmente' });
+  }
+
+  res.json({ ok: true });
+};
+
 const registrati = async (req, res) => {
   const username = testo(req.body.username).toLowerCase();
   const nomeVisualizzato = testo(req.body.nomeVisualizzato);
@@ -293,4 +328,4 @@ const cambiaPin = async (req, res) => {
   res.json({ ok: true });
 };
 
-module.exports = { registrati, login, me, aggiornaTema, aggiornaProfilo, cambiaPin, profiloPubblico };
+module.exports = { registrati, verificaInvito, login, me, aggiornaTema, aggiornaProfilo, cambiaPin, profiloPubblico };

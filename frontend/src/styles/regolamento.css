@@ -180,3 +180,8 @@ button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
   display:flex; justify-content:space-between; gap:6px; padding-top:12px; border-top:1px solid var(--filo-lieve);
   font-family:'Oswald',sans-serif; font-size:14px; color:var(--ink-soft);
 }
+
+/* Glossario (Regolamento → "Glossario: come si parla qui"). */
+.faq-glossario{ margin:0; display:flex; flex-direction:column; gap:12px; }
+.faq-glossario dt{ font-family:'Oswald',sans-serif; font-weight:600; font-size:16px; letter-spacing:.03em; color:var(--ink); }
+.faq-glossario dd{ margin:2px 0 0; font-size:15px; line-height:1.5; color:var(--ink-soft); }

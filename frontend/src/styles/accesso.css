@@ -26,6 +26,22 @@
 .scelta-squadra select{ flex:1 1 auto; font-family:'Anton',sans-serif; font-size:20px; text-transform:uppercase; }
 .stemma-vuoto{ flex:0 0 auto; width:44px; height:44px; border-radius:50%; background:var(--paper-dark); }
 
+/* Indicatore dei passi dell'iscrizione. */
+.passi{ display:flex; gap:8px; margin:0 0 16px; padding:0; list-style:none; }
+.passi li{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.passi .barra{ height:8px; border-radius:var(--r-pill); background:var(--paper-dark); transition:background .2s ease; }
+.passi li.fatto .barra{ background:var(--ink); }
+.passi li.attuale .barra{ background:var(--stamp-red); }
+.passi .nome{
+  font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.passi li.attuale .nome{ color:var(--ink); font-weight:600; }
+
+.passo-azioni{ display:flex; gap:10px; align-items:stretch; margin-top:6px; }
+.passo-azioni .bottone-contorno{ flex:0 0 auto; margin-top:0; }
+.passo-azioni .bottone-grande{ flex:1 1 auto; margin-top:0; }
+
 .accesso .ruolo-carta{ padding:16px 18px; border-radius:20px; }
 .accesso .ruolo-carta .nome{ font-family:'Anton',sans-serif; font-size:24px; text-transform:uppercase; }
 .accesso .ruolo-carta .descrizione{ font-family:'Libre Baskerville',serif; font-size:15px; line-height:1.5; }
