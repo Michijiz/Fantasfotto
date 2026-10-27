@@ -225,6 +225,9 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
       mostraToast('Consegnata. Che la fortuna ti assista');
     } catch (err) {
       mostraToast(err.message);
+      // Se il fischio è passato mentre la pagina era aperta, il server ha rifiutato:
+      // si ricarica perché il cedolino si chiuda e mostri la schedina già consegnata.
+      if (giornata.data && new Date(giornata.data).getTime() <= Date.now()) await onSalvato();
     } finally {
       setInviando(false);
       inviandoRef.current = false;
@@ -364,6 +367,19 @@ function Precedente({ precedente, onSalvato }) {
 export default function Schedina() {
   const { schedina, ricaricaSchedina } = useDati();
   const { giornata, miaSchedina, chiusa, motivo, precedente } = schedina;
+
+  // Chi tiene la pagina aperta fino al fischio la vede chiudersi da sola: si
+  // ricarica a quell'ora (il server decide, qui si chiede solo di nuovo). Se per
+  // l'orologio del telefono sembra già passato ma il server dice ancora "aperta",
+  // si riprova ogni 15 secondi invece di restare con il cedolino aperto per sempre.
+  const fischio = giornata?.data;
+  useEffect(() => {
+    if (chiusa || !fischio) return undefined;
+    const mancano = new Date(fischio).getTime() - Date.now();
+    const attesa = mancano > 0 ? Math.min(mancano + 1000, 2 ** 31 - 1) : 15000;
+    const timer = setTimeout(ricaricaSchedina, attesa);
+    return () => clearTimeout(timer);
+  }, [schedina, chiusa, fischio, ricaricaSchedina]);
 
   if (!giornata) {
     return (

@@ -47,6 +47,7 @@ const salva = async (req, res) => {
   if (!Number.isInteger(numero) || numero < 1) return res.status(400).json({ errore: 'Numero giornata richiesto' });
 
   const aggiornamenti = { createdBy: req.utente.id };
+  const esistente = await Giornata.findOne({ stagione, numero }).select('accoppiamenti data conclusa').lean();
 
   if (accoppiamenti !== undefined) {
     const coppie = (accoppiamenti || []).filter((a) => a.squadraCasa && a.squadraTrasferta);
@@ -70,7 +71,6 @@ const salva = async (req, res) => {
     // sempre. Qui l'id si riprende da quello che c'è già, riconoscendo lo scontro
     // dalle due squadre. Se la coppia cambia (anche solo invertendo campo e
     // trasferta) è un altro scontro e un id nuovo è giusto.
-    const esistente = await Giornata.findOne({ stagione, numero }).select('accoppiamenti').lean();
     const perCoppia = new Map(
       (esistente?.accoppiamenti || []).map((a) => [chiaveCoppia(a.squadraCasa, a.squadraTrasferta), a])
     );
@@ -105,8 +105,33 @@ const salva = async (req, res) => {
   }
 
   if (serieANumero !== undefined) aggiornamenti.serieANumero = serieANumero || undefined;
-  if (data !== undefined) aggiornamenti.data = data || undefined;
+  // Il fischio d'inizio è ciò che chiude le schedine: arriva come istante assoluto
+  // (ISO con fuso, lo manda il form) e qui si controlla che sia una data vera, perché
+  // una data illeggibile non chiuderebbe mai niente.
+  if (data !== undefined) {
+    if (data) {
+      const quando = new Date(data);
+      if (Number.isNaN(quando.getTime())) return res.status(400).json({ errore: "Il fischio d'inizio non è una data valida" });
+      aggiornamenti.data = quando;
+    } else {
+      aggiornamenti.data = undefined;
+    }
+  }
   if (conclusa !== undefined) aggiornamenti.conclusa = Boolean(conclusa);
+
+  // Una giornata ancora da giocare, con gli scontri, deve dire quando inizia: senza
+  // quell'ora le schedine restano aperte anche a partite iniziate, e il banco non
+  // ha modo di accorgersene. Si guarda come resterà la giornata DOPO il salvataggio
+  // (i campi non inviati restano quelli di prima). Le giornate concluse non servono:
+  // lì si correggono solo i risultati.
+  const scontriFinali = aggiornamenti.accoppiamenti ?? esistente?.accoppiamenti ?? [];
+  const dataFinale = 'data' in aggiornamenti ? aggiornamenti.data : esistente?.data;
+  const conclusaFinale = aggiornamenti.conclusa ?? esistente?.conclusa ?? false;
+  if (scontriFinali.length > 0 && !conclusaFinale && !dataFinale) {
+    return res.status(400).json({
+      errore: "Serve il fischio d'inizio: senza, la schedina non si chiude da sola quando partono le partite"
+    });
+  }
 
   const giornata = await Giornata.findOneAndUpdate(
     { stagione, numero },
