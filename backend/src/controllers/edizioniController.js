@@ -3,7 +3,6 @@ const Edizione = require('../models/Edizione');
 const Giornata = require('../models/Giornata');
 const Schedina = require('../models/Schedina');
 const Voto = require('../models/Voto');
-const { registra } = require('../services/attivita');
 const { urlDelNostroCloud } = require('../services/cloudinary');
 const { stagioneCorrente, filtroStagione } = require('../utils/stagione');
 
@@ -213,10 +212,6 @@ const crea = async (req, res) => {
   // L'indice unico copre la corsa tra due direttori che stampano insieme: il
   // controllo sopra dà il messaggio giusto, l'indice è la garanzia.
   const edizione = await Edizione.create({ ...campi, stagione, createdBy: req.utente.id });
-  await registra({
-    autore: req.utente.id, tipo: 'edizione',
-    dati: { giornata: edizione.giornataNumero, titolo: edizione.titolo }, chiave: String(edizione._id)
-  });
   res.status(201).json({ edizione: await leggi(edizione._id) });
 };
 

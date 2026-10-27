@@ -1,11 +1,14 @@
 const Attivita = require('../models/Attivita');
+const { TIPI } = require('../models/Attivita');
 
-// Le ultime attività della lega, dalla più recente. Le righe di utenti o squadre
-// che non esistono più (o disattivati) si scartano invece di mostrare "qualcuno".
+// Le ultime schedine giocate e i verdetti emessi, dalla più recente. Le righe di
+// utenti o squadre che non esistono più (o disattivati) si scartano invece di
+// mostrare "qualcuno". Il filtro sul tipo serve anche per le vecchie righe di
+// temi, profili e simili ancora nel database: spariscono da sole entro 60 giorni.
 const lista = async (req, res) => {
   const limite = Math.min(50, Math.max(1, Number(req.query.limite) || 20));
 
-  const righe = await Attivita.find()
+  const righe = await Attivita.find({ tipo: { $in: TIPI } })
     .sort({ quando: -1 })
     .limit(limite * 2)
     .populate('autore', 'nomeVisualizzato avatar tema attivo')

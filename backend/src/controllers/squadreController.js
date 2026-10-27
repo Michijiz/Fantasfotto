@@ -7,7 +7,6 @@ const User = require('../models/User');
 const { calcolaClassifica, repartiModulo } = require('../utils/regolamento');
 const { calcolaCulo, calcolaInvertiti } = require('../utils/culo');
 const { urlDelNostroCloud } = require('../services/cloudinary');
-const { registra } = require('../services/attivita');
 
 // Quante foto può tenere l'album di una squadra.
 const MAX_ALBUM = 30;
@@ -258,43 +257,8 @@ const aggiornaMiaSquadra = async (req, res) => {
 
   const squadra = await Squadra.findByIdAndUpdate(utente.squadra, { $set: aggiornamenti }, { new: true, runValidators: true });
 
-  const campi = campiCambiati(attuale, squadra.toObject());
-  if (campi.length) {
-    await registra({
-      autore: req.utente.id, tipo: 'squadra', squadra: squadra._id,
-      dati: { campi, nome: squadra.nome, ...(campi.includes('nome') ? { vecchioNome: attuale.nome } : {}) },
-      chiave: String(squadra._id), unisci: 'campi'
-    });
-  }
-
   res.json({ squadra });
 };
-
-// Cosa è cambiato davvero tra prima e dopo il salvataggio, con i nomi che usa il
-// diario della lega (frontend/src/utils/attivita.js li trasforma in parole).
-function campiCambiati(prima, dopo) {
-  const uguale = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-  const pagina = (x) => ({ s: x?.pagina?.stileTitolo || 'pieno', n: x?.pagina?.nascosti || [], o: x?.pagina?.ordine || [] });
-  const rosa = (x) => ({ r: x?.rosaRuoli || {}, v: x?.rosa || [] });
-  // Senza modulo la formazione non esiste: i record vecchi (campo assente) e
-  // quelli con la formazione vuota di default contano come uguali.
-  const formazione = (x) => (x?.formazione?.modulo ? { m: x.formazione.modulo, t: x.formazione.titolari || {} } : null);
-  const confronti = [
-    ['nome', (x) => x.nome],
-    ['stemma', (x) => x.stemma || ''],
-    ['maglia', (x) => x.maglia || ''],
-    ['foto', (x) => x.foto || ''],
-    ['colori', (x) => x.colori || []],
-    ['slogan', (x) => x.slogan || ''],
-    ['occhiello', (x) => x.occhiello || ''],
-    ['storia', (x) => x.bio || ''],
-    ['fondata', (x) => x.fondataNel || null],
-    ['rosa', rosa],
-    ['formazione', formazione],
-    ['pagina', pagina]
-  ];
-  return confronti.filter(([, leggi]) => !uguale(leggi(prima), leggi(dopo))).map(([nome]) => nome);
-}
 
 // --- Album ------------------------------------------------------------------
 
@@ -313,10 +277,6 @@ const aggiungiFoto = async (req, res) => {
   );
   if (!squadra) return res.status(400).json({ errore: `L'album è pieno: massimo ${MAX_ALBUM} foto. Togline qualcuna` });
 
-  await registra({
-    autore: req.utente.id, tipo: 'album', squadra: squadra._id,
-    dati: { quante: 1, nome: squadra.nome }, chiave: String(squadra._id), unisci: 'somma', finestra: 2 * 3600 * 1000
-  });
   res.json({ squadra });
 };
 
