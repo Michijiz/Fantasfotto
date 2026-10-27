@@ -31,6 +31,19 @@ const squadraSchema = new mongoose.Schema({
     A: [{ type: String }]
   },
 
+  // La formazione ideale: un modulo del regolamento e gli 11 titolari scelti dalla
+  // rosa, per ruolo e nell'ordine in cui vanno in campo (da sinistra a destra).
+  // Si salvano i nomi, come in rosaRuoli: il server li ricontrolla a ogni salvataggio.
+  formazione: {
+    modulo: { type: String, default: '' },
+    titolari: {
+      P: [{ type: String }],
+      D: [{ type: String }],
+      C: [{ type: String }],
+      A: [{ type: String }]
+    }
+  },
+
   // --- Personalizzazione della pagina squadra --------------------------------
   // Tutto facoltativo, con valori di default che riproducono la pagina di prima:
   // le squadre già esistenti non cambiano aspetto finché qualcuno non le tocca.

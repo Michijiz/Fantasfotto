@@ -1,0 +1,70 @@
+/* ===== Formazione ideale (components/ui/FormazioneIdeale.jsx + editor in ComponiSquadra) =====
+   Il foglio segue il tema (--paper-dark, --ink); barra e cerchi i colori sociali
+   (--fz-colore / --fz-testo, impostati dal componente). Il prato è fisso. */
+
+.formazione{
+  width:100%; max-width:360px; margin:0 auto; padding:14px; box-sizing:border-box;
+  background:var(--paper-dark); border-radius:var(--r-md); color:var(--ink);
+}
+.fz-barra{
+  background:var(--fz-colore, var(--ink)); color:var(--fz-testo, var(--paper-input));
+  text-align:center; padding:6px 10px 8px; margin:0;
+  font-family:'Anton',sans-serif; font-weight:400; font-size:26px; line-height:1.1;
+  letter-spacing:.04em; text-transform:uppercase; overflow-wrap:anywhere;
+}
+.fz-info{
+  margin:10px 0 12px; text-align:center;
+  font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.06em; text-transform:uppercase;
+}
+.fz-info b{ font-weight:500; color:var(--gold); }
+
+.fz-campo{
+  position:relative; box-sizing:border-box; width:100%; aspect-ratio:340 / 440;
+  background:#c9d0a6; border:5px solid #3e7b2e;
+}
+.fz-campo svg{ position:absolute; inset:0; width:100%; height:100%; stroke:#f3f0e2; stroke-width:1.5; }
+
+.fz-giocatore{
+  position:absolute; transform:translate(-50%, -14px);
+  display:flex; flex-direction:column; align-items:center;
+}
+.fz-giocatore i{
+  width:28px; height:28px; border-radius:50%; box-sizing:border-box;
+  background:var(--fz-colore, var(--ink)); color:var(--fz-testo, var(--paper-input));
+  display:flex; align-items:center; justify-content:center;
+  font-style:normal; font-family:'Anton',sans-serif; font-size:14px; line-height:1;
+}
+.fz-giocatore b{
+  margin-top:3px; max-width:96px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-family:'Oswald',sans-serif; font-weight:500; font-size:12px; letter-spacing:.02em;
+  text-transform:uppercase; color:#1b1b1b;
+}
+.fz-giocatore.fitto b{ font-size:11px; max-width:84px; }
+.fz-modulo{
+  position:absolute; right:8px; bottom:6px;
+  font-family:'Anton',sans-serif; font-size:22px; line-height:1; color:#1b1b1b;
+}
+
+/* ----- Editor (foglio "Componi la squadra") ----- */
+.fz-editor{ display:flex; flex-direction:column; gap:10px; }
+.fz-moduli, .fz-scelte{ display:flex; flex-wrap:wrap; gap:8px; }
+.fz-chip{
+  min-height:44px; padding:0 16px; border-radius:var(--r-pill); cursor:pointer;
+  background:var(--superficie-piena); border:1px solid var(--filo-lieve); color:var(--ink);
+  font-family:'Oswald',sans-serif; font-size:16px; font-variant-numeric:tabular-nums;
+  display:inline-flex; align-items:center; gap:8px;
+  transition:transform .1s var(--ease-tap);
+}
+.fz-chip:active{ transform:scale(.96); }
+.fz-chip[aria-pressed="true"]{ background:var(--ink); color:var(--paper-input); border-color:var(--ink); }
+.fz-chip .posto{
+  min-width:22px; height:22px; border-radius:50%; padding:0 4px; box-sizing:border-box;
+  background:var(--paper-input); color:var(--ink);
+  display:inline-flex; align-items:center; justify-content:center; font-size:13px;
+}
+.fz-reparto-testa{
+  display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-top:6px;
+  font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.08em; text-transform:uppercase;
+}
+.fz-reparto-testa .conta{ font-variant-numeric:tabular-nums; color:var(--ink-soft); }
+.fz-reparto-testa .conta.completo{ color:var(--verde); }

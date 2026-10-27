@@ -15,6 +15,7 @@ const COSE_SQUADRA = {
   storia: 'la storia',
   fondata: "l'anno di fondazione",
   rosa: 'la rosa',
+  formazione: 'la formazione',
   pagina: 'la pagina'
 };
 

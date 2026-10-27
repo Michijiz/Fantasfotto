@@ -8,6 +8,17 @@
 // Le stesse costanti sono replicate in frontend/src/utils/regolamento.js (pagina
 // Regolamento): se cambiano qui, vanno cambiate anche là.
 
+// Moduli consentiti dal regolamento (difensori-centrocampisti-attaccanti).
+// Replicati in frontend/src/utils/regolamento.js.
+const MODULI = ['3-5-2', '3-4-3', '4-5-1', '4-4-2', '4-3-3', '5-3-2', '5-4-1'];
+
+// '4-3-3' → { P: 1, D: 4, C: 3, A: 3 }; null se il modulo non è tra quelli ammessi.
+function repartiModulo(modulo) {
+  if (!MODULI.includes(modulo)) return null;
+  const [D, C, A] = modulo.split('-').map(Number);
+  return { P: 1, D, C, A };
+}
+
 const REGOLE = {
   sogliaPrimoGol: 66,
   ampiezzaFascia: 4,
@@ -338,6 +349,8 @@ function esitoSchedina(pronostici, giornataArricchita) {
 
 module.exports = {
   REGOLE,
+  MODULI,
+  repartiModulo,
   QUOTE,
   chiaveCoppia,
   fantapuntiInGol,

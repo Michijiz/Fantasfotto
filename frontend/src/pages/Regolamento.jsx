@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDati } from '../context/DataContext';
 import {
-  SOGLIA_PRIMO_GOL, AMPIEZZA_FASCIA, PUNTI_VITTORIA, PUNTI_PAREGGIO, PUNTI_SCONFITTA,
+  MODULI, SOGLIA_PRIMO_GOL, AMPIEZZA_FASCIA, PUNTI_VITTORIA, PUNTI_PAREGGIO, PUNTI_SCONFITTA,
   fantapuntiInGol, fasceGol, formattaFantapunti
 } from '../utils/regolamento';
 import '../styles/regolamento.css';
-
-const MODULI = ['3-5-2', '3-4-3', '4-5-1', '4-4-2', '4-3-3', '5-3-2', '5-4-1'];
 
 const BONUS = [
   ['Gol segnato, anche su rigore', '+3'],

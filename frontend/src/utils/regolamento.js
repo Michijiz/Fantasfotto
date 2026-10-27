@@ -9,6 +9,16 @@ export const PUNTI_VITTORIA = 3;
 export const PUNTI_PAREGGIO = 1;
 export const PUNTI_SCONFITTA = 0;
 
+// Moduli consentiti dal regolamento (difensori-centrocampisti-attaccanti).
+export const MODULI = ['3-5-2', '3-4-3', '4-5-1', '4-4-2', '4-3-3', '5-3-2', '5-4-1'];
+
+// '4-3-3' → { P: 1, D: 4, C: 3, A: 3 }; null se il modulo non è tra quelli ammessi.
+export function repartiModulo(modulo) {
+  if (!MODULI.includes(modulo)) return null;
+  const [D, C, A] = modulo.split('-').map(Number);
+  return { P: 1, D, C, A };
+}
+
 const EPS = 1e-9;
 
 export function fantapuntiInGol(fantapunti) {

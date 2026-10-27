@@ -7,12 +7,13 @@ import Avatar from '../components/ui/Avatar';
 import Sheet from '../components/ui/Sheet';
 import ComponiSquadra from '../components/ui/ComponiSquadra';
 import AlbumSquadra from '../components/ui/AlbumSquadra';
+import FormazioneIdeale from '../components/ui/FormazioneIdeale';
 import { avatarUtente } from '../avatar';
 import { magliaSquadra } from '../loghi';
 import { puoCancellare } from '../ruoli';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, formaRecente, derbyPersonale, menzioni, rosaPerRuolo } from '../utils/lega';
-import { bozzaSquadra, ordineRitagli, sfondoColori, miniatura } from '../squadra';
+import { bozzaSquadra, ordineRitagli, sfondoColori, miniatura, formazioneSchierata } from '../squadra';
 import '../styles/squadre.css';
 import '../styles/gazzetta.css';
 import '../styles/albo.css';
@@ -173,6 +174,15 @@ export default function Squadra() {
             </div>
           </div>
         ))}
+      </section>
+    ),
+
+    formazione: (
+      <section className="ritaglio" key="formazione">
+        <Occhiello>La formazione ideale</Occhiello>
+        {formazioneSchierata(squadra)
+          ? <FormazioneIdeale squadra={squadra} nome={nome} colori={colori} />
+          : <p className="ritaglio-vuoto">Formazione ideale ancora da schierare.</p>}
       </section>
     ),
 
