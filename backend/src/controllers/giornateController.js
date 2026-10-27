@@ -105,7 +105,18 @@ const salva = async (req, res) => {
   }
 
   if (serieANumero !== undefined) aggiornamenti.serieANumero = serieANumero || undefined;
-  if (data !== undefined) aggiornamenti.data = data || undefined;
+  // Il fischio d'inizio arriva come istante assoluto (ISO con fuso, lo manda il form)
+  // e qui si controlla che sia una data vera. Non chiude niente: il banco lo chiude
+  // la redazione a mano. Serve alle votazioni e a dire quando si gioca.
+  if (data !== undefined) {
+    if (data) {
+      const quando = new Date(data);
+      if (Number.isNaN(quando.getTime())) return res.status(400).json({ errore: "Il fischio d'inizio non è una data valida" });
+      aggiornamenti.data = quando;
+    } else {
+      aggiornamenti.data = undefined;
+    }
+  }
   if (conclusa !== undefined) aggiornamenti.conclusa = Boolean(conclusa);
 
   const giornata = await Giornata.findOneAndUpdate(

@@ -45,14 +45,14 @@ const GLOSSARIO = [
   ['Edizione', 'L\'articolo che racconta una giornata, con titolo e scontri. Mandarla in stampa vuol dire pubblicarla.'],
   ['Schedina e cedolino', 'La schedina è la multipla della giornata; il cedolino è il foglio su cui la compili e la consegni.'],
   ['Gufare, gufo', 'Gufare è fare il pronostico (1, X o 2). I gufi sono quelli che hanno consegnato la schedina.'],
-  ['Banco', 'Il periodo in cui la schedina si può consegnare: apre quando gli scontri sono impostati e chiude al fischio d\'inizio.'],
+  ['Banco', 'Il periodo in cui la schedina si può consegnare: apre quando gli scontri sono impostati e lo chiude la redazione a mano, quando partono le partite.'],
   ['Quota', 'Il moltiplicatore di ogni segno. Si fissa all\'apertura del banco e non cambia più.'],
   ['Re dei Gufi', 'Chi vince la schedina della giornata. Finisce nel tabellino dell\'edizione.'],
   ['Verdetti, tribunale', 'I voti della lega dopo ogni edizione: sette categorie, un voto ciascuna.'],
   ['Fantapunti', 'La somma dei voti dei calciatori con bonus e malus. Decidono quanti gol fa una squadra.'],
   ['Fede', 'La squadra reale che tifi: dà i colori a tutta l\'app.'],
   ['Culo, Culo Index', 'Quanto il calendario ha aiutato (+) o penalizzato (−) una squadra rispetto alla media di tutte le avversarie. L\'indice dice quanto ha pesato in tutta la lega.'],
-  ['Dal ritiro', 'Le notizie dalla lega: chi ha cambiato lo stemma, consegnato la schedina, ritoccato il profilo.'],
+  ['Dal ritiro', 'Le notizie dalla lega: chi ha consegnato la schedina e chi ha emesso i verdetti.'],
   ['Ristampa', 'È uscita una versione nuova dell\'app: tocca Aggiorna per averla.'],
   ['Albo d\'oro', 'I campioni di ogni stagione.']
 ];
@@ -298,7 +298,7 @@ export default function Regolamento() {
             uguali valgono uguale, chiunque le consegni e in qualunque momento.
           </p>
           <p>
-            Puoi modificarla fino al fischio d&apos;inizio; dopo si chiude. La schedina è vinta solo se azzecchi
+            Una volta consegnata non si cambia più: ci pensi prima. Il banco lo chiude la redazione quando partono le partite, e a giornata finita scopri com&apos;è andata. La schedina è vinta solo se azzecchi
             tutti gli scontri, altrimenti è persa: niente premi parziali. Chi la vince diventa Re dei Gufi e
             finisce nel tabellino dell&apos;edizione.
           </p>

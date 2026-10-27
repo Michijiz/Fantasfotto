@@ -74,7 +74,8 @@ const SCHEDE = [
     intro: () => 'Una sola schedina a giornata: per ogni scontro scegli 1, X o 2.',
     voci: [
       ['La vinci', 'Solo se li azzecchi tutti'],
-      ['Puoi cambiarla', 'Fino al fischio d\'inizio'],
+      ['Non si cambia', 'Una volta consegnata è definitiva'],
+      ['Scopri com\'è andata', 'A giornata finita, con un tocco'],
       ['Il premio', 'Chi vince è Re dei Gufi e finisce nell\'edizione'],
       ['Pallino rosso su Gioca', 'C\'è ancora qualcosa da fare']
     ]

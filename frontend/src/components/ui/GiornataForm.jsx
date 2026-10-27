@@ -18,6 +18,18 @@ const rigaVuota = () => ({ id: rigaId(), casa: '', trasferta: '' });
 // fantapunti ha fatto ognuno. Un posto solo per scrivere i numeri e un posto solo
 // per correggerli — prima i punteggi si inserivano pubblicando l'edizione e non
 // c'era modo di rimetterci mano.
+// Il campo datetime-local lavora in ORA LOCALE, senza fuso. Mostrare
+// toISOString() (che è in UTC) lo spostava di 1-2 ore, e mandare il valore nudo
+// lo faceva leggere al server (UTC) come se fosse ora sua: la schedina si
+// chiudeva con 1-2 ore di ritardo, a partite già iniziate. Si mostra l'ora locale
+// e si invia l'istante vero (ISO con fuso).
+function inOraLocale(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const z = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
 export default function GiornataForm({ giornata, onFatto }) {
   const { squadre, ricaricaTutto } = useDati();
   const { utente } = useAuth();
@@ -29,7 +41,7 @@ export default function GiornataForm({ giornata, onFatto }) {
   const [numero, setNumero] = useState(String(giornata?.numero ?? ''));
   const [serieANumero, setSerieANumero] = useState(String(giornata?.serieANumero ?? ''));
   const [data, setData] = useState(
-    giornata?.data ? new Date(giornata.data).toISOString().slice(0, 16) : ''
+    giornata?.data ? inOraLocale(giornata.data) : ''
   );
   const [conclusa, setConclusa] = useState(Boolean(giornata?.conclusa));
   // Ogni riga porta un id suo: usare l'indice come chiave React faceva sì che,
@@ -127,7 +139,7 @@ export default function GiornataForm({ giornata, onFatto }) {
     try {
       await api.put(`/api/giornate/numero/${n}`, {
         serieANumero: serieANumero ? Number(serieANumero) : undefined,
-        data: data || undefined,
+        data: data ? new Date(data).toISOString() : undefined,
         conclusa,
         accoppiamenti: pieni.map((s) => ({ squadraCasa: s.casa, squadraTrasferta: s.trasferta })),
         punteggi: Object.entries(punteggi)
@@ -180,14 +192,17 @@ export default function GiornataForm({ giornata, onFatto }) {
         </div>
       </div>
 
-      <label>Fischio d'inizio <span className="facoltativo">facoltativo</span></label>
+      <label>Fischio d&apos;inizio <span className="facoltativo">facoltativo</span></label>
       <input
         type="datetime-local"
         className="campo-data"
         value={data}
         onChange={(e) => setData(e.target.value)}
       />
-      <p className="nota-form">Se lo imposti, schedine e votazioni si chiudono da sole a quell&apos;ora.</p>
+      <p className="nota-form">
+        Metti il primo calcio d&apos;inizio della giornata (ora italiana): da quel momento si chiudono le votazioni
+        dell&apos;edizione precedente. La schedina no: il banco lo chiudi tu, a mano, dalla pagina Gioca.
+      </p>
 
       <h2 className="section-title" style={{ marginTop: 18 }}>Scontri</h2>
       {scontri.map((s, i) => (
