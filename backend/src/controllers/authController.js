@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { registra } = require('../services/attivita');
 const Squadra = require('../models/Squadra');
 
 // Dopo MAX_TENTATIVI PIN sbagliati consecutivi, login bloccato per BLOCCO_MINUTI.
@@ -164,8 +163,6 @@ const registrati = async (req, res) => {
     avatar: slugValido(avatarRichiesto) ? avatarRichiesto : ''
   });
 
-  await registra({ autore: user._id, tipo: 'iscrizione', squadra: squadra._id });
-
   const token = firmaToken(user);
   res.status(201).json({ token, utente: pubblico(user) });
 };
@@ -227,8 +224,6 @@ const aggiornaTema = async (req, res) => {
     return res.status(400).json({ errore: 'Tema non valido' });
   }
 
-  const prima = await User.findById(req.utente.id).select('tema').lean();
-
   const user = await User.findByIdAndUpdate(
     req.utente.id,
     { $set: { tema } },
@@ -236,9 +231,6 @@ const aggiornaTema = async (req, res) => {
   ).populate('squadra', 'nome stemma');
 
   if (!user) return res.status(404).json({ errore: 'Utente non trovato' });
-  if (prima && (prima.tema || TEMA_DEFAULT) !== tema) {
-    await registra({ autore: user._id, tipo: 'tema', squadra: user.squadra?._id || user.squadra, dati: { tema } });
-  }
   res.json({ utente: pubblico(user) });
 };
 
@@ -283,8 +275,6 @@ const aggiornaProfilo = async (req, res) => {
     return res.status(400).json({ errore: 'Niente da aggiornare' });
   }
 
-  const prima = await User.findById(req.utente.id).select('nomeVisualizzato avatar profilo').lean();
-
   const user = await User.findByIdAndUpdate(
     req.utente.id,
     { $set: set },
@@ -293,21 +283,6 @@ const aggiornaProfilo = async (req, res) => {
 
   if (!user) return res.status(404).json({ errore: 'Utente non trovato' });
 
-  // Nel diario della lega finisce solo ciò che si vede: nome, avatar e i testi.
-  if (prima) {
-    const campi = [];
-    if (set.nomeVisualizzato !== undefined && set.nomeVisualizzato !== prima.nomeVisualizzato) campi.push('nome');
-    if (set.avatar !== undefined && set.avatar !== (prima.avatar || '')) campi.push('avatar');
-    const testiCambiati = Object.keys(LIMITI_PROFILO)
-      .some((c) => set[`profilo.${c}`] !== undefined && set[`profilo.${c}`] !== (prima.profilo?.[c] || ''));
-    if (testiCambiati) campi.push('testi');
-    if (campi.length) {
-      await registra({
-        autore: user._id, tipo: 'profilo', squadra: user.squadra?._id || user.squadra,
-        dati: { campi, nome: user.nomeVisualizzato }, unisci: 'campi'
-      });
-    }
-  }
   res.json({ utente: pubblico(user) });
 };
 

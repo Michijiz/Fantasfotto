@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 
-// Il diario della lega: chi ha fatto cosa ("Tizio ha cambiato lo stemma",
-// "Caio ha giocato la schedina"). Alimenta il banner in Home e la pagina Allenatori.
+// Il diario della lega: chi ha giocato la schedina e chi ha emesso i verdetti
+// ("Caio ha giocato la schedina della G5"). Alimenta il banner in Home e la
+// pagina Allenatori.
 //
-// Si scrive solo da services/attivita.js, che accorpa le azioni ripetute: dieci
-// salvataggi di fila della stessa squadra sono una riga, non dieci.
-const TIPI = ['iscrizione', 'profilo', 'tema', 'squadra', 'album', 'schedina', 'voti', 'edizione'];
+// Solo queste due azioni: sono quelle che interessano agli altri e che accadono
+// una volta a giornata. Temi, profili, stemmi, foto e iscrizioni non vengono
+// registrati (ogni ritocco sarebbe una scrittura e una riga in più da leggere
+// ogni minuto per nulla). Per aggiungere un tipo basta metterlo qui e chiamare
+// registra() dove succede, più la sua frase in frontend/src/utils/attivita.js.
+//
+// Si scrive solo da services/attivita.js, che accorpa le azioni ripetute.
+const TIPI = ['schedina', 'voti'];
 
 const attivitaSchema = new mongoose.Schema({
   tipo: { type: String, enum: TIPI, required: true },

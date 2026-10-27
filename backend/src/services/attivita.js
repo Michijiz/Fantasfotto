@@ -1,4 +1,5 @@
 const Attivita = require('../models/Attivita');
+const { TIPI } = require('../models/Attivita');
 
 // Finestra entro cui la stessa azione della stessa persona si accorpa alla riga
 // precedente invece di aprirne una nuova.
@@ -9,7 +10,7 @@ const FINESTRA_MS = 30 * 60 * 1000;
 // schedina persa perché il banner non si è scritto sarebbe assurdo).
 //
 //   autore     id dell'utente
-//   tipo       vedi models/Attivita.js
+//   tipo       'schedina' o 'voti' (vedi models/Attivita.js: altri tipi vengono ignorati)
 //   squadra    id della squadra coinvolta (facoltativo)
 //   dati       dettagli per la frase
 //   chiave     cosa rende "la stessa azione" (default: nessuna distinzione)
@@ -20,7 +21,8 @@ const FINESTRA_MS = 30 * 60 * 1000;
 //   finestra   ms entro cui accorpare (default 30 minuti)
 async function registra({ autore, tipo, squadra, dati = {}, chiave = '', unisci, finestra = FINESTRA_MS }) {
   try {
-    if (!autore || !tipo) return;
+    // Ciò che non è nel diario non si scrive, chiunque lo chiami.
+    if (!autore || !TIPI.includes(tipo)) return;
     const ora = new Date();
 
     const precedente = await Attivita.findOne({
