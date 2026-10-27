@@ -117,10 +117,6 @@ export default function GiornataForm({ giornata, onFatto }) {
     if (!n) { setErrore('Serve il numero della giornata'); return; }
 
     const pieni = scontri.filter((s) => s.casa && s.trasferta);
-    if (pieni.length > 0 && !conclusa && !data) {
-      setErrore("Serve il fischio d'inizio: è l'ora in cui la schedina si chiude");
-      return;
-    }
     if (pieni.some((s) => s.casa === s.trasferta)) {
       setErrore('Una squadra non può giocare contro se stessa (nemmeno se se lo merita)');
       return;
@@ -196,7 +192,7 @@ export default function GiornataForm({ giornata, onFatto }) {
         </div>
       </div>
 
-      <label>Fischio d&apos;inizio <span className="facoltativo">obbligatorio con gli scontri</span></label>
+      <label>Fischio d&apos;inizio <span className="facoltativo">facoltativo</span></label>
       <input
         type="datetime-local"
         className="campo-data"
@@ -204,8 +200,8 @@ export default function GiornataForm({ giornata, onFatto }) {
         onChange={(e) => setData(e.target.value)}
       />
       <p className="nota-form">
-        Metti il primo calcio d&apos;inizio della giornata (ora italiana): da quel momento la schedina si chiude da sola,
-        e con essa le votazioni dell&apos;edizione precedente.
+        Metti il primo calcio d&apos;inizio della giornata (ora italiana): da quel momento si chiudono le votazioni
+        dell&apos;edizione precedente. La schedina no: il banco lo chiudi tu, a mano, dalla pagina Gioca.
       </p>
 
       <h2 className="section-title" style={{ marginTop: 18 }}>Scontri</h2>

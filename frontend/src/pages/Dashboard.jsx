@@ -19,7 +19,7 @@ function statoSchedina({ miaSchedina, chiusa }) {
     if (miaSchedina.esito === 'vinta') return { testo: 'Vinta', bottone: 'Conta i danni' };
     if (miaSchedina.esito === 'persa') return { testo: 'Persa', bottone: 'Conta i danni' };
     if (chiusa) return { testo: 'In attesa dei risultati', bottone: 'Conta i danni' };
-    return { testo: `Consegnata, quota ${formattaQuota(miaSchedina.quotaTotale)}`, bottone: 'Rigufa' };
+    return { testo: `Consegnata, quota ${formattaQuota(miaSchedina.quotaTotale)}`, bottone: 'Guarda i gufi' };
   }
   if (chiusa) return { testo: 'Non giocata', bottone: 'Conta i danni' };
   return { testo: 'Da giocare', bottone: 'Gufa ora' };

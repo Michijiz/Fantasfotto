@@ -42,6 +42,12 @@ const giornataSchema = new mongoose.Schema({
   // true quando tutti i punteggi sono definitivi e la giornata può alimentare Edizione/Voto
   conclusa: { type: Boolean, default: false },
 
+  // Il banco lo chiude la redazione, a mano, quando partono le partite: nessun
+  // orologio decide al suo posto (la data d'inizio resta solo un'informazione, e
+  // serve alle votazioni). Si può riaprire. Con la giornata conclusa il banco è
+  // chiuso comunque.
+  schedineChiuse: { type: Boolean, default: false },
+
   // Quando il banco si è aperto, cioè quando le quote degli scontri sono state
   // fissate. Serve solo a raccontarlo: a decidere è la presenza delle quote.
   quoteFissateIl: { type: Date },

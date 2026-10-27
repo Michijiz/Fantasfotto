@@ -21,11 +21,15 @@ const schedinaSchema = new mongoose.Schema({
   quotaTotale: { type: Number, default: 1 },
 
   // Niente valuta e niente punteggio: la multipla è o tutta giusta o persa.
-  esito: { type: String, enum: ['attesa', 'vinta', 'persa'], default: 'attesa' }
+  esito: { type: String, enum: ['attesa', 'vinta', 'persa'], default: 'attesa' },
+
+  // Quando il giocatore ha toccato "Scopri se hai gufato bene". Sta sul server e
+  // non nel browser perché la rivelazione è sua e vale su ogni dispositivo.
+  rivelataIl: { type: Date }
 }, { timestamps: true });
 
-// Una sola schedina per utente per giornata di una stagione: rigiocarla è un
-// update, non un insert.
+// Una sola schedina per utente per giornata di una stagione, e una volta consegnata
+// non si tocca più: il secondo insert viene respinto da questo indice.
 schedinaSchema.index({ utente: 1, stagione: 1, giornataNumero: 1 }, { unique: true });
 schedinaSchema.index({ stagione: 1, giornataNumero: 1, esito: 1 });
 

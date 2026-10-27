@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, X as Croce, CaretDown, CaretUp } from '@phosphor-icons/react';
+import { Check, X as Croce, CaretDown, CaretUp, Eye, Lock, LockOpen } from '@phosphor-icons/react';
 import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { puoRedigere } from '../../ruoli';
 import { useToast } from '../../context/ToastContext';
 import Stemma from './Stemma';
 import { formattaQuota, formattaFantapunti } from '../../utils/regolamento';
@@ -17,10 +18,13 @@ const esitoReale = (a) => {
   return 'X';
 };
 
-function tempo(giornata) {
+// La data è solo un'informazione: il banco lo chiude la redazione, non l'orologio.
+function tempo(giornata, chiusa) {
+  if (giornata?.conclusa) return 'fischio finale';
+  if (chiusa) return 'banco chiuso';
   if (!giornata?.data) return null;
   const diff = new Date(giornata.data).getTime() - Date.now();
-  if (diff <= 0) return giornata.conclusa ? 'fischio finale' : 'in campo';
+  if (diff <= 0) return null;
   return `fischio d'inizio tra ${Math.floor(diff / 86400000)}g ${Math.floor((diff % 86400000) / 3600000)}h`;
 }
 
@@ -183,6 +187,8 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
   const mostraToast = useToast();
   const [scelte, setScelte] = useState({});
   const [inviando, setInviando] = useState(false);
+  // Consegnare è definitivo: il primo tocco chiede conferma, il secondo consegna.
+  const [conferma, setConferma] = useState(false);
   const inviandoRef = useRef(false);
 
   useEffect(() => {
@@ -206,13 +212,21 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
     return Math.round(scelti.reduce((acc, a) => acc * (a.quote?.[scelte[String(a._id)]] ?? 1), 1) * 100) / 100;
   }, [scontri, scelte]);
 
-  const cambiata = miaSchedina && scontri.some((a) => {
-    const p = miaSchedina.pronostici?.find((x) => String(x.accoppiamento) === String(a._id));
-    return p?.esito !== scelte[String(a._id)];
-  });
+  // La conferma si spegne da sola se ci si ripensa, e a ogni modifica del cedolino.
+  useEffect(() => {
+    if (!conferma) return undefined;
+    const t = setTimeout(() => setConferma(false), 6000);
+    return () => clearTimeout(t);
+  }, [conferma]);
+
+  const scegli = (id, segno) => {
+    setConferma(false);
+    setScelte((s) => ({ ...s, [id]: segno }));
+  };
 
   const consegna = async () => {
     if (!completa) { mostraToast('Manca un pronostico: la multipla è una sola.'); return; }
+    if (!conferma) { setConferma(true); return; }
     if (inviandoRef.current) return;
     inviandoRef.current = true;
     setInviando(true);
@@ -222,22 +236,23 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
         pronostici: scontri.map((a) => ({ accoppiamento: a._id, esito: scelte[String(a._id)] }))
       });
       await onSalvato();
-      mostraToast('Consegnata. Che la fortuna ti assista');
+      mostraToast('Consegnata. Ora i gufi aspettano');
     } catch (err) {
       mostraToast(err.message);
-      // Se il fischio è passato mentre la pagina era aperta, il server ha rifiutato:
-      // si ricarica perché il cedolino si chiuda e mostri la schedina già consegnata.
-      if (giornata.data && new Date(giornata.data).getTime() <= Date.now()) await onSalvato();
+      // Il server ha rifiutato (banco chiuso nel frattempo, o schedina già consegnata
+      // da un altro dispositivo): si ricarica perché la pagina dica lo stato vero.
+      await onSalvato();
     } finally {
+      setConferma(false);
       setInviando(false);
       inviandoRef.current = false;
     }
   };
 
-  const t = tempo(giornata);
+  const t = tempo(giornata, chiusa);
   const esito = chiusa ? esitoTesto(giornata, miaSchedina) : null;
-  const etichettaBottone = inviando ? 'Consegno…' : miaSchedina ? 'Aggiorna' : 'Consegna';
-  const bottoneSpento = !completa || (miaSchedina && !cambiata);
+  const etichettaBottone = inviando ? 'Consegno…' : conferma ? 'Conferma: non si cambia più' : 'Consegna';
+  const bottoneSpento = !completa;
 
   return (
     <>
@@ -263,14 +278,14 @@ function Cedolino({ giornata, miaSchedina, chiusa, onSalvato }) {
               scelta={scelte[String(a._id)]}
               quotaGiocata={quoteGiocate[String(a._id)]}
               soloLettura={chiusa}
-              onScegli={(id, segno) => setScelte((s) => ({ ...s, [id]: segno }))}
+              onScegli={scegli}
             />
           ))}
         </div>
         {!chiusa && (
           <div className="barra-consegna">
             <span className="testi">
-              <span className="dettaglio">Quota · {fatti} su {scontri.length}</span>
+              <span className="dettaglio">{conferma ? 'Una volta consegnata è definitiva' : `Quota · ${fatti} su ${scontri.length}`}</span>
               <b>{quotaTotale ? formattaQuota(quotaTotale) : '—'}</b>
             </span>
             <button
@@ -306,10 +321,10 @@ const segnaVisto = (g) => { try { localStorage.setItem(chiaveVisto(g), '1'); } c
 // inseriti l'esito compare in evidenza; con "Visto" si riduce a una riga, e il cedolino
 // completo (pronostici, fantapunti, gli altri gufi) resta a un tocco. L'esito non si
 // può segnare come visto finché è "in attesa": sarebbe sparito prima di sapere com'è andata.
-function EsitoPrecedente({ precedente, onSalvato }) {
+function EsitoPrecedente({ precedente, onSalvato, apertoInizio = false }) {
   const { giornata, miaSchedina } = precedente || {};
   const [visto, setVisto] = useState(() => (giornata ? leggiVisto(giornata) : true));
-  const [aperto, setAperto] = useState(false);
+  const [aperto, setAperto] = useState(apertoInizio);
   if (!giornata) return null;
 
   const risolta = miaSchedina && miaSchedina.esito !== 'attesa';
@@ -350,36 +365,241 @@ function EsitoPrecedente({ precedente, onSalvato }) {
   );
 }
 
-// Il cedolino completo della giornata appena chiusa, con i pronostici degli altri.
-// Prima compariva solo quando non c'era nessuna giornata aperta: con il calendario
-// caricato per tutta la stagione c'è sempre la successiva, e l'esito della schedina
-// appena chiusa spariva dalla pagina senza che nessuno la vedesse come vinta.
-function Precedente({ precedente, onSalvato }) {
-  if (!precedente?.giornata) return null;
+// Dieci e più posatoi sulla chioma: ogni squadra della lega ne prende uno, nell'ordine
+// dell'elenco. Oltre i dodici non c'è più posto sull'albero e i gufi in più non si
+// disegnano (il conteggio a parole resta quello vero).
+const POSATOI = [
+  [190, 82], [130, 104], [252, 106], [100, 154], [164, 138], [226, 142],
+  [284, 158], [190, 186], [146, 64], [236, 66], [140, 184], [244, 184]
+];
+
+// Albero notturno con un paio d'occhi per ogni squadra: aperti se ha consegnato,
+// una lineetta se dorme. Quello col cerchio rosa è il tuo. Colori fissi: è una
+// scena, non una parte del tema.
+function ScenaAlbero({ gufi, descrizione }) {
+  return (
+    <svg className="albero-gufi" viewBox="0 40 380 240" role="img" aria-label={descrizione}>
+      <defs>
+        <g id="gufo-occhi">
+          <circle cx="-9" r="7" fill="#f2c24b" /><circle cx="9" r="7" fill="#f2c24b" />
+          <circle cx="-9" r="3.4" fill="#1d1722" /><circle cx="9" r="3.4" fill="#1d1722" />
+        </g>
+      </defs>
+      <rect y="40" width="380" height="240" fill="#1d1722" />
+      <circle cx="325" cy="64" r="17" fill="#efe6c8" /><circle cx="333" cy="60" r="15" fill="#1d1722" />
+      <rect y="268" width="380" height="12" fill="#120d10" />
+      <path d="M190 284C186 245 192 205 188 155" fill="none" stroke="#3a2a22" strokeWidth="30" strokeLinecap="round" />
+      <ellipse cx="190" cy="112" rx="125" ry="70" fill="#26382d" />
+      <ellipse cx="112" cy="155" rx="70" ry="45" fill="#26382d" />
+      <ellipse cx="268" cy="155" rx="70" ry="45" fill="#26382d" />
+      <ellipse cx="190" cy="182" rx="88" ry="40" fill="#26382d" />
+      <ellipse cx="148" cy="98" rx="62" ry="38" fill="#2f4435" />
+      <ellipse cx="235" cy="104" rx="62" ry="38" fill="#2f4435" />
+      <ellipse cx="190" cy="152" rx="72" ry="40" fill="#2f4435" />
+      {gufi.slice(0, POSATOI.length).map((g, i) => {
+        const [x, y] = POSATOI[i];
+        return (
+          <g key={g.chiave}>
+            {g.mio && <ellipse cx={x} cy={y} rx="22" ry="12" fill="none" stroke="#e58fa6" strokeWidth="1.5" />}
+            {g.sveglio
+              ? <use href="#gufo-occhi" x={x} y={y} className="occhi" style={{ animationDelay: `${(i * 0.9) % 5}s` }} />
+              : <path d={`M${x - 15} ${y}H${x - 5}M${x + 5} ${y}H${x + 15}`} stroke="#6e5f66" strokeWidth="2" strokeLinecap="round" fill="none" />}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// Dopo la consegna il cedolino sparisce: restano i gufi che aspettano il fischio
+// finale e un tasto piccolo per rivedere la propria schedina (in sola lettura).
+function AlberoGufi({ giornata, miaSchedina, chiusa }) {
+  const { squadre } = useDati();
+  const { utente } = useAuth();
+  const mia = typeof utente?.squadra === 'object' ? utente?.squadra?._id : utente?.squadra;
+  const [dati, setDati] = useState(null);
+  const [vedi, setVedi] = useState(false);
+  const numero = giornata.numero;
+
+  useEffect(() => {
+    let attivo = true;
+    let inCorso = false;
+    const carica = () => {
+      if (inCorso || document.visibilityState !== 'visible') return;
+      inCorso = true;
+      api.get(`/api/schedine/giornata/${numero}`)
+        .then((d) => { if (attivo) setDati(d); })
+        .catch(() => { /* resta l'ultimo conteggio noto */ })
+        .finally(() => { inCorso = false; });
+    };
+    carica();
+    // Gli altri consegnano mentre guardi: un poll leggero, fermo a scheda nascosta.
+    const intervallo = setInterval(carica, 30000);
+    document.addEventListener('visibilitychange', carica);
+    return () => {
+      attivo = false;
+      clearInterval(intervallo);
+      document.removeEventListener('visibilitychange', carica);
+    };
+  }, [numero]);
+
+  // La mia consegna la so già io, anche se l'elenco del server non è ancora arrivato.
+  const consegnate = new Set([
+    ...(dati?.partecipanti || []).map((p) => p.squadra?._id),
+    ...(dati?.schedine || []).map((s) => s.squadra?._id),
+    mia
+  ].filter(Boolean));
+  const gufi = squadre.map((s) => ({ chiave: s._id, sveglio: consegnate.has(s._id), mio: s._id === mia }));
+  const svegli = gufi.filter((g) => g.sveglio).length;
+
   return (
     <>
-      <Cedolino giornata={precedente.giornata} miaSchedina={precedente.miaSchedina} chiusa onSalvato={onSalvato} />
-      <AltriGufi giornata={precedente.giornata} chiusa />
+      <section className="ritaglio albero-scheda">
+        <div className="ritaglio-testa">
+          <span className="occhiello-oro">Cedolino · Giornata {giornata.numero}</span>
+          <span className="chip-tempo">Consegnata</span>
+        </div>
+        <ScenaAlbero
+          gufi={gufi}
+          descrizione={`Albero con i gufi: ${svegli} su ${gufi.length} hanno consegnato, il tuo ha il cerchio rosa`}
+        />
+        <h1 className="ritaglio-titolo medio">I gufi aspettano il fischio finale</h1>
+        <p className="dettaglio">
+          {svegli} su {gufi.length} hanno già consegnato. Il gufo col cerchio rosa è il tuo.
+          {chiusa ? ' Il banco è chiuso.' : ' Il banco è ancora aperto: gli altri possono consegnare.'}
+        </p>
+        <p className="dettaglio albero-blocco"><Lock size={15} weight="bold" aria-hidden="true" /> Consegnata: non si può più cambiare.</p>
+        <button type="button" className="bottone-contorno" aria-expanded={vedi} onClick={() => setVedi(!vedi)}>
+          <Eye size={16} weight="bold" /> {vedi ? 'Nascondi la mia schedina' : 'Vedi la mia schedina'}
+        </button>
+      </section>
+      {vedi && <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa onSalvato={() => {}} />}
     </>
+  );
+}
+
+// Giornata finita, schedina consegnata ma ancora da scoprire: l'esito non si mostra
+// da solo. Il tocco è registrato sul server, così vale su ogni dispositivo.
+function RivelaEsito({ giornata, onRivelata }) {
+  const mostraToast = useToast();
+  const { squadre } = useDati();
+  const { utente } = useAuth();
+  const mia = typeof utente?.squadra === 'object' ? utente?.squadra?._id : utente?.squadra;
+  const [invio, setInvio] = useState(false);
+  const gufi = squadre.map((s) => ({ chiave: s._id, sveglio: true, mio: s._id === mia }));
+
+  const scopri = async () => {
+    if (invio) return;
+    setInvio(true);
+    try {
+      await onRivelata(giornata.numero);
+    } catch (err) {
+      mostraToast(err.message);
+      setInvio(false);
+    }
+  };
+
+  return (
+    <section className="ritaglio albero-scheda">
+      <div className="ritaglio-testa">
+        <span className="occhiello-oro">Cedolino · Giornata {giornata.numero}</span>
+        <span className="chip-tempo">Giornata conclusa</span>
+      </div>
+      <ScenaAlbero gufi={gufi} descrizione="Albero con i gufi voltati verso di te" />
+      <h1 className="ritaglio-titolo medio">Il fischio finale è suonato</h1>
+      <p className="dettaglio">I gufi hanno fatto il loro dovere. Ora tocca a te sapere com&apos;è andata.</p>
+      <button type="button" className="bottone-grande" onClick={scopri} disabled={invio}>
+        <Eye size={20} weight="bold" aria-hidden="true" /> {invio ? 'Giro i gufi…' : 'Scopri se hai gufato bene'}
+      </button>
+    </section>
+  );
+}
+
+// Com'è andata la giornata appena chiusa. Se la schedina c'è e non l'hai ancora
+// scoperta, prima viene la rivelazione; dopo, l'esito col cedolino già aperto e i
+// pronostici degli altri gufi. Prima compariva solo quando non c'era nessuna
+// giornata aperta: con il calendario caricato per tutta la stagione ce n'è sempre
+// una successiva, e l'esito spariva dalla pagina senza che nessuno lo vedesse.
+function Precedente({ precedente, onSalvato }) {
+  const [appena, setAppena] = useState(null);
+  if (!precedente?.giornata) return null;
+  const { giornata, miaSchedina } = precedente;
+
+  if (miaSchedina && !miaSchedina.rivelataIl) {
+    const rivela = async (numero) => {
+      await api.post(`/api/schedine/rivela/${numero}`);
+      setAppena(numero);
+      await onSalvato();
+    };
+    return <RivelaEsito giornata={giornata} onRivelata={rivela} />;
+  }
+  return (
+    <EsitoPrecedente
+      key={giornata._id}
+      precedente={precedente}
+      onSalvato={onSalvato}
+      apertoInizio={appena === giornata.numero}
+    />
+  );
+}
+
+// Il banco lo chiude la redazione, a mano, quando partono le partite. Due tocchi
+// per chiudere (si può riaprire, ma i gufi se ne accorgono); uno per riaprire.
+function BancoRedazione({ giornata, chiusa, onCambiato }) {
+  const mostraToast = useToast();
+  const [conferma, setConferma] = useState(false);
+  const [invio, setInvio] = useState(false);
+
+  useEffect(() => {
+    if (!conferma) return undefined;
+    const t = setTimeout(() => setConferma(false), 6000);
+    return () => clearTimeout(t);
+  }, [conferma]);
+
+  const imposta = async (chiuse) => {
+    if (invio) return;
+    setInvio(true);
+    try {
+      await api.put(`/api/schedine/banco/${giornata.numero}`, { chiuse });
+      await onCambiato();
+      mostraToast(chiuse ? 'Banco chiuso: niente più schedine.' : 'Banco riaperto.');
+    } catch (err) {
+      mostraToast(err.message);
+    } finally {
+      setConferma(false);
+      setInvio(false);
+    }
+  };
+
+  const Icona = chiusa ? LockOpen : Lock;
+  return (
+    <section className="ritaglio banco-redazione">
+      <div className="ritaglio-testa">
+        <span className="occhiello-oro">Redazione · Giornata {giornata.numero}</span>
+        <span className="chip-tempo">{chiusa ? 'Banco chiuso' : 'Banco aperto'}</span>
+      </div>
+      <p className="dettaglio">
+        {chiusa
+          ? 'Nessuno può più consegnare. Si chiude da sola la giornata quando la segni conclusa.'
+          : 'Chiudi il banco quando partono le partite: dopo, nessuno potrà più consegnare.'}
+      </p>
+      <button
+        type="button"
+        className="bottone-contorno"
+        disabled={invio}
+        onClick={() => (chiusa ? imposta(false) : conferma ? imposta(true) : setConferma(true))}
+      >
+        <Icona size={16} weight="bold" aria-hidden="true" />
+        {' '}{chiusa ? 'Riapri il banco' : conferma ? 'Conferma: chiudi il banco' : 'Chiudi il banco'}
+      </button>
+    </section>
   );
 }
 
 export default function Schedina() {
   const { schedina, ricaricaSchedina } = useDati();
+  const { utente } = useAuth();
   const { giornata, miaSchedina, chiusa, motivo, precedente } = schedina;
-
-  // Chi tiene la pagina aperta fino al fischio la vede chiudersi da sola: si
-  // ricarica a quell'ora (il server decide, qui si chiede solo di nuovo). Se per
-  // l'orologio del telefono sembra già passato ma il server dice ancora "aperta",
-  // si riprova ogni 15 secondi invece di restare con il cedolino aperto per sempre.
-  const fischio = giornata?.data;
-  useEffect(() => {
-    if (chiusa || !fischio) return undefined;
-    const mancano = new Date(fischio).getTime() - Date.now();
-    const attesa = mancano > 0 ? Math.min(mancano + 1000, 2 ** 31 - 1) : 15000;
-    const timer = setTimeout(ricaricaSchedina, attesa);
-    return () => clearTimeout(timer);
-  }, [schedina, chiusa, fischio, ricaricaSchedina]);
 
   if (!giornata) {
     return (
@@ -396,7 +616,7 @@ export default function Schedina() {
   if (motivo === 'calendario-mancante' || !giornata.accoppiamenti?.length) {
     return (
       <div className="ritagli">
-        <EsitoPrecedente key={precedente?.giornata?._id} precedente={precedente} onSalvato={ricaricaSchedina} />
+        <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
         <section className="ritaglio">
           <h2 className="ritaglio-titolo medio">Giornata {giornata.numero}</h2>
           <p className="ritaglio-vuoto">Il banco apre quando il direttore di turno imposta gli scontri.</p>
@@ -407,9 +627,18 @@ export default function Schedina() {
 
   return (
     <div className="ritagli">
-      <EsitoPrecedente key={precedente?.giornata?._id} precedente={precedente} onSalvato={ricaricaSchedina} />
-      <Cedolino giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} onSalvato={ricaricaSchedina} />
-      <AltriGufi giornata={giornata} chiusa={chiusa} />
+      <Precedente precedente={precedente} onSalvato={ricaricaSchedina} />
+      {puoRedigere(utente) && !giornata.conclusa && (
+        <BancoRedazione giornata={giornata} chiusa={chiusa} onCambiato={ricaricaSchedina} />
+      )}
+      {miaSchedina ? (
+        <AlberoGufi giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} />
+      ) : (
+        <>
+          <Cedolino giornata={giornata} miaSchedina={null} chiusa={chiusa} onSalvato={ricaricaSchedina} />
+          <AltriGufi giornata={giornata} chiusa={chiusa} />
+        </>
+      )}
     </div>
   );
 }

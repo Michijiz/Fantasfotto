@@ -59,9 +59,7 @@ export function fraseAttivita(a) {
       return `ha incollato ${n === 1 ? 'una foto' : `${n} foto`} nell'album${squadra ? ` di ${squadra}` : ''}`;
     }
     case 'schedina':
-      return d.rigiocata
-        ? `ha rigufato la schedina della G${d.giornata}`
-        : `ha giocato la schedina della G${d.giornata}`;
+      return `ha giocato la schedina della G${d.giornata}`;
     case 'voti':
       return `ha emesso i suoi verdetti sulla G${d.giornata}`;
     case 'edizione':

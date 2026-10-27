@@ -72,12 +72,12 @@ async function risolviArretrate(stagione) {
   for (const numero of recenti) await risolviSchedine(numero, stagione);
 }
 
-// Una schedina si può compilare finché la giornata non è conclusa e, se ha una
-// data, finché quella data non è passata: dopo il primo fischio non si gufa più.
+// Il banco si chiude quando la redazione lo decide (schedineChiuse) o, in ogni
+// caso, quando la giornata è conclusa. La data d'inizio non c'entra: nessun
+// orologio chiude niente da solo.
 function chiusa(giornata) {
   if (!giornata) return true;
-  if (giornata.conclusa) return true;
-  return Boolean(giornata.data && new Date(giornata.data).getTime() <= Date.now());
+  return Boolean(giornata.conclusa || giornata.schedineChiuse);
 }
 
 // L'ultima giornata già archiviata, con la mia schedina: serve a far vedere com'è
@@ -176,24 +176,69 @@ const salva = async (req, res) => {
   const utente = await User.findById(req.utente.id).lean();
   if (!utente) return res.status(401).json({ errore: 'Utente non trovato' });
 
-  const esisteva = await Schedina.exists({ utente: req.utente.id, stagione, giornataNumero });
+  // Una volta consegnata non si cambia. Il controllo vero lo fa l'indice unico
+  // (due richieste in contemporanea: una sola passa); questo giro serve a dare un
+  // messaggio chiaro nel caso normale.
+  const giaConsegnata = 'Hai già consegnato questa schedina: non si può più cambiare';
+  if (await Schedina.exists({ utente: req.utente.id, stagione, giornataNumero })) {
+    return res.status(409).json({ errore: giaConsegnata });
+  }
 
-  const schedina = await Schedina.findOneAndUpdate(
-    { utente: req.utente.id, stagione, giornataNumero },
-    {
-      $set: { pronostici: daSalvare, quotaTotale, esito: 'attesa', squadra: utente.squadra },
-      $setOnInsert: { utente: req.utente.id, stagione, giornataNumero }
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+  let schedina;
+  try {
+    schedina = await Schedina.create({
+      utente: req.utente.id, stagione, giornataNumero,
+      pronostici: daSalvare, quotaTotale, squadra: utente.squadra
+    });
+  } catch (err) {
+    if (err?.code === 11000) return res.status(409).json({ errore: giaConsegnata });
+    throw err;
+  }
 
   // Nel diario: che l'ha giocata, non cosa ha giocato (i pronostici restano suoi).
   await registra({
     autore: req.utente.id, tipo: 'schedina', squadra: utente.squadra,
-    dati: { giornata: giornataNumero, rigiocata: Boolean(esisteva) },
+    dati: { giornata: giornataNumero },
     chiave: `g${giornataNumero}`, unisci: 'tieni'
   });
 
+  res.json({ schedina });
+};
+
+// Apre o chiude il banco di una giornata. Lo fa la redazione, a mano, quando
+// iniziano le partite; si può riaprire se è stato un errore. Su una giornata già
+// conclusa non c'è niente da decidere: è chiusa per sempre.
+const impostaBanco = async (req, res) => {
+  const stagione = stagioneCorrente();
+  const numero = Number(req.params.numero);
+  const { chiuse } = req.body;
+  if (typeof chiuse !== 'boolean') return res.status(400).json({ errore: 'Dimmi se il banco è aperto o chiuso' });
+
+  const giornata = await Giornata.findOne({ stagione, numero }).select('conclusa accoppiamenti');
+  if (!giornata) return res.status(404).json({ errore: 'Giornata non trovata' });
+  if (giornata.conclusa) return res.status(400).json({ errore: 'Giornata conclusa: il banco è già chiuso' });
+  if (!giornata.accoppiamenti.length) return res.status(400).json({ errore: 'Senza scontri non c\'è un banco da aprire o chiudere' });
+
+  giornata.schedineChiuse = chiuse;
+  await giornata.save();
+  res.json({ numero, schedineChiuse: chiuse });
+};
+
+// "Scopri se hai gufato bene": segna la schedina come rivelata. Vale solo a giornata
+// conclusa e solo per la propria schedina; richiamarla non cambia la data.
+const rivela = async (req, res) => {
+  const stagione = stagioneCorrente();
+  const numero = Number(req.params.numero);
+  const giornata = await Giornata.findOne({ stagione, numero }).select('conclusa').lean();
+  if (!giornata) return res.status(404).json({ errore: 'Giornata non trovata' });
+  if (!giornata.conclusa) return res.status(400).json({ errore: 'La giornata non è ancora finita: i gufi aspettano' });
+
+  const schedina = await Schedina.findOneAndUpdate(
+    { utente: req.utente.id, stagione, giornataNumero: numero, rivelataIl: { $exists: false } },
+    { $set: { rivelataIl: new Date() } },
+    { new: true }
+  ) || await Schedina.findOne({ utente: req.utente.id, stagione, giornataNumero: numero });
+  if (!schedina) return res.status(404).json({ errore: 'Questa giornata non l\'hai gufata' });
   res.json({ schedina });
 };
 
@@ -251,4 +296,4 @@ const mie = async (req, res) => {
   res.json({ giocate, vinte });
 };
 
-module.exports = { apertura, salva, perGiornata, risolviSchedine, mie };
+module.exports = { apertura, salva, impostaBanco, rivela, perGiornata, risolviSchedine, mie };
