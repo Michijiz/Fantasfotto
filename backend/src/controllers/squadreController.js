@@ -4,7 +4,7 @@ const Squadra = require('../models/Squadra');
 const Giornata = require('../models/Giornata');
 const { filtroStagione } = require('../utils/stagione');
 const User = require('../models/User');
-const { calcolaClassifica } = require('../utils/regolamento');
+const { calcolaClassifica, repartiModulo } = require('../utils/regolamento');
 const { calcolaCulo, calcolaInvertiti } = require('../utils/culo');
 const { urlDelNostroCloud } = require('../services/cloudinary');
 const { registra } = require('../services/attivita');
@@ -14,7 +14,7 @@ const MAX_ALBUM = 30;
 
 // I ritagli della pagina squadra che si possono spegnere e riordinare. Deve
 // combaciare con RITAGLI_SQUADRA in frontend/src/squadra.js.
-const RITAGLI = ['derby', 'forma', 'storia', 'rosa', 'album', 'albo'];
+const RITAGLI = ['derby', 'forma', 'storia', 'rosa', 'formazione', 'album', 'albo'];
 
 const COLORE = /^#[0-9a-f]{6}$/i;
 
@@ -128,6 +128,48 @@ function immagine(nuova, attuale, cosa) {
 const soloRitagli = (v) => [...new Set((Array.isArray(v) ? v : []).map((x) => String(x).toLowerCase()))]
   .filter((x) => RITAGLI.includes(x));
 
+const RUOLI_ROSA = ['P', 'D', 'C', 'A'];
+const NOME_RUOLO = { P: 'portiere', D: 'difensori', C: 'centrocampisti', A: 'attaccanti' };
+const FORMAZIONE_VUOTA = () => ({ modulo: '', titolari: { P: [], D: [], C: [], A: [] } });
+
+// Controlla la formazione ideale prima di salvarla: modulo del regolamento, titolari
+// scelti dalla rosa nel ruolo giusto, nessun doppione e il numero esatto per reparto.
+// Modulo vuoto = nessuna formazione. Si rifiuta invece di aggiustare in silenzio:
+// una formazione "quasi giusta" salvata a metà sarebbe peggio di un errore chiaro.
+function formazioneDa(f, rosaRuoli) {
+  const modulo = String(f?.modulo ?? '').trim();
+  if (!modulo) return FORMAZIONE_VUOTA();
+
+  const reparti = repartiModulo(modulo);
+  if (!reparti) throw errore(400, 'Il modulo non è tra quelli del regolamento');
+
+  const titolari = {};
+  for (const ruolo of RUOLI_ROSA) {
+    const scelti = (Array.isArray(f.titolari?.[ruolo]) ? f.titolari[ruolo] : [])
+      .map((n) => String(n).trim()).filter(Boolean);
+    if (new Set(scelti).size !== scelti.length) throw errore(400, 'Un calciatore non può essere schierato due volte');
+    const rosa = rosaRuoli?.[ruolo] || [];
+    if (scelti.some((n) => !rosa.includes(n))) throw errore(400, 'I titolari vanno scelti dalla rosa, nel ruolo giusto');
+    if (scelti.length !== reparti[ruolo]) {
+      throw errore(400, `Formazione incompleta: con il ${modulo} servono ${reparti[ruolo]} ${NOME_RUOLO[ruolo]}`);
+    }
+    titolari[ruolo] = scelti;
+  }
+  return { modulo, titolari };
+}
+
+// Se la rosa cambia senza che arrivi una formazione (altri client, script), i
+// titolari che non ci sono più si tolgono: la formazione resta, ma incompleta,
+// e la pagina non mostra un campo con nomi di calciatori che non esistono più.
+function formazionePotata(formazione, rosaRuoli) {
+  const titolari = {};
+  for (const ruolo of RUOLI_ROSA) {
+    const rosa = rosaRuoli?.[ruolo] || [];
+    titolari[ruolo] = (formazione.titolari?.[ruolo] || []).filter((n) => rosa.includes(n));
+  }
+  return { modulo: formazione.modulo, titolari };
+}
+
 async function squadraDellUtente(req) {
   const utente = await User.findById(req.utente.id).select('squadra ruolo').lean();
   if (!utente) throw errore(404, 'Utente non trovato');
@@ -140,7 +182,7 @@ async function squadraDellUtente(req) {
 const aggiornaMiaSquadra = async (req, res) => {
   const {
     nome, stemma, maglia, foto, bio, rosa, fondataNel, rosaRuoli,
-    occhiello, slogan, colori, pagina
+    occhiello, slogan, colori, pagina, formazione
   } = req.body;
   const utente = await squadraDellUtente(req);
   const attuale = await Squadra.findById(utente.squadra).lean();
@@ -203,6 +245,17 @@ const aggiornaMiaSquadra = async (req, res) => {
     if (rosa === undefined) aggiornamenti.rosa = [];
   }
 
+  // La formazione si valida contro la rosa che resterà dopo questo salvataggio.
+  const rosaFinale = aggiornamenti.rosaRuoli || attuale.rosaRuoli || {};
+  if (formazione !== undefined) {
+    aggiornamenti.formazione = formazioneDa(formazione, rosaFinale);
+  } else if (aggiornamenti.rosaRuoli && attuale.formazione?.modulo) {
+    const potata = formazionePotata(attuale.formazione, rosaFinale);
+    if (JSON.stringify(potata.titolari) !== JSON.stringify(attuale.formazione.titolari)) {
+      aggiornamenti.formazione = potata;
+    }
+  }
+
   const squadra = await Squadra.findByIdAndUpdate(utente.squadra, { $set: aggiornamenti }, { new: true, runValidators: true });
 
   const campi = campiCambiati(attuale, squadra.toObject());
@@ -223,6 +276,9 @@ function campiCambiati(prima, dopo) {
   const uguale = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
   const pagina = (x) => ({ s: x?.pagina?.stileTitolo || 'pieno', n: x?.pagina?.nascosti || [], o: x?.pagina?.ordine || [] });
   const rosa = (x) => ({ r: x?.rosaRuoli || {}, v: x?.rosa || [] });
+  // Senza modulo la formazione non esiste: i record vecchi (campo assente) e
+  // quelli con la formazione vuota di default contano come uguali.
+  const formazione = (x) => (x?.formazione?.modulo ? { m: x.formazione.modulo, t: x.formazione.titolari || {} } : null);
   const confronti = [
     ['nome', (x) => x.nome],
     ['stemma', (x) => x.stemma || ''],
@@ -234,6 +290,7 @@ function campiCambiati(prima, dopo) {
     ['storia', (x) => x.bio || ''],
     ['fondata', (x) => x.fondataNel || null],
     ['rosa', rosa],
+    ['formazione', formazione],
     ['pagina', pagina]
   ];
   return confronti.filter(([, leggi]) => !uguale(leggi(prima), leggi(dopo))).map(([nome]) => nome);

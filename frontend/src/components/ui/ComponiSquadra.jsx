@@ -5,8 +5,10 @@ import { useToast } from '../../context/ToastContext';
 import ImageUpload from './ImageUpload';
 import { RUOLI_ROSA } from '../../utils/lega';
 import { logoSquadra, magliaSquadra } from '../../loghi';
-import { RITAGLI_SQUADRA, COLORI_PROPOSTI } from '../../squadra';
+import { MODULI, repartiModulo } from '../../utils/regolamento';
+import { RITAGLI_SQUADRA, COLORI_PROPOSTI, formazioneDi, formazioneSchierata } from '../../squadra';
 import '../../styles/profilo.css';
+import '../../styles/formazione.css';
 
 // Il foglio "Componi la squadra". Come "Componi la tua pagina" lavora su una bozza
 // che vive nella pagina Squadra (onCambia a ogni tocco): dietro lo sheet la pagina
@@ -42,6 +44,31 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
     setRosaTesto((prima) => ({ ...prima, [id]: valore }));
     if (id === 'senzaRuolo') cambia({ rosa: inNomi(valore) });
     else cambia({ rosaRuoli: { ...bozza.rosaRuoli, [id]: inNomi(valore) } });
+  };
+
+  // --- formazione ideale ---
+  // I titolari si scelgono dalla rosa che c'è adesso nei campi qui sopra (non da quella
+  // già pubblicata): scrivere un nuovo nome e schierarlo si fa nello stesso foglio.
+  const formazione = bozza.formazione || formazioneDi(null);
+  const reparti = repartiModulo(formazione.modulo);
+  const nomiRosa = Object.fromEntries(RUOLI_ROSA.map((r) => [r.id, [...new Set(inNomi(rosaTesto[r.id]))]]));
+  const schierati = (ruolo) => formazione.titolari[ruolo].filter((n) => nomiRosa[ruolo].includes(n));
+  const cambiaFormazione = (campi) => cambia({ formazione: { ...formazione, ...campi } });
+  const scegliModulo = (modulo) => {
+    if (modulo === formazione.modulo) { cambiaFormazione({ modulo: '' }); return; }
+    const r = repartiModulo(modulo);
+    // Cambiando modulo i titolari in più (per reparto) escono, gli altri restano.
+    cambiaFormazione({
+      modulo,
+      titolari: Object.fromEntries(RUOLI_ROSA.map(({ id }) => [id, schierati(id).slice(0, r[id])]))
+    });
+  };
+  const scegliTitolare = (ruolo, nome) => {
+    const attuali = schierati(ruolo);
+    let nuovi = attuali;
+    if (attuali.includes(nome)) nuovi = attuali.filter((n) => n !== nome);
+    else if (attuali.length < reparti[ruolo]) nuovi = [...attuali, nome];
+    cambiaFormazione({ titolari: { ...formazione.titolari, [ruolo]: nuovi } });
   };
 
   // --- colori ---
@@ -82,6 +109,15 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
       setErrore("L'anno di fondazione va scritto con quattro cifre");
       return;
     }
+    // Come il server: con un modulo scelto servono tutti i titolari, ognuno ancora in rosa.
+    const formazioneDaSalvare = formazione.modulo
+      ? { modulo: formazione.modulo, titolari: Object.fromEntries(RUOLI_ROSA.map(({ id }) => [id, schierati(id)])) }
+      : { modulo: '', titolari: {} };
+    const rosaNuova = Object.fromEntries(RUOLI_ROSA.map((r) => [r.id, nomiRosa[r.id]]));
+    if (formazione.modulo && !formazioneSchierata({ rosaRuoli: rosaNuova, formazione: formazioneDaSalvare })) {
+      setErrore('Formazione ideale incompleta: schiera tutti i titolari del modulo scelto, oppure togli il modulo');
+      return;
+    }
     setSalvando(true);
     try {
       await api.patch('/api/squadre/mia', {
@@ -95,6 +131,7 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
         maglia: bozza.maglia,
         colori: bozza.colori,
         pagina: bozza.pagina,
+        formazione: formazioneDaSalvare,
         rosaRuoli: Object.fromEntries(RUOLI_ROSA.map((r) => [r.id, inNomi(rosaTesto[r.id])])),
         // Sempre inviata: così il server non svuota i nomi senza ruolo da solo.
         rosa: inNomi(rosaTesto.senzaRuolo)
@@ -251,6 +288,57 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
           <input id="sq-senza" type="text" value={rosaTesto.senzaRuolo} onChange={(e) => scriviRosa('senzaRuolo', e.target.value)} />
         </div>
       )}
+
+      {/* ---------------- Formazione ideale ---------------- */}
+      <div className="componi-gruppo">La formazione ideale</div>
+      <p className="nota-form">
+        Scegli un modulo del regolamento e tocca i titolari nell&apos;ordine in cui vanno in campo, da sinistra a destra.
+        Tocca di nuovo il modulo per toglierla.
+      </p>
+      <div className="fz-editor">
+        <div className="fz-moduli">
+          {MODULI.map((m) => (
+            <button key={m} type="button" className="fz-chip" aria-pressed={formazione.modulo === m} onClick={() => scegliModulo(m)}>
+              {m}
+            </button>
+          ))}
+        </div>
+        {reparti && RUOLI_ROSA.map((ruolo) => {
+          const scelti = schierati(ruolo.id);
+          const disponibili = nomiRosa[ruolo.id];
+          return (
+            <div key={ruolo.id}>
+              <div className="fz-reparto-testa">
+                <span>{ruolo.nome}</span>
+                <span className={`conta${scelti.length === reparti[ruolo.id] ? ' completo' : ''}`}>
+                  {scelti.length}/{reparti[ruolo.id]}
+                </span>
+              </div>
+              {disponibili.length === 0 ? (
+                <p className="nota-form">Scrivi prima i {ruolo.nome.toLowerCase()} nella rosa, qui sopra.</p>
+              ) : (
+                <div className="fz-scelte">
+                  {disponibili.map((nome) => {
+                    const posto = scelti.indexOf(nome);
+                    return (
+                      <button
+                        key={nome}
+                        type="button"
+                        className="fz-chip"
+                        aria-pressed={posto >= 0}
+                        onClick={() => scegliTitolare(ruolo.id, nome)}
+                      >
+                        {posto >= 0 && <span className="posto">{posto + 1}</span>}
+                        {nome}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {/* ---------------- Ritagli ---------------- */}
       <div className="componi-gruppo">I ritagli in pagina</div>

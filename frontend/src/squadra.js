@@ -1,3 +1,5 @@
+import { repartiModulo } from './utils/regolamento';
+
 // Le scelte della pagina squadra che gli allenatori fanno da "Componi la squadra".
 // Il server salva solo gli id (vedi squadreController.aggiornaMiaSquadra): deve
 // combaciare con RITAGLI in backend/src/controllers/squadreController.js.
@@ -9,6 +11,7 @@ export const RITAGLI_SQUADRA = [
   { id: 'forma', nome: 'La forma' },
   { id: 'storia', nome: 'La storia' },
   { id: 'rosa', nome: 'La rosa' },
+  { id: 'formazione', nome: 'La formazione ideale' },
   { id: 'album', nome: "L'album" },
   { id: 'albo', nome: "Nell'albo" }
 ];
@@ -37,6 +40,7 @@ export function bozzaSquadra(squadra) {
     colori: Array.isArray(squadra?.colori) ? squadra.colori.slice(0, 2) : [],
     rosaRuoli: { P: r.P || [], D: r.D || [], C: r.C || [], A: r.A || [] },
     rosa: squadra?.rosa || [],
+    formazione: formazioneDi(squadra),
     pagina: {
       stileTitolo: squadra?.pagina?.stileTitolo === 'contorno' ? 'contorno' : 'pieno',
       nascosti: squadra?.pagina?.nascosti || [],
@@ -66,4 +70,71 @@ export function sfondoColori(colori) {
 export function miniatura(url, larghezza = 600) {
   if (typeof url !== 'string' || !url.includes('res.cloudinary.com/') || !url.includes('/upload/')) return url;
   return url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${larghezza}/`);
+}
+
+
+// --- Formazione ideale --------------------------------------------------------
+
+export const RUOLI_CAMPO = ['P', 'D', 'C', 'A'];
+
+// La formazione com'è salvata (o vuota). Sempre con tutti e quattro i reparti,
+// così l'editor e il campo non devono controllare ogni campo mancante.
+export function formazioneDi(squadra) {
+  const f = squadra?.formazione || {};
+  const t = f.titolari || {};
+  return {
+    modulo: f.modulo || '',
+    titolari: { P: t.P || [], D: t.D || [], C: t.C || [], A: t.A || [] }
+  };
+}
+
+// La formazione pronta da disegnare, oppure null. Conta solo se il modulo è del
+// regolamento, ogni reparto ha il numero giusto di titolari e tutti sono ancora
+// in rosa nel loro ruolo: un calciatore tolto dalla rosa non deve restare in
+// campo. È lo stesso controllo del server (formazioneDa), così pagina e salvataggio
+// non possono dare risposte diverse.
+export function formazioneSchierata(squadra) {
+  const { modulo, titolari } = formazioneDi(squadra);
+  const reparti = repartiModulo(modulo);
+  if (!reparti) return null;
+  const rosa = squadra?.rosaRuoli || {};
+  const righe = [];
+  for (const ruolo of RUOLI_CAMPO) {
+    const nomi = titolari[ruolo];
+    const inRosa = new Set(rosa[ruolo] || []);
+    if (nomi.length !== reparti[ruolo] || new Set(nomi).size !== nomi.length || nomi.some((n) => !inRosa.has(n))) return null;
+    righe.push({ ruolo, nomi });
+  }
+  return { modulo, righe };
+}
+
+// Dove stanno i giocatori sul mezzo campo, in percentuale (x da sinistra, y
+// dall'alto; la porta è in basso, l'attacco verso la linea di metà campo).
+// Numerati da 1 a 11 per reparto, dalla porta in su: nei dati non ci sono i numeri
+// di maglia veri. Con 5 in fila i nomi si toccherebbero: a righe alterne la
+// posizione scala un po', come nei campi dei giornali.
+const Y_RIGA = { P: 89, D: 65, C: 41, A: 16 };
+export function posizioniCampo(righe) {
+  let numero = 0;
+  return righe.flatMap(({ ruolo, nomi }) => {
+    const n = nomi.length;
+    const passo = n > 1 ? Math.min(30, 76 / (n - 1)) : 0;
+    return nomi.map((nome, i) => ({
+      numero: (numero += 1),
+      nome,
+      ruolo,
+      x: 50 + (i - (n - 1) / 2) * passo,
+      y: Y_RIGA[ruolo] + (n >= 5 && i % 2 === 1 ? -6 : 0),
+      fitto: n >= 4
+    }));
+  });
+}
+
+// Bianco o nero, a seconda di quale si legge meglio sopra `colore` (#rrggbb).
+export function testoSu(colore) {
+  const m = /^#([0-9a-f]{6})$/i.exec(colore || '');
+  if (!m) return '#ffffff';
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? '#000000' : '#ffffff';
 }
