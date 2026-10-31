@@ -379,12 +379,6 @@ const POSATOI = [
 function ScenaAlbero({ gufi, descrizione }) {
   return (
     <svg className="albero-gufi" viewBox="0 40 380 240" role="img" aria-label={descrizione}>
-      <defs>
-        <g id="gufo-occhi">
-          <circle cx="-9" r="7" fill="#f2c24b" /><circle cx="9" r="7" fill="#f2c24b" />
-          <circle cx="-9" r="3.4" fill="#1d1722" /><circle cx="9" r="3.4" fill="#1d1722" />
-        </g>
-      </defs>
       <rect y="40" width="380" height="240" fill="#1d1722" />
       <circle cx="325" cy="64" r="17" fill="#efe6c8" /><circle cx="333" cy="60" r="15" fill="#1d1722" />
       <rect y="268" width="380" height="12" fill="#120d10" />
@@ -402,7 +396,14 @@ function ScenaAlbero({ gufi, descrizione }) {
           <g key={g.chiave}>
             {g.mio && <ellipse cx={x} cy={y} rx="22" ry="12" fill="none" stroke="#e58fa6" strokeWidth="1.5" />}
             {g.sveglio
-              ? <use href="#gufo-occhi" x={x} y={y} className="occhi" style={{ animationDelay: `${(i * 0.9) % 5}s` }} />
+              ? (
+                <g transform={`translate(${x} ${y})`}>
+                  <g className="occhi" style={{ animationDelay: `${(i * 1.7) % 7}s` }}>
+                    <circle cx="-9" r="7" fill="#f2c24b" /><circle cx="9" r="7" fill="#f2c24b" />
+                    <circle cx="-9" r="3.4" fill="#1d1722" /><circle cx="9" r="3.4" fill="#1d1722" />
+                  </g>
+                </g>
+              )
               : <path d={`M${x - 15} ${y}H${x - 5}M${x + 5} ${y}H${x + 15}`} stroke="#6e5f66" strokeWidth="2" strokeLinecap="round" fill="none" />}
           </g>
         );
@@ -413,7 +414,7 @@ function ScenaAlbero({ gufi, descrizione }) {
 
 // Dopo la consegna il cedolino sparisce: restano i gufi che aspettano il fischio
 // finale e un tasto piccolo per rivedere la propria schedina (in sola lettura).
-function AlberoGufi({ giornata, miaSchedina, chiusa }) {
+function AlberoGufi({ giornata, miaSchedina }) {
   const { squadre } = useDati();
   const { utente } = useAuth();
   const mia = typeof utente?.squadra === 'object' ? utente?.squadra?._id : utente?.squadra;
@@ -464,11 +465,6 @@ function AlberoGufi({ giornata, miaSchedina, chiusa }) {
           descrizione={`Albero con i gufi: ${svegli} su ${gufi.length} hanno consegnato, il tuo ha il cerchio rosa`}
         />
         <h1 className="ritaglio-titolo medio">I gufi aspettano il fischio finale</h1>
-        <p className="dettaglio">
-          {svegli} su {gufi.length} hanno già consegnato. Il gufo col cerchio rosa è il tuo.
-          {chiusa ? ' Il banco è chiuso.' : ' Il banco è ancora aperto: gli altri possono consegnare.'}
-        </p>
-        <p className="dettaglio albero-blocco"><Lock size={15} weight="bold" aria-hidden="true" /> Consegnata: non si può più cambiare.</p>
         <button type="button" className="bottone-contorno" aria-expanded={vedi} onClick={() => setVedi(!vedi)}>
           <Eye size={16} weight="bold" /> {vedi ? 'Nascondi la mia schedina' : 'Vedi la mia schedina'}
         </button>
@@ -507,7 +503,6 @@ function RivelaEsito({ giornata, onRivelata }) {
       </div>
       <ScenaAlbero gufi={gufi} descrizione="Albero con i gufi voltati verso di te" />
       <h1 className="ritaglio-titolo medio">Il fischio finale è suonato</h1>
-      <p className="dettaglio">I gufi hanno fatto il loro dovere. Ora tocca a te sapere com&apos;è andata.</p>
       <button type="button" className="bottone-grande" onClick={scopri} disabled={invio}>
         <Eye size={20} weight="bold" aria-hidden="true" /> {invio ? 'Giro i gufi…' : 'Scopri se hai gufato bene'}
       </button>
@@ -632,7 +627,7 @@ export default function Schedina() {
         <BancoRedazione giornata={giornata} chiusa={chiusa} onCambiato={ricaricaSchedina} />
       )}
       {miaSchedina ? (
-        <AlberoGufi giornata={giornata} miaSchedina={miaSchedina} chiusa={chiusa} />
+        <AlberoGufi giornata={giornata} miaSchedina={miaSchedina} />
       ) : (
         <>
           <Cedolino giornata={giornata} miaSchedina={null} chiusa={chiusa} onSalvato={ricaricaSchedina} />

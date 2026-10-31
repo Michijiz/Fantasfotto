@@ -132,10 +132,9 @@
 .albero-gufi{ display:block; width:100%; height:auto; border-radius:var(--r-md); }
 .albero-gufi .occhi{ transform-box:fill-box; transform-origin:center; }
 @media (prefers-reduced-motion:no-preference){
-  .albero-gufi .occhi{ animation:gufo-ammicca 5s infinite; }
+  .albero-gufi .occhi{ animation:gufo-ammicca 7s infinite; }
 }
-@keyframes gufo-ammicca{ 0%,91%,100%{ transform:scaleY(1); } 94%{ transform:scaleY(.08); } }
-.albero-blocco{ display:flex; align-items:center; gap:6px; }
+@keyframes gufo-ammicca{ 0%,94%,100%{ transform:scaleY(1); } 96.5%{ transform:scaleY(.08); } }
 .albero-scheda .bottone-contorno,
 .albero-scheda .bottone-grande,
 .banco-redazione .bottone-contorno{ display:inline-flex; align-items:center; justify-content:center; gap:6px; margin-top:4px; }
