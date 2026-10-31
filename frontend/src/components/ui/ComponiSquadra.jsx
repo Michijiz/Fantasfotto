@@ -4,7 +4,7 @@ import { api } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import ImageUpload from './ImageUpload';
 import { RUOLI_ROSA } from '../../utils/lega';
-import { logoSquadra, magliaSquadra } from '../../loghi';
+import { logoSquadra } from '../../loghi';
 import { MODULI, repartiModulo } from '../../utils/regolamento';
 import { RITAGLI_SQUADRA, COLORI_PROPOSTI, formazioneDi, formazioneSchierata } from '../../squadra';
 import '../../styles/profilo.css';
@@ -123,7 +123,6 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
         bio: bozza.bio,
         foto: bozza.foto,
         stemma: bozza.stemma,
-        maglia: bozza.maglia,
         colori: bozza.colori,
         pagina: bozza.pagina,
         formazione: formazioneDaSalvare,
@@ -164,14 +163,6 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
         etichettaTogli="Torna al logo"
       />
 
-      <div className="componi-etichetta"><span>Maglia</span><span className="facoltativo">vuoto = maglia di redazione</span></div>
-      <ImageUpload
-        value={soloIndirizzo(bozza.maglia)}
-        onChange={(maglia) => cambia({ maglia })}
-        cartella="squadre"
-        anteprima={magliaSquadra(bozza.nome) || magliaSquadra(squadra.nome)}
-        etichettaTogli="Torna alla maglia"
-      />
       <p className="nota-form">Le foto dell&apos;album si aggiungono direttamente dalla pagina, nel ritaglio &quot;L&apos;album&quot;.</p>
 
       {/* ---------------- Colori ---------------- */}

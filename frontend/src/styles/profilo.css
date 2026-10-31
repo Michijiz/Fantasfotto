@@ -89,7 +89,6 @@
   font-family:'Anton',sans-serif; font-size:34px; line-height:1.05;
   text-transform:uppercase; overflow-wrap:anywhere;
 }
-.squadra-maglia{ width:44px; height:44px; object-fit:contain; }
 .squadra-rosa-riga{
   display:flex; justify-content:space-between; align-items:baseline; gap:12px;
   padding-top:14px; border-top:1px solid var(--filo-lieve);

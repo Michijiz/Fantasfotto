@@ -16,7 +16,6 @@ import { etichettaRuolo, puoRedigere, puoCancellare } from '../ruoli';
 import { avatarUtente } from '../avatar';
 import { coloreSfondo, profiloDi } from '../profilo';
 import { sfondoTema, temaPerId } from '../temi';
-import { magliaSquadra } from '../loghi';
 import { idDi, rosaPerRuolo } from '../utils/lega';
 import '../styles/profilo.css';
 
@@ -131,7 +130,6 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
 
   const titolo = vista.nomeVisualizzato.trim() || utente.nomeVisualizzato;
   const oggi = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-  const maglia = miaSquadra?.maglia || magliaSquadra(miaSquadra?.nome);
 
   // Sfondo "Come il tema": a casa d'altri è la carta della *sua* squadra.
   const sfondoFoto = !mio && p.sfondo === 'tema' ? (tema.vars?.['--paper-dark'] || coloreSfondo('tema')) : coloreSfondo(p.sfondo);
@@ -198,7 +196,6 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
               <Stemma src={miaSquadra.stemma} nome={miaSquadra.nome} size={88} />
               <div className="squadra-testi">
                 <div className="squadra-nome-grande">{miaSquadra.nome}</div>
-                {maglia && <img className="squadra-maglia" src={maglia} alt="Maglia" />}
               </div>
             </div>
             <div className="squadra-rosa-riga">

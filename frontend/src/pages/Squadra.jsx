@@ -10,7 +10,6 @@ import AlbumSquadra from '../components/ui/AlbumSquadra';
 import FormazioneIdeale from '../components/ui/FormazioneIdeale';
 import MiniTrofei from '../components/ui/Trofei';
 import { avatarUtente } from '../avatar';
-import { magliaSquadra } from '../loghi';
 import { puoCancellare } from '../ruoli';
 import { formattaFantapunti } from '../utils/regolamento';
 import { idDi, formaRecente, derbyPersonale, rosaPerRuolo } from '../utils/lega';
@@ -88,7 +87,6 @@ export default function Squadra() {
 
   const posizione = tabellone.findIndex((s) => s._id === id);
   const riga = posizione >= 0 ? tabellone[posizione] : null;
-  const maglia = squadra.maglia || magliaSquadra(squadra.nome);
   const { gruppi, totale } = rosaPerRuolo(squadra);
   const allenatori = pubblicata.allenatori || [];
   const nascosti = squadra.pagina?.nascosti || [];
@@ -223,7 +221,6 @@ export default function Squadra() {
           style={squadra.foto ? undefined : { background: sfondoColori(colori) }}
         >
           {squadra.foto && <img className="copertina-foto" src={miniatura(squadra.foto, 1200)} alt="" decoding="async" />}
-          {maglia && <img className="maglia" src={maglia} alt="Maglia" />}
           {eMia && (
             <button type="button" className="copertina-matita" onClick={apriComponi} aria-label="Componi la squadra">
               <PencilSimple size={20} />
