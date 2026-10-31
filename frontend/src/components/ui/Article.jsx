@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import Stemma from './Stemma';
 import { Scontro } from './Scontro';
 import { Corpo, Inline } from './Formattato';
-import { conRisultato, esitoPer, estremiGiornata, idDi, scontriGiocabili, scontroDi } from '../../utils/lega';
+import { estremiGiornata, idDi, scontriGiocabili } from '../../utils/lega';
 import { formattaFantapunti } from '../../utils/regolamento';
 import { formattaVoto, squadreConPunti } from '../../utils/spunti';
 
@@ -44,8 +44,6 @@ function Partita({ scontro, testo, mia }) {
   );
 }
 
-const ESITO_TUO = { V: 'Hai vinto', N: 'Pareggio', P: 'Hai perso' };
-
 // Quante partite commentate si leggono prima di "Mostra le altre": l'edizione deve
 // restare leggera, e chi vuole il resto lo apre.
 const PARTITE_VISIBILI = 4;
@@ -82,8 +80,8 @@ function Pagelle({ pagelle, giornata, miaSquadra }) {
   );
 }
 
-// Un'edizione impaginata come pezzo di giornale. In ordine di lettura: foto, com'è
-// andata la tua partita, titolo e pezzo, le partite commentate (le prime quattro),
+// Un'edizione impaginata come pezzo di giornale. In ordine di lettura: foto,
+// titolo e pezzo, le partite commentate (le prime quattro),
 // poi le pagelle — o, nelle edizioni uscite prima che esistessero, il tabellino dei
 // premi — e il tasto per giudicare la giornata.
 export default function Article({ edizione }) {
@@ -99,9 +97,6 @@ export default function Article({ edizione }) {
   // una notizia ma solo una cosa che non si sa ancora.
   const giornata = giornate.find((g) => g.numero === edizione.giornataNumero);
   const miaSquadra = idDi(utente?.squadra);
-
-  const mio = scontroDi(giornata, miaSquadra);
-  const esitoMio = mio && conRisultato(mio) ? esitoPer(mio, miaSquadra) : null;
 
   // Le due righe sugli scontri, legate alla coppia di squadre: uno scontro uscito
   // dal calendario non compare più. Il tuo va per primo.
@@ -129,16 +124,6 @@ export default function Article({ edizione }) {
         {edizione.immagineUrl && <img src={edizione.immagineUrl} alt="" />}
       </div>
       {edizione.didascalia && <div className="articolo-didascalia">{edizione.didascalia}</div>}
-
-      {esitoMio && (
-        <div className="tua-giornata">
-          <div className="ritaglio-testa">
-            <span className="occhiello-oro">La tua giornata</span>
-            <span className="dettaglio">{ESITO_TUO[esitoMio]}</span>
-          </div>
-          <Scontro scontro={mio} />
-        </div>
-      )}
 
       <div className="ritaglio-occhiello"><span>{edizione.occhiello}</span><span className="filo" /></div>
       <h1 className="articolo-titolo">{edizione.titolo}</h1>
