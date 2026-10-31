@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { PencilSimple, BookOpen, CaretRight, CaretLeft, Key, Trophy } from '@phosphor-icons/react';
+import { PencilSimple, BookOpen, CaretRight, CaretLeft, Key } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useDati } from '../context/DataContext';
 import { useTema } from '../context/TemaContext';
@@ -17,10 +17,8 @@ import { avatarUtente } from '../avatar';
 import { coloreSfondo, profiloDi } from '../profilo';
 import { sfondoTema, temaPerId } from '../temi';
 import { magliaSquadra } from '../loghi';
-import { formattaFantapunti } from '../utils/regolamento';
-import { idDi, formaRecente, menzioni, rosaPerRuolo } from '../utils/lega';
+import { idDi, rosaPerRuolo } from '../utils/lega';
 import '../styles/profilo.css';
-import '../styles/albo.css';
 
 // Il titolo è in Anton a tutta larghezza: la parola più lunga decide la misura,
 // così un nome lungo va a capo tra le parole e non a metà.
@@ -95,7 +93,7 @@ function ProfiloAltrui({ id }) {
 
 function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
   const { logout } = useAuth();
-  const { squadre, tabellone, giornate, edizioni, albo } = useDati();
+  const { squadre, edizioni } = useDati();
   const { temaId, tema: temaMio, cambiaTema } = useTema();
   const navigate = useNavigate();
 
@@ -126,10 +124,6 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
   const p = vista.profilo;
   const mostra = (id) => !p.nascosti.includes(id);
 
-  const posizione = tabellone.findIndex((s) => s._id === squadraId);
-  const riga = posizione >= 0 ? tabellone[posizione] : null;
-  const forma = useMemo(() => formaRecente(giornate, squadraId), [giornate, squadraId]);
-  const albi = useMemo(() => menzioni(albo, edizioni, giornate, squadraId), [albo, edizioni, giornate, squadraId]);
   const firmate = useMemo(
     () => edizioni.filter((e) => idDi(e.createdBy) === utente.id).slice(0, 5),
     [edizioni, utente.id]
@@ -184,43 +178,13 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
 
       {mostra('numeri') && (
         <section className="ritaglio">
-          <Occhiello>I numeri</Occhiello>
+          <Occhiello>Le schedine</Occhiello>
           <div className="numeri-griglia">
-            <div className="numero">
-              <b>{riga ? `${posizione + 1}ª` : '—'}</b>
-              <span>In classifica</span>
-            </div>
-            <div className="numero">
-              <b>{riga ? riga.punti ?? 0 : '—'}</b>
-              <span>Punti lega</span>
-            </div>
-            <div className="numero">
-              <b>{riga ? formattaFantapunti(riga.puntiTotali ?? 0) : '—'}</b>
-              <span>Fantapunti</span>
-            </div>
             <div className="numero">
               <b>{schedine ? `${schedine.vinte}/${schedine.giocate}` : '—'}</b>
               <span>Schedine vinte</span>
             </div>
           </div>
-        </section>
-      )}
-
-      {mostra('forma') && (
-        <section className="ritaglio">
-          <Occhiello>La forma</Occhiello>
-          {forma.length === 0 ? (
-            <div className="ritaglio-vuoto">Ancora nessuno scontro giocato.</div>
-          ) : (
-            <div className="forma-riga">
-              {forma.map((f) => (
-                <div className="forma-voce" key={f.numero}>
-                  <span className={`bollino esito-${f.esito}`}>{f.esito}</span>
-                  <span className="g">G{f.numero}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
       )}
 
@@ -281,23 +245,6 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
                   <span className="titolo">{e.titolo}</span>
                   <CaretRight size={20} />
                 </button>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {mostra('albo') && (
-        <section className="ritaglio">
-          <Occhiello>Nell&apos;albo</Occhiello>
-          {albi.length === 0 ? (
-            <div className="ritaglio-vuoto">Ancora nessuna menzione. C&apos;è tempo.</div>
-          ) : (
-            <div className="albo-chips">
-              {albi.map((a) => (
-                <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}${a.coppa ? ` coppa-${a.coppa}` : ''}`}>
-                  {a.coppa && <Trophy size={18} weight="fill" />}{a.testo}
-                </span>
               ))}
             </div>
           )}

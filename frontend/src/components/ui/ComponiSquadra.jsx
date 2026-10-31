@@ -105,10 +105,6 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
     e.preventDefault();
     setErrore('');
     if (!bozza.nome.trim()) { setErrore('Il nome della squadra non può restare vuoto'); return; }
-    if (bozza.fondataNel.trim() && !/^\d{4}$/.test(bozza.fondataNel.trim())) {
-      setErrore("L'anno di fondazione va scritto con quattro cifre");
-      return;
-    }
     // Come il server: con un modulo scelto servono tutti i titolari, ognuno ancora in rosa.
     const formazioneDaSalvare = formazione.modulo
       ? { modulo: formazione.modulo, titolari: Object.fromEntries(RUOLI_ROSA.map(({ id }) => [id, schierati(id)])) }
@@ -124,7 +120,6 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
         nome: bozza.nome,
         occhiello: bozza.occhiello,
         slogan: bozza.slogan,
-        fondataNel: bozza.fondataNel.trim(),
         bio: bozza.bio,
         foto: bozza.foto,
         stemma: bozza.stemma,
@@ -246,11 +241,6 @@ export default function ComponiSquadra({ squadra, bozza, onCambia, onFatto }) {
         <span>Slogan o coro</span><span className="facoltativo">facoltativo</span>
       </label>
       <textarea id="sq-slogan" rows={2} maxLength={120} className="campo-motto" value={bozza.slogan} onChange={testo('slogan')} placeholder="Quello che canta la curva (cioè tu)" />
-
-      <label htmlFor="sq-fondata" className="componi-etichetta">
-        <span>Fondata nel</span><span className="facoltativo">facoltativo</span>
-      </label>
-      <input id="sq-fondata" type="text" inputMode="numeric" maxLength={4} value={bozza.fondataNel} onChange={testo('fondataNel')} placeholder="es. 2019" />
 
       <div className="componi-etichetta"><span>Stile del nome</span></div>
       <div className="stili-titolo">

@@ -17,11 +17,9 @@ export const coloreSfondo = (id) => (SFONDI.find((s) => s.id === id) || SFONDI[0
 // I ritagli che si possono spegnere. Squadra e impostazioni restano sempre: senza
 // la squadra la pagina non direbbe più di chi è.
 export const RITAGLI = [
-  { id: 'numeri', nome: 'I numeri' },
-  { id: 'forma', nome: 'La forma' },
+  { id: 'numeri', nome: 'Le schedine' },
   { id: 'cuore', nome: 'Il cuore' },
-  { id: 'archivio', nome: "Dall'archivio", soloRedazione: true },
-  { id: 'albo', nome: "Nell'albo" }
+  { id: 'archivio', nome: "Dall'archivio", soloRedazione: true }
 ];
 
 export const PROFILO_VUOTO = {
