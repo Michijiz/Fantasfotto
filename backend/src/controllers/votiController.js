@@ -4,6 +4,7 @@ const Giornata = require('../models/Giornata');
 const User = require('../models/User');
 const { registra } = require('../services/attivita');
 const { stagioneCorrente } = require('../utils/stagione');
+const { inviaATutti } = require('../services/notifiche');
 
 // Le votazioni su un'edizione restano aperte fino al fischio d'inizio della
 // giornata dopo. Senza data impostata su quella giornata, restano aperte finché
@@ -15,6 +16,7 @@ const chiusaDa = (dopo) => {
 };
 
 async function votazioniChiuse(edizione) {
+  if (edizione.votiChiusi) return true;
   const dopo = await Giornata.findOne({ stagione: edizione.stagione || stagioneCorrente(), numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
   return chiusaDa(dopo);
 }
@@ -55,7 +57,7 @@ const vota = async (req, res) => {
 
   // Senza questo si potevano registrare voti su un'edizione qualsiasi (anche
   // inesistente): righe che nessuna schermata mostra più e che restano lì.
-  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione').lean();
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione votiChiusi').lean();
   if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
   if (await votazioniChiuse(edizione)) {
     return res.status(403).json({ errore: 'Votazioni chiuse: il tribunale ha già emesso le sentenze' });
@@ -85,7 +87,7 @@ const vota = async (req, res) => {
 // non solo nell'app, altrimenti basterebbe aprire l'indirizzo della pagina.
 const risultati = async (req, res) => {
   const { edizioneId } = req.params;
-  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione').lean();
+  const edizione = await Edizione.findById(edizioneId).select('giornataNumero stagione votiChiusi').lean();
   if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
 
   const [voti, chiuse, utentiTotali] = await Promise.all([
@@ -125,12 +127,12 @@ const risultati = async (req, res) => {
 // giornata dopo, quindi i suoi trofei compaiono solo allora.
 const trofei = async (req, res) => {
   const [edizioni, giornate] = await Promise.all([
-    Edizione.find().select('giornataNumero stagione').lean(),
+    Edizione.find().select('giornataNumero stagione votiChiusi').lean(),
     Giornata.find().select('stagione numero data conclusa').lean()
   ]);
   const chiave = (stagione, numero) => `${stagione}|${numero}`;
   const perChiave = new Map(giornate.map((g) => [chiave(g.stagione, g.numero), g]));
-  const chiuse = edizioni.filter((e) => chiusaDa(perChiave.get(chiave(e.stagione || stagioneCorrente(), e.giornataNumero + 1))));
+  const chiuse = edizioni.filter((e) => e.votiChiusi || chiusaDa(perChiave.get(chiave(e.stagione || stagioneCorrente(), e.giornataNumero + 1))));
   if (chiuse.length === 0) return res.json({ trofei: [] });
 
   const conteggi = await Voto.aggregate([
@@ -159,4 +161,21 @@ const trofei = async (req, res) => {
   res.json({ trofei: elenco });
 };
 
-module.exports = { categorie, vota, risultati, trofei };
+// La redazione chiude (o riapre) i verdetti di un'edizione senza aspettare la
+// giornata dopo. Riaprire non ha effetto se la giornata dopo è già iniziata: lì si
+// chiudono da soli.
+const chiusura = async (req, res) => {
+  const { edizioneId } = req.params;
+  const chiusi = req.body?.chiusi !== false;
+  const edizione = await Edizione.findByIdAndUpdate(edizioneId, { votiChiusi: chiusi }, { new: true }).select('giornataNumero votiChiusi').lean();
+  if (!edizione) return res.status(404).json({ errore: 'Edizione non trovata' });
+  if (chiusi) {
+    await inviaATutti(
+      { titolo: 'Verdetti chiusi', corpo: `Giornata ${edizione.giornataNumero}: guarda chi ha vinto i trofei`, url: '/gioca' },
+      { escludiUtente: req.utente.id }
+    );
+  }
+  res.json({ votiChiusi: edizione.votiChiusi });
+};
+
+module.exports = { categorie, vota, risultati, trofei, chiusura };

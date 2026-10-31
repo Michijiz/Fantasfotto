@@ -5,6 +5,7 @@ const Schedina = require('../models/Schedina');
 const Voto = require('../models/Voto');
 const { urlDelNostroCloud } = require('../services/cloudinary');
 const { stagioneCorrente, filtroStagione } = require('../utils/stagione');
+const { inviaATutti } = require('../services/notifiche');
 
 // L'autore è l'utente che ha stampato l'edizione; la firma (`direttore`) è solo
 // l'etichetta che si legge sul giornale.
@@ -212,6 +213,10 @@ const crea = async (req, res) => {
   // L'indice unico copre la corsa tra due direttori che stampano insieme: il
   // controllo sopra dà il messaggio giusto, l'indice è la garanzia.
   const edizione = await Edizione.create({ ...campi, stagione, createdBy: req.utente.id });
+  await inviaATutti(
+    { titolo: 'È uscita la Gazzetta', corpo: `G${campi.giornataNumero}: ${campi.titolo}`, url: '/gazzetta' },
+    { escludiUtente: req.utente.id }
+  );
   res.status(201).json({ edizione: await leggi(edizione._id) });
 };
 

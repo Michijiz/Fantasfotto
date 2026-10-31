@@ -14,6 +14,7 @@ const alboRoutes = require('./routes/albo');
 const legaRoutes = require('./routes/lega');
 const utentiRoutes = require('./routes/utenti');
 const attivitaRoutes = require('./routes/attivita');
+const pushRoutes = require('./routes/push');
 
 const app = express();
 app.use(cors());
@@ -52,6 +53,7 @@ app.use('/api/albo', alboRoutes);
 app.use('/api/lega', legaRoutes);
 app.use('/api/utenti', utentiRoutes);
 app.use('/api/attivita', attivitaRoutes);
+app.use('/api/push', pushRoutes);
 
 app.use((req, res) => res.status(404).json({ errore: 'Rotta non trovata' }));
 app.use(errorHandler);

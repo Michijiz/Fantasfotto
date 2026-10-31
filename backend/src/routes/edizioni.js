@@ -4,11 +4,14 @@ const { verificaToken, richiedeAdmin, richiedeRedazione } = require('../middlewa
 const {
   lista, ultima, crea, aggiorna, elimina
 } = require('../controllers/edizioniController');
+const reazioni = require('../controllers/reazioniController');
 
 const router = express.Router();
 
 router.get('/', verificaToken, asyncHandler(lista));
 router.get('/ultima', verificaToken, asyncHandler(ultima));
+router.get('/:id/reazioni', verificaToken, asyncHandler(reazioni.lista));
+router.post('/:id/reazioni', verificaToken, asyncHandler(reazioni.alterna));
 router.post('/', verificaToken, richiedeRedazione, asyncHandler(crea));
 router.put('/:id', verificaToken, richiedeRedazione, asyncHandler(aggiorna));
 router.delete('/:id', verificaToken, richiedeAdmin, asyncHandler(elimina));

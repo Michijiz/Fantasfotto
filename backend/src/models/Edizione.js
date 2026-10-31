@@ -47,6 +47,10 @@ const edizioneSchema = new mongoose.Schema({
   pagelle: [pagellaSchema],
   immagineUrl: { type: String, default: '' },
   didascalia: { type: String, default: '', trim: true, maxlength: 140 },
+  // I verdetti restano aperti fino al fischio d'inizio della giornata dopo; la
+  // redazione può chiuderli prima (per esempio a fine stagione, quando la giornata
+  // dopo non esiste).
+  votiChiusi: { type: Boolean, default: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

@@ -1,7 +1,13 @@
 const mongoose = require('mongoose');
 const Albo = require('../models/Albo');
 const User = require('../models/User');
+const Squadra = require('../models/Squadra');
+const Giornata = require('../models/Giornata');
+const Edizione = require('../models/Edizione');
 const { urlDelNostroCloud } = require('../services/cloudinary');
+const { stagioneCorrente } = require('../utils/stagione');
+const { calcolaClassifica } = require('../utils/regolamento');
+const { inviaATutti } = require('../services/notifiche');
 
 const POPOLA = [
   { path: 'squadra', select: 'nome stemma' },
@@ -103,4 +109,42 @@ const elimina = async (req, res) => {
   res.json({ ok: true });
 };
 
-module.exports = { lista, crea, aggiorna, elimina };
+// Fine stagione: prende i primi tre della classifica sulle giornate concluse,
+// scrive la voce dell'albo (campione, podio, fantapunti, allenatori di adesso) e
+// chiude i verdetti di tutte le edizioni della stagione, così i trofei dell'ultima
+// giornata non restano in sospeso. Una stagione si chiude una volta sola: se la voce
+// esiste già (o va corretta) si usa la modifica dell'albo.
+const chiudiStagione = async (req, res) => {
+  const stagione = String(req.body?.stagione || '').trim() || stagioneCorrente();
+
+  if (await Albo.exists({ stagione })) {
+    throw errore(409, `La stagione ${stagione} è già nell'albo`);
+  }
+  const [squadre, giornate] = await Promise.all([
+    Squadra.find().sort('nome').lean(),
+    Giornata.find({ stagione, conclusa: true }).sort('numero').lean()
+  ]);
+  if (giornate.length === 0) throw errore(400, `Nessuna giornata conclusa nella stagione ${stagione}`);
+
+  const [primo, secondo, terzo] = calcolaClassifica(squadre, giornate);
+  if (!primo) throw errore(400, 'Classifica vuota');
+
+  const voce = await Albo.create({
+    stagione,
+    squadra: primo._id,
+    punti: primo.puntiTotali,
+    ...(secondo ? { secondo: secondo._id } : {}),
+    ...(terzo ? { terzo: terzo._id } : {}),
+    allenatori: await allenatoriDi(primo._id)
+  });
+  await Edizione.updateMany({ stagione }, { votiChiusi: true });
+  await voce.populate(POPOLA);
+
+  await inviaATutti(
+    { titolo: `Stagione ${stagione} chiusa`, corpo: `Il campione è ${voce.squadra?.nome || 'chi ha vinto'}`, url: '/lega' },
+    { escludiUtente: req.utente.id }
+  );
+  res.status(201).json({ voce });
+};
+
+module.exports = { lista, crea, aggiorna, elimina, chiudiStagione };
