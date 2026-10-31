@@ -1,17 +1,15 @@
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CaretRight } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
-import { idDi, nomiAllenatori } from '../utils/lega';
+import { nomiAllenatori } from '../utils/lega';
 import '../styles/squadre.css';
 
 // Le squadre della lega, a righe: tutte in una schermata. Toccandone una si apre
 // il suo interno.
 export default function Squadre() {
-  const { utente } = useOutletContext();
   const { squadre } = useDati();
   const navigate = useNavigate();
-  const mia = idDi(utente.squadra);
 
   return (
     <div className="ritagli squadre">
@@ -32,7 +30,6 @@ export default function Squadre() {
                   <span className="nome">{s.nome}</span>
                   {allenatori && <span className="dettaglio">di {allenatori}</span>}
                 </span>
-                {s._id === mia && <span className="la-tua">la tua</span>}
                 <CaretRight size={20} />
               </button>
             );
