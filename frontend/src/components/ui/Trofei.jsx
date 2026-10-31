@@ -34,6 +34,14 @@ export function IconaTrofeo({ id, size = 26 }) {
   );
 }
 
+// La nota sotto il nome: quando è stato vinto (stagione o giornata). Con più
+// vittorie, le ultime due e il resto in coda.
+const nota = (dettagli) => {
+  const ultime = dettagli.slice(-2).reverse();
+  const resto = dettagli.length - ultime.length;
+  return resto > 0 ? `${ultime.join(' · ')} +${resto}` : ultime.join(' · ');
+};
+
 // I trofei di una squadra in piccolo, come quelli della PlayStation: un disco con
 // l'icona, il "×3" appeso all'angolo e il nome sotto. `gruppi` arriva da
 // trofeiSquadra(); toccando (o tenendo) un trofeo escono le giornate in cui è stato vinto.
@@ -49,6 +57,7 @@ export default function MiniTrofei({ gruppi, categorie = [] }) {
               {g.quanti > 1 && <b className="minitrofeo-conto">×{g.quanti}</b>}
             </span>
             <span className="minitrofeo-nome">{breve}</span>
+            <span className="minitrofeo-nota">{nota(g.dettagli)}</span>
             <span className="visually-hidden">{`${etichetta}, ${g.quanti} ${g.quanti === 1 ? 'volta' : 'volte'}`}</span>
           </li>
         );

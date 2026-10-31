@@ -15,7 +15,7 @@
 
 /* Mini trofei sulla copertina della squadra. */
 .minitrofei{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:12px 10px; }
-.minitrofeo{ width:68px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; }
+.minitrofeo{ width:80px; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; }
 .minitrofeo-icona{ position:relative; display:inline-flex; }
 .minitrofeo-icona .trofeo-disco{ width:46px; height:46px; box-shadow:var(--ombra-bassa); }
 .minitrofeo-conto{
@@ -25,3 +25,4 @@
 }
 .minitrofeo-nome{ font-family:'Oswald',sans-serif; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; line-height:1.15; overflow-wrap:anywhere; }
 .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.minitrofeo-nota{ font-size:11px; line-height:1.2; color:var(--ink-soft); overflow-wrap:anywhere; }

@@ -13,9 +13,9 @@ export const TROFEI_AUTOMATICI = ['gufi', 'top', 'nera'];
 // Etichette fisse per i trofei che non sono categorie di voto. Le categorie di voto
 // portano la loro etichetta dal backend (vedi `categorieVoto` nel contesto).
 const ETICHETTE_FISSE = {
-  campione: { etichetta: 'Campione', breve: 'Campione' },
-  argento: { etichetta: 'Secondo posto', breve: '2ª' },
-  bronzo: { etichetta: 'Terzo posto', breve: '3ª' },
+  campione: { etichetta: 'Campione di lega', breve: 'Campione di lega' },
+  argento: { etichetta: 'Secondo in classifica', breve: '2º in lega' },
+  bronzo: { etichetta: 'Terzo in classifica', breve: '3º in lega' },
   gufi: { etichetta: 'Re dei Gufi', breve: 'Re dei Gufi' },
   top: { etichetta: 'Miglior punteggio', breve: 'Top di giornata' },
   nera: { etichetta: 'Maglia nera', breve: 'Maglia nera' }
