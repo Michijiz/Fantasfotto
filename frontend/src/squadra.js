@@ -13,7 +13,7 @@ export const RITAGLI_SQUADRA = [
   { id: 'rosa', nome: 'La rosa' },
   { id: 'formazione', nome: 'La formazione ideale' },
   { id: 'album', nome: "L'album" },
-  { id: 'albo', nome: "Nell'albo" }
+  { id: 'albo', nome: 'La bacheca' }
 ];
 
 const IDS = RITAGLI_SQUADRA.map((r) => r.id);

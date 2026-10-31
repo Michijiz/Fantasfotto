@@ -8,11 +8,15 @@ const { stagioneCorrente } = require('../utils/stagione');
 // Le votazioni su un'edizione restano aperte fino al fischio d'inizio della
 // giornata dopo. Senza data impostata su quella giornata, restano aperte finché
 // non viene conclusa.
-async function votazioniChiuse(edizione) {
-  const dopo = await Giornata.findOne({ stagione: edizione.stagione || stagioneCorrente(), numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
+const chiusaDa = (dopo) => {
   if (!dopo) return false;
   if (dopo.conclusa) return true;
   return Boolean(dopo.data && new Date(dopo.data).getTime() <= Date.now());
+};
+
+async function votazioniChiuse(edizione) {
+  const dopo = await Giornata.findOne({ stagione: edizione.stagione || stagioneCorrente(), numero: edizione.giornataNumero + 1 }).select('data conclusa').lean();
+  return chiusaDa(dopo);
 }
 
 // Categorie di voto disponibili per edizione. Tenute qui (non in DB) perché
@@ -28,9 +32,11 @@ const CATEGORIE_DEF = [
   { id: 'culo', etichetta: 'San Culo', breve: 'San Culo', descrizione: 'Ha vinto senza capire come. Accendetegli un cero.' },
   { id: 'sfigato', etichetta: 'Il Cornuto e mazziato', breve: 'Cornuto', descrizione: 'Ha fatto tutto giusto e ha perso lo stesso.' },
   { id: 'piangina', etichetta: 'Muro del pianto', breve: 'Pianto', descrizione: 'Ha riempito la chat di lamenti.' },
-  { id: 'formazione', etichetta: 'Formazione da denuncia', breve: 'Formazione', descrizione: 'Schierata col cuore, non con la testa.' },
-  { id: 'panchina', etichetta: "Il Panchinaro d'oro", breve: 'Panchinaro', descrizione: 'I migliori li ha lasciati a scaldare la panca.' }
+  { id: 'formazione', etichetta: 'Formazione da denuncia', breve: 'Formazione', descrizione: 'Schierata col cuore, non con la testa.' }
 ];
+// Nota: 'panchina' (Il Panchinaro d'oro) è stata tolta. I voti già dati restano a
+// database ma non compaiono più né nei conteggi né nei trofei, perché tutto
+// filtra sull'elenco qui sopra.
 
 const CATEGORIE = CATEGORIE_DEF.map((c) => c.id);
 
@@ -54,10 +60,8 @@ const vota = async (req, res) => {
   if (await votazioniChiuse(edizione)) {
     return res.status(403).json({ errore: 'Votazioni chiuse: il tribunale ha già emesso le sentenze' });
   }
+  // La propria squadra si può votare, come tutte le altre.
   const io = await User.findById(req.utente.id).select('squadra').lean();
-  if (io && String(io.squadra) === String(squadraId)) {
-    return res.status(400).json({ errore: 'La tua squadra non si vota: niente autoassoluzioni' });
-  }
 
   const voto = await Voto.findOneAndUpdate(
     { edizione: edizioneId, categoria, votante: req.utente.id },
@@ -114,4 +118,45 @@ const risultati = async (req, res) => {
   res.json({ conteggi, mioVoto, chiuse, visibili, votantiCompleti, utentiTotali });
 };
 
-module.exports = { categorie, vota, risultati };
+// I trofei dei verdetti: per ogni edizione a votazioni chiuse, chi ha vinto ogni
+// categoria (più squadre in caso di pari merito). Prima della chiusura non si dice
+// niente: sarebbe un modo per vedere i conteggi senza aver votato.
+// Nota: l'ultima edizione di una stagione non si chiude finché non esiste la
+// giornata dopo, quindi i suoi trofei compaiono solo allora.
+const trofei = async (req, res) => {
+  const [edizioni, giornate] = await Promise.all([
+    Edizione.find().select('giornataNumero stagione').lean(),
+    Giornata.find().select('stagione numero data conclusa').lean()
+  ]);
+  const chiave = (stagione, numero) => `${stagione}|${numero}`;
+  const perChiave = new Map(giornate.map((g) => [chiave(g.stagione, g.numero), g]));
+  const chiuse = edizioni.filter((e) => chiusaDa(perChiave.get(chiave(e.stagione || stagioneCorrente(), e.giornataNumero + 1))));
+  if (chiuse.length === 0) return res.json({ trofei: [] });
+
+  const conteggi = await Voto.aggregate([
+    { $match: { edizione: { $in: chiuse.map((e) => e._id) }, categoria: { $in: CATEGORIE } } },
+    { $group: { _id: { edizione: '$edizione', categoria: '$categoria', squadra: '$votato' }, n: { $sum: 1 } } }
+  ]);
+
+  const perGruppo = new Map();
+  for (const c of conteggi) {
+    const k = `${c._id.edizione}|${c._id.categoria}`;
+    if (!perGruppo.has(k)) perGruppo.set(k, []);
+    perGruppo.get(k).push({ squadra: String(c._id.squadra), n: c.n });
+  }
+
+  const numeroDi = new Map(chiuse.map((e) => [String(e._id), e.giornataNumero]));
+  const elenco = [];
+  for (const [k, righe] of perGruppo) {
+    const [edizioneId, categoria] = k.split('|');
+    const massimo = Math.max(...righe.map((r) => r.n));
+    elenco.push({
+      edizioneId, giornata: numeroDi.get(edizioneId), categoria, voti: massimo,
+      squadre: righe.filter((r) => r.n === massimo).map((r) => r.squadra)
+    });
+  }
+  elenco.sort((a, b) => a.giornata - b.giornata);
+  res.json({ trofei: elenco });
+};
+
+module.exports = { categorie, vota, risultati, trofei };

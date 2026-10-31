@@ -42,7 +42,6 @@ export default function Verdetti() {
   const chiuse = Boolean(risultatiVoti.chiuse);
   const scelta = mioVoto[cat.id];
   const mia = idDi(utente.squadra);
-  const votabili = squadre.filter((s) => s._id !== mia);
 
   const vai = (k) => setIndice((k + n) % n);
   const prossimaDaVotare = () => {
@@ -77,7 +76,7 @@ export default function Verdetti() {
           <span className="binario"><span className="riempito" style={{ width: `${Math.round((100 * votate) / n)}%` }} /></span>
           <b>{votate}/{n}</b>
         </span>
-        <p className="dettaglio">Si vota fino al fischio d&apos;inizio della giornata dopo. Un voto per categoria, la tua squadra non si vota.</p>
+        <p className="dettaglio">Si vota fino al fischio d&apos;inizio della giornata dopo. Un voto per categoria, anche per la tua squadra.</p>
       </section>
 
       {chiuse ? (
@@ -116,7 +115,7 @@ export default function Verdetti() {
           </div>
 
           <div className="voto-squadre">
-            {votabili.map((s) => (
+            {squadre.map((s) => (
               <button
                 key={s._id}
                 type="button"
@@ -127,6 +126,7 @@ export default function Verdetti() {
               >
                 <Stemma src={s.stemma} nome={s.nome} size={38} />
                 <span className="nome">{s.nome}</span>
+                {s._id === mia && <span className="tu">Tu</span>}
               </button>
             ))}
           </div>

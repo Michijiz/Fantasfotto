@@ -48,7 +48,7 @@ const GLOSSARIO = [
   ['Banco', 'Il periodo in cui la schedina si può consegnare: apre quando gli scontri sono impostati e lo chiude la redazione a mano, quando partono le partite.'],
   ['Quota', 'Il moltiplicatore di ogni segno. Si fissa all\'apertura del banco e non cambia più.'],
   ['Re dei Gufi', 'Chi vince la schedina della giornata. Finisce nel tabellino dell\'edizione.'],
-  ['Verdetti, tribunale', 'I voti della lega dopo ogni edizione: sette categorie, un voto ciascuna.'],
+  ['Verdetti, tribunale', 'I voti della lega dopo ogni edizione: sei categorie, un voto ciascuna.'],
   ['Fantapunti', 'La somma dei voti dei calciatori con bonus e malus. Decidono quanti gol fa una squadra.'],
   ['Fede', 'La squadra reale che tifi: dà i colori a tutta l\'app.'],
   ['Culo, Culo Index', 'Quanto il calendario ha aiutato (+) o penalizzato (−) una squadra rispetto alla media di tutte le avversarie. L\'indice dice quanto ha pesato in tutta la lega.'],
@@ -306,9 +306,10 @@ export default function Regolamento() {
 
         <Voce id="tribunale" titolo="Il tribunale" apertaAllInizio={sezione === 'tribunale'}>
           <p>
-            Dopo ogni edizione la lega giudica la giornata in sette categorie: Fenomeno di giornata, Il Brocco
-            della settimana, San Culo, Il Cornuto e mazziato, Muro del pianto, Formazione da denuncia e Il
-            Panchinaro d&apos;oro. Un voto per categoria, e la propria squadra non si vota.
+            Dopo ogni edizione la lega giudica la giornata in sei categorie: Fenomeno di giornata, Il Brocco
+            della settimana, San Culo, Il Cornuto e mazziato, Muro del pianto e Formazione da denuncia.
+            Un voto per categoria, e si può votare anche la propria squadra. Chi vince una categoria a
+            votazioni chiuse si porta a casa il trofeo, che resta nella pagina della squadra.
           </p>
           <p>
             Si vota fino al fischio d&apos;inizio della giornata dopo. Com&apos;è andata lo vede subito chi ha

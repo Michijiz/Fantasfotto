@@ -1,0 +1,33 @@
+/* ===== Trofei: dischi con l'icona e bacheca delle squadre (components/ui/Trofei.jsx) =====
+   Le tinte oro/argento/bronzo sono quelle da medaglia di albo.css. */
+
+.trofeo-disco{
+  flex:0 0 auto; width:44px; height:44px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--paper-dark); color:var(--ink);
+}
+.trofeo-disco.oro{ background:var(--gold); color:var(--paper-input); }
+.trofeo-disco.argento{ background:var(--medaglia-argento); color:#fff; }
+.trofeo-disco.bronzo{ background:var(--medaglia-bronzo); color:#fff; }
+.trofeo-disco.verdetto{ background:var(--stamp-red); color:#fff; }
+.trofeo-disco.notte{ background:#1d1722; color:#f2c24b; }
+.trofeo-disco.nera{ background:var(--ink); color:var(--paper-input); }
+
+.trofei-griglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.trofeo{
+  display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px 12px 12px;
+  border-radius:var(--r-md); background:var(--paper-dark); border:1.5px solid transparent; min-width:0;
+}
+.trofeo.oro{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, var(--paper-dark)); }
+.trofeo.argento{ border-color:color-mix(in srgb, var(--medaglia-argento) 55%, transparent); }
+.trofeo.bronzo{ border-color:color-mix(in srgb, var(--medaglia-bronzo) 55%, transparent); }
+.trofeo-quanti{ margin-top:4px; font-family:'Anton',sans-serif; font-size:30px; line-height:1; }
+.trofeo-nome{ font-family:'Anton',sans-serif; font-size:16px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
+.trofeo-quando{ font-size:13px; line-height:1.3; }
+
+/* Striscia "campione in carica" in cima alla copertina della squadra. */
+.banner-campione{
+  align-self:stretch; display:flex; align-items:center; justify-content:center; gap:8px; padding:7px 12px;
+  background:var(--gold); color:var(--paper-input);
+  font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+}

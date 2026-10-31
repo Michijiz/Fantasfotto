@@ -33,6 +33,7 @@ export function DataProvider({ children }) {
   const [categorieVoto, setCategorieVoto] = useState([]);
   const [schedina, setSchedina] = useState(SCHEDINA_VUOTA);
   const [albo, setAlbo] = useState([]);
+  const [trofeiVerdetti, setTrofeiVerdetti] = useState([]);
 
   const ricaricaSquadre = useCallback(async () => {
     const { squadre } = await api.get('/api/squadre');
@@ -99,6 +100,13 @@ export function DataProvider({ children }) {
     setAlbo(albo);
   }, []);
 
+  // I vincitori dei verdetti a votazioni chiuse: finiscono nelle bacheche delle
+  // squadre e nell'albo d'oro.
+  const ricaricaTrofei = useCallback(async () => {
+    const { trofei } = await api.get('/api/voti/trofei');
+    setTrofeiVerdetti(trofei);
+  }, []);
+
   // Restituisce una promessa che si risolve quando TUTTE le ricariche sono finite:
   // i form fanno `await ricaricaTutto()` prima di chiudersi e di mostrare il toast,
   // e prima restituiva undefined — il messaggio "salvato" compariva mentre in
@@ -115,13 +123,14 @@ export function DataProvider({ children }) {
         ricaricaProssimaGiornata(),
         ricaricaGiornate(),
         ricaricaSchedina(),
-        ricaricaAlbo()
+        ricaricaAlbo(),
+        ricaricaTrofei()
       );
     }
     return Promise.allSettled(lavori);
   }, [
     utenteId, ricaricaSquadre, ricaricaCategorieVoto, ricaricaTabellone, ricaricaUltimaEdizione,
-    ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina, ricaricaAlbo
+    ricaricaEdizioni, ricaricaProssimaGiornata, ricaricaGiornate, ricaricaSchedina, ricaricaAlbo, ricaricaTrofei
   ]);
 
   // Dipendere dall'id e non dall'oggetto: `utente` è un oggetto nuovo a ogni
@@ -144,7 +153,7 @@ export function DataProvider({ children }) {
   return (
     <DataContext.Provider value={{
       squadre, tabellone, ultimaEdizione, edizioni, prossimaGiornata, giornate, risultatiVoti,
-      categorieVoto, schedina, albo,
+      categorieVoto, schedina, albo, trofeiVerdetti,
       // Solo le ricariche mirate che qualcuno usa davvero: Profilo (squadre),
       // Schedina (schedina), Verdetti (risultatiVoti). Tutto il resto passa da
       // ricaricaTutto — le altre sette erano superficie pubblica mai chiamata.

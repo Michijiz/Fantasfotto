@@ -8,15 +8,18 @@ import Sheet from '../components/ui/Sheet';
 import ComponiSquadra from '../components/ui/ComponiSquadra';
 import AlbumSquadra from '../components/ui/AlbumSquadra';
 import FormazioneIdeale from '../components/ui/FormazioneIdeale';
+import BachecaTrofei from '../components/ui/Trofei';
 import { avatarUtente } from '../avatar';
 import { magliaSquadra } from '../loghi';
 import { puoCancellare } from '../ruoli';
 import { formattaFantapunti } from '../utils/regolamento';
-import { idDi, formaRecente, derbyPersonale, menzioni, rosaPerRuolo } from '../utils/lega';
+import { idDi, formaRecente, derbyPersonale, rosaPerRuolo } from '../utils/lega';
+import { trofeiSquadra } from '../utils/trofei';
 import { bozzaSquadra, ordineRitagli, sfondoColori, miniatura, formazioneSchierata } from '../squadra';
 import '../styles/squadre.css';
 import '../styles/gazzetta.css';
 import '../styles/albo.css';
+import '../styles/trofei.css';
 
 function tempoAl(g) {
   if (!g?.data) return null;
@@ -55,7 +58,7 @@ function conBozza(squadra, bozza) {
 export default function Squadra() {
   const { id } = useParams();
   const { utente } = useOutletContext();
-  const { squadre, tabellone, giornate, edizioni, albo, ricaricaSquadre } = useDati();
+  const { squadre, tabellone, giornate, edizioni, albo, trofeiVerdetti, categorieVoto, ricaricaSquadre } = useDati();
   const navigate = useNavigate();
   const [bozza, setBozza] = useState(null);
 
@@ -65,7 +68,11 @@ export default function Squadra() {
 
   const forma = useMemo(() => formaRecente(giornate, id), [giornate, id]);
   const derby = useMemo(() => derbyPersonale(giornate, mia, id), [giornate, mia, id]);
-  const albi = useMemo(() => menzioni(albo, edizioni, giornate, id), [albo, edizioni, giornate, id]);
+  const trofei = useMemo(
+    () => trofeiSquadra(id, { albo, edizioni, giornate, trofeiVerdetti, categorie: categorieVoto }),
+    [albo, edizioni, giornate, trofeiVerdetti, categorieVoto, id]
+  );
+  const inCarica = albo[0] && idDi(albo[0].squadra) === id ? albo[0] : null;
 
   if (!pubblicata) {
     return (
@@ -200,17 +207,11 @@ export default function Squadra() {
 
     albo: (
       <section className="ritaglio" key="albo">
-        <Occhiello>Nell&apos;albo</Occhiello>
-        {albi.length === 0 ? (
-          <p className="ritaglio-vuoto">Ancora nessuna menzione. C&apos;è tempo.</p>
+        <Occhiello>{trofei.length ? `La bacheca · ${trofei.reduce((t, g) => t + g.quanti, 0)}` : 'La bacheca'}</Occhiello>
+        {trofei.length === 0 ? (
+          <p className="ritaglio-vuoto">Bacheca vuota. C&apos;è tempo.</p>
         ) : (
-          <div className="albo-chips">
-            {albi.map((a) => (
-              <span key={a.chiave} className={`albo-chip${a.oro ? ' oro' : ''}${a.coppa ? ` coppa-${a.coppa}` : ''}`}>
-                {a.coppa && <Trophy size={18} weight="fill" />}{a.testo}
-              </span>
-            ))}
-          </div>
+          <BachecaTrofei gruppi={trofei} categorie={categorieVoto} />
         )}
       </section>
     )
@@ -229,6 +230,11 @@ export default function Squadra() {
       </header>
 
       <section className="ritaglio squadra-copertina">
+        {inCarica && (
+          <div className="banner-campione">
+            <Trophy size={16} weight="fill" aria-hidden="true" /> Campione in carica · {inCarica.stagione}
+          </div>
+        )}
         <div
           className={`fascia${squadra.foto ? ' con-foto' : ''}`}
           style={squadra.foto ? undefined : { background: sfondoColori(colori) }}

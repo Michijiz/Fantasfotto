@@ -1,216 +1,220 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, PencilSimple, CaretRight, Plus } from '@phosphor-icons/react';
+import { Trophy, PencilSimple, Plus, Medal } from '@phosphor-icons/react';
 import { useDati } from '../../context/DataContext';
 import Stemma from './Stemma';
+import { IconaTrofeo } from './Trofei';
 import { formattaFantapunti } from '../../utils/regolamento';
-import { idDi, bacheca, recordLega } from '../../utils/lega';
+import { idDi, bacheca } from '../../utils/lega';
+import { classificaTrofei, etichettaTrofeo, ordineTrofei, TROFEI_CAMPIONATO } from '../../utils/trofei';
 import { miniatura } from '../../squadra';
 import '../../styles/albo.css';
-
-function Occhiello({ children }) {
-  return <div className="ritaglio-occhiello"><span>{children}</span><span className="filo" /></div>;
-}
+import '../../styles/trofei.css';
 
 // "Tizio", "Tizio e Caio", "Tizio, Caio e Sempronio"
 const elencoNomi = (nomi) => (nomi.length <= 1 ? nomi[0] || '' : `${nomi.slice(0, -1).join(', ')} e ${nomi[nomi.length - 1]}`);
 
-// Le coppe di una squadra: una per titolo finché ci stanno, poi "×n".
-function Coppe({ quante, tipo = 'oro', dimensione = 22 }) {
-  if (!quante) return null;
-  if (quante > 5) {
-    return (
-      <span className={`coppe ${tipo}`} aria-label={`${quante} volte`}>
-        <Trophy size={dimensione} weight="fill" /><b>×{quante}</b>
-      </span>
-    );
-  }
-  return (
-    <span className={`coppe ${tipo}`} aria-label={`${quante} volte`}>
-      {Array.from({ length: quante }, (_, i) => <Trophy key={i} size={dimensione} weight="fill" />)}
-    </span>
-  );
-}
+const VISTE = [
+  { id: 'stagioni', nome: 'Stagioni' },
+  { id: 'medagliere', nome: 'Medagliere' },
+  { id: 'tribunale', nome: 'Tribunale' }
+];
 
-// L'albo d'oro come bacheca dei trofei, in tre ritagli: il campione in carica in
-// grande, la bacheca di tutte le squadre (con i record calcolati dalle giornate)
-// e la linea del tempo delle stagioni. La redazione tocca una voce per correggerla.
+// Cosa ha fatto vincere ogni premio che non è una categoria di voto: le categorie
+// portano la propria descrizione dal backend.
+const DESCRIZIONI = {
+  gufi: 'Ha azzeccato tutti gli scontri della schedina.',
+  top: 'Il miglior punteggio della giornata.',
+  nera: 'Il peggior punteggio della giornata.'
+};
+
+// L'albo d'oro in tre viste: le stagioni come targhe di ottone, il medagliere
+// della lega e il tribunale, cioè chi ha vinto più verdetti e premi di giornata.
+// La redazione tocca una targa per correggerla.
 export default function AlboDOro({ sonoRedazione, onModifica }) {
-  const { albo, squadre, giornate, edizioni } = useDati();
+  const { albo, squadre, giornate, edizioni, trofeiVerdetti, categorieVoto } = useDati();
   const navigate = useNavigate();
+  const [vista, setVista] = useState('stagioni');
 
-  const trofei = useMemo(() => bacheca(albo, squadre), [albo, squadre]);
-  const record = useMemo(() => recordLega(giornate, edizioni), [giornate, edizioni]);
-  const nomeSquadra = (id) => squadre.find((s) => s._id === id)?.nome || '';
+  const medagliere = useMemo(() => bacheca(albo, squadre), [albo, squadre]);
+  const classifiche = useMemo(
+    () => classificaTrofei(squadre, { albo, edizioni, giornate, trofeiVerdetti, categorie: categorieVoto }),
+    [squadre, albo, edizioni, giornate, trofeiVerdetti, categorieVoto]
+  );
 
   const campione = albo[0];
   const squadraCampione = campione && squadre.find((s) => s._id === idDi(campione.squadra));
-  // Chi l'ha vinta: quelli fissati nella voce; per le voci di prima, gli attuali.
-  const allenatoriCampione = campione?.allenatori?.length
-    ? campione.allenatori.map((a) => a.nome)
-    : (squadraCampione?.allenatori || []).map((a) => a.nomeVisualizzato);
-  const titoliCampione = trofei.find((t) => t.squadra._id === idDi(campione?.squadra))?.titoli || 0;
+  const campioniDiversi = new Set(albo.map((v) => idDi(v.squadra))).size;
+  const vaiAllaSquadra = (squadra) => squadra && navigate(`/squadre/${idDi(squadra)}`);
+
+  const aggiungi = sonoRedazione && (
+    <button type="button" className="bottone-contorno" onClick={() => onModifica({})}>
+      <Plus size={18} weight="bold" /> Aggiungi un campione
+    </button>
+  );
+
+  if (!campione) {
+    return (
+      <>
+        {aggiungi}
+        <section className="ritaglio albo-vuoto">
+          <Trophy size={64} weight="duotone" />
+          <h2 className="ritaglio-titolo medio">L&apos;albo aspetta il primo nome</h2>
+          <p className="ritaglio-vuoto">Nessun campione ancora. Qualcuno dovrà pur vincere.</p>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
-      {sonoRedazione && (
-        <button type="button" className="bottone-contorno" onClick={() => onModifica({})}>
-          <Plus size={18} weight="bold" /> Aggiungi un campione
-        </button>
+      {aggiungi}
+
+      <section className="ritaglio albo-testa">
+        <span className="occhiello-oro">L&apos;albo d&apos;oro</span>
+        <h2 className="albo-trono">
+          Sul trono: <button type="button" onClick={() => vaiAllaSquadra(squadraCampione)}>{campione.squadra?.nome || 'Squadra sciolta'}</button>
+        </h2>
+        <p className="dettaglio">
+          {albo.length} {albo.length === 1 ? 'stagione' : 'stagioni'} · {campioniDiversi} {campioniDiversi === 1 ? 'campione diverso' : 'campioni diversi'}
+        </p>
+        <div className="albo-viste" role="tablist">
+          {VISTE.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={vista === v.id}
+              className={`albo-vista${vista === v.id ? ' attiva' : ''}`}
+              onClick={() => setVista(v.id)}
+            >
+              {v.nome}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {vista === 'stagioni' && (
+        <div className="targhe">
+          {albo.map((v, i) => {
+            const allenatori = v.allenatori?.length ? v.allenatori.map((a) => a.nome) : [];
+            return (
+              <button
+                key={v._id}
+                type="button"
+                className={`targa${i === 0 ? ' prima' : ''}`}
+                onClick={sonoRedazione ? () => onModifica(v) : () => vaiAllaSquadra(v.squadra)}
+              >
+                <span className="targa-stagione">
+                  {i === 0 && <Trophy size={15} weight="fill" aria-hidden="true" />}
+                  {i === 0 ? 'Campione in carica' : 'Campione'} · {v.stagione}
+                </span>
+                {v.foto && <img className="targa-foto" src={miniatura(v.foto, 1000)} alt="" loading="lazy" decoding="async" />}
+                <span className="targa-squadra">
+                  <Stemma src={v.squadra?.stemma} nome={v.squadra?.nome} size={i === 0 ? 64 : 46} />
+                  <span className="nome">{v.squadra?.nome || 'Squadra sciolta'}</span>
+                </span>
+                <span className="targa-riga">
+                  {v.punti != null && <span><b>{formattaFantapunti(v.punti)}</b> fantapunti</span>}
+                  {allenatori.length > 0 && <span>in panchina {elencoNomi(allenatori)}</span>}
+                </span>
+                {(v.secondo || v.terzo) && (
+                  <span className="targa-podio">
+                    {v.secondo && <span className="argento"><Medal size={16} weight="fill" aria-hidden="true" /> {v.secondo.nome}</span>}
+                    {v.terzo && <span className="bronzo"><Medal size={16} weight="fill" aria-hidden="true" /> {v.terzo.nome}</span>}
+                  </span>
+                )}
+                {v.note && <span className="targa-nota">{v.note}</span>}
+                {sonoRedazione && <PencilSimple size={18} className="targa-matita" aria-label="Correggi la voce" />}
+              </button>
+            );
+          })}
+        </div>
       )}
 
-      {!campione ? (
-        <section className="ritaglio albo-vuoto">
-          <Trophy size={64} weight="duotone" />
-          <h2 className="ritaglio-titolo medio">La bacheca aspetta il primo trofeo</h2>
-          <p className="ritaglio-vuoto">Nessun campione ancora. Qualcuno dovrà pur vincere.</p>
-        </section>
-      ) : (
-        <>
-          {/* 1 · Il campione in carica */}
-          <section className="ritaglio albo-campione">
-            <div className="campione-testa">
-              <span className="occhiello-oro">Campione in carica · {campione.stagione}</span>
-              {sonoRedazione && (
-                <button type="button" className="campione-matita" onClick={() => onModifica(campione)} aria-label="Correggi la voce">
-                  <PencilSimple size={18} />
+      {vista === 'medagliere' && (
+        <section className="ritaglio">
+          <div className="medagliere-intesta" aria-hidden="true">
+            <span className="chi">Squadra</span>
+            <span className="oro"><Medal size={18} weight="fill" /></span>
+            <span className="argento"><Medal size={18} weight="fill" /></span>
+            <span className="bronzo"><Medal size={18} weight="fill" /></span>
+          </div>
+          <div className="medagliere">
+            {medagliere.map((t, i) => {
+              // Pari merito: stesso posto di chi ha gli stessi titoli e podi.
+              const prima = medagliere.findIndex((x) => x.titoli === t.titoli && x.secondi === t.secondi && x.terzi === t.terzi);
+              const vuota = !t.titoli && !t.secondi && !t.terzi;
+              return (
+                <button
+                  key={t.squadra._id}
+                  type="button"
+                  className={`medagliere-riga${vuota ? ' vuota' : ''}`}
+                  onClick={() => vaiAllaSquadra(t.squadra)}
+                >
+                  <span className="posto">{vuota ? '' : (prima >= 0 ? prima : i) + 1}</span>
+                  <Stemma src={t.squadra.stemma} nome={t.squadra.nome} size={36} />
+                  <span className="chi">
+                    <span className="nome">{t.squadra.nome}</span>
+                    {t.stagioni.length > 0 && <span className="dettaglio">{t.stagioni.join(' · ')}</span>}
+                  </span>
+                  <span className="conto oro">{t.titoli || '·'}</span>
+                  <span className="conto argento">{t.secondi || '·'}</span>
+                  <span className="conto bronzo">{t.terzi || '·'}</span>
                 </button>
-              )}
-            </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-            {campione.foto ? (
-              <div className="campione-foto">
-                <img src={miniatura(campione.foto, 1200)} alt="" decoding="async" />
-                <span className="campione-stemma-piccolo">
-                  <Stemma src={campione.squadra?.stemma} nome={campione.squadra?.nome} size={64} />
-                </span>
-              </div>
-            ) : (
-              <div className="campione-medaglione">
-                <span className="alone" aria-hidden="true" />
-                <Stemma src={campione.squadra?.stemma} nome={campione.squadra?.nome} size={120} />
-                <span className="coppa-grande" aria-hidden="true"><Trophy size={34} weight="fill" /></span>
-              </div>
-            )}
-
-            <button
-              type="button"
-              className="campione-nome"
-              onClick={() => squadraCampione && navigate(`/squadre/${squadraCampione._id}`)}
-            >
-              {campione.squadra?.nome || 'Squadra sciolta'}
-            </button>
-            {allenatoriCampione.length > 0 && (
-              <div className="dettaglio campione-chi">allenata da {elencoNomi(allenatoriCampione)}</div>
-            )}
-
-            <div className="campione-numeri">
-              {campione.punti != null && (
-                <div><b>{formattaFantapunti(campione.punti)}</b><span className="dettaglio">fantapunti</span></div>
-              )}
-              <div><b>{titoliCampione}</b><span className="dettaglio">{titoliCampione === 1 ? 'titolo' : 'titoli'} in bacheca</span></div>
-            </div>
-
-            {campione.note && <blockquote className="campione-citazione">{campione.note}</blockquote>}
-
-            {(campione.secondo || campione.terzo) && (
-              <div className="podio-mini">
-                {campione.secondo && (
-                  <span className="gradino argento"><b>2ª</b> <Stemma src={campione.secondo.stemma} nome={campione.secondo.nome} size={26} /> {campione.secondo.nome}</span>
-                )}
-                {campione.terzo && (
-                  <span className="gradino bronzo"><b>3ª</b> <Stemma src={campione.terzo.stemma} nome={campione.terzo.nome} size={26} /> {campione.terzo.nome}</span>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* 2 · La bacheca */}
-          <section className="ritaglio">
-            <Occhiello>La bacheca</Occhiello>
-            <div className="bacheca">
-              {trofei.map((t) => {
-                const vuota = !t.titoli && !t.secondi && !t.terzi;
-                return (
-                  <button
-                    key={t.squadra._id}
-                    type="button"
-                    className={`bacheca-riga${vuota ? ' vuota' : ''}`}
-                    onClick={() => navigate(`/squadre/${t.squadra._id}`)}
-                  >
-                    <Stemma src={t.squadra.stemma} nome={t.squadra.nome} size={40} />
-                    <span className="testi">
-                      <span className="nome">{t.squadra.nome}</span>
-                      {vuota ? (
-                        <span className="dettaglio">bacheca vuota</span>
-                      ) : t.stagioni.length > 0 ? (
-                        <span className="dettaglio">{t.stagioni.join(' · ')}</span>
-                      ) : (
-                        <span className="dettaglio">sempre sul podio, mai sul trono</span>
-                      )}
-                    </span>
-                    <span className="trofei">
-                      <Coppe quante={t.titoli} />
-                      {(t.secondi > 0 || t.terzi > 0) && (
-                        <span className="podi">
-                          {t.secondi > 0 && <span className="argento">{t.secondi}×2ª</span>}
-                          {t.terzi > 0 && <span className="bronzo">{t.terzi}×3ª</span>}
-                        </span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {record.length > 0 && (
-              <div className="record-griglia">
-                {record.map((r) => (
-                  <div key={r.id} className={`record record-${r.id}`}>
-                    <span className="dettaglio">{r.nome}</span>
-                    <b>{elencoNomi(r.ids.map(nomeSquadra).filter(Boolean))}</b>
-                    <span className="volte">×{r.volte}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* 3 · Le stagioni */}
-          <section className="ritaglio">
-            <Occhiello>Le stagioni</Occhiello>
-            <ol className="stagioni">
-              {albo.map((v, i) => (
-                <li key={v._id} className={i === 0 ? 'ultima' : ''}>
-                  <span className="pallino" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="stagione-voce"
-                    onClick={sonoRedazione ? () => onModifica(v) : () => v.squadra && navigate(`/squadre/${idDi(v.squadra)}`)}
-                  >
-                    <span className="stagione-etichetta">{v.stagione}</span>
-                    <span className="stagione-vincitrice">
-                      <Stemma src={v.squadra?.stemma} nome={v.squadra?.nome} size={34} />
-                      <span className="nome">{v.squadra?.nome || 'Squadra sciolta'}</span>
-                      {v.punti != null && <span className="punti">{formattaFantapunti(v.punti)}</span>}
-                    </span>
-                    {(v.secondo || v.terzo) && (
-                      <span className="dettaglio">
-                        {[v.secondo && `2ª ${v.secondo.nome}`, v.terzo && `3ª ${v.terzo.nome}`].filter(Boolean).join(' · ')}
-                      </span>
-                    )}
-                    {v.allenatori?.length > 0 && (
-                      <span className="dettaglio">con {elencoNomi(v.allenatori.map((a) => a.nome))} in panchina</span>
-                    )}
-                    {v.note && <span className="stagione-nota">{v.note}</span>}
-                    {sonoRedazione && <CaretRight size={18} className="stagione-freccia" aria-hidden="true" />}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </>
+      {vista === 'tribunale' && (
+        <Tribunale classifiche={classifiche} categorie={categorieVoto} onSquadra={vaiAllaSquadra} />
       )}
     </>
   );
+}
+
+// Per ogni verdetto e premio di giornata, le squadre più decorate. Il campionato sta
+// nelle altre due viste, qui ci sono solo i trofei "satirici".
+function Tribunale({ classifiche, categorie, onSquadra }) {
+  const tipi = ordineTrofei(categorie).filter((id) => !TROFEI_CAMPIONATO.includes(id) && classifiche.has(id));
+
+  if (tipi.length === 0) {
+    return (
+      <section className="ritaglio albo-vuoto">
+        <Trophy size={64} weight="duotone" />
+        <h2 className="ritaglio-titolo medio">Il tribunale non ha ancora sentenze</h2>
+        <p className="ritaglio-vuoto">I verdetti diventano trofei quando le votazioni si chiudono.</p>
+      </section>
+    );
+  }
+
+  return tipi.map((id) => {
+    const righe = classifiche.get(id);
+    const { etichetta } = etichettaTrofeo(id, categorie);
+    const descrizione = categorie.find((c) => c.id === id)?.descrizione || DESCRIZIONI[id] || '';
+    const massimo = righe[0].quanti;
+    return (
+      <section className="ritaglio premio" key={id}>
+        <div className="premio-testa">
+          <IconaTrofeo id={id} />
+          <div className="testi">
+            <h3 className="ritaglio-titolo medio">{etichetta}</h3>
+            {descrizione && <span className="dettaglio">{descrizione}</span>}
+          </div>
+        </div>
+        <div className="premio-classifica">
+          {righe.slice(0, 5).map((r) => (
+            <button key={r.squadra._id} type="button" className="premio-riga" onClick={() => onSquadra(r.squadra)}>
+              <Stemma src={r.squadra.stemma} nome={r.squadra.nome} size={30} />
+              <span className="nome">{r.squadra.nome}</span>
+              <span className="binario"><span className="pieno" style={{ width: `${Math.round((100 * r.quanti) / massimo)}%` }} /></span>
+              <b>{r.quanti}</b>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  });
 }
