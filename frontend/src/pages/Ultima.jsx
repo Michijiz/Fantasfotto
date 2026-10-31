@@ -24,14 +24,6 @@ export default function Ultima() {
   // dopo una correzione si vede subito il testo nuovo.
   const mostrata = edizioni.find((e) => e._id === selezionataId) || ultimaEdizione;
 
-  // Edizioni in ordine di giornata (per la fila di copertine).
-  const ordinate = [...edizioni].sort((a, b) => a.giornataNumero - b.giornataNumero);
-
-  const apri = (e) => {
-    setSelezionataId(e._id);
-    document.querySelector('.contenuto')?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const elimina = async () => {
     try {
       await api.delete(`/api/edizioni/${mostrata._id}`);
@@ -58,22 +50,7 @@ export default function Ultima() {
     <div className="ritagli gazzetta">
       <div className="edicola">
         <div className="edicola-testa">
-          <span className="titolo">Le edizioni</span>
           <button type="button" className="bottone-link" onClick={() => navigate('/archivio')}>Tutto l&apos;archivio →</button>
-        </div>
-        <div className="edicola-fila">
-          {[...ordinate].reverse().slice(0, 10).map((e) => (
-            <button
-              key={e._id}
-              type="button"
-              className={`copertina${e._id === mostrata._id ? ' scelta' : ''}`}
-              onClick={() => apri(e)}
-              aria-current={e._id === mostrata._id ? 'true' : undefined}
-            >
-              <span className="num">G{e.giornataNumero}</span>
-              <span className="titolo">{e.titolo}</span>
-            </button>
-          ))}
         </div>
       </div>
 

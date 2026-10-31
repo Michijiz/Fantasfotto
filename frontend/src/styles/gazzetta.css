@@ -2,7 +2,7 @@
 
 /* Fila delle copertine in cima. */
 .edicola{ display:flex; flex-direction:column; gap:10px; }
-.edicola-testa{ display:flex; align-items:baseline; justify-content:space-between; padding:0 4px; }
+.edicola-testa{ display:flex; align-items:baseline; justify-content:flex-end; padding:0 4px; }
 .edicola-testa .titolo{ font-family:'Anton',sans-serif; font-size:26px; text-transform:uppercase; }
 .edicola-testa .bottone-link{ align-self:auto; }
 .edicola-fila{ display:flex; gap:12px; overflow-x:auto; margin:0 -16px; padding:4px 16px 14px; scrollbar-width:none; }
