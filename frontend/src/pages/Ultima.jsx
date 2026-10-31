@@ -24,11 +24,8 @@ export default function Ultima() {
   // dopo una correzione si vede subito il testo nuovo.
   const mostrata = edizioni.find((e) => e._id === selezionataId) || ultimaEdizione;
 
-  // Edizioni in ordine di giornata: la precedente e la successiva di quella aperta.
+  // Edizioni in ordine di giornata (per la fila di copertine).
   const ordinate = [...edizioni].sort((a, b) => a.giornataNumero - b.giornataNumero);
-  const posizione = mostrata ? ordinate.findIndex((e) => e._id === mostrata._id) : -1;
-  const precedente = posizione > 0 ? ordinate[posizione - 1] : null;
-  const successiva = posizione >= 0 && posizione < ordinate.length - 1 ? ordinate[posizione + 1] : null;
 
   const apri = (e) => {
     setSelezionataId(e._id);
@@ -90,15 +87,6 @@ export default function Ultima() {
           )}
         </div>
       )}
-
-      <div className="sfoglia">
-        <button type="button" className="bottone-contorno" disabled={!precedente} onClick={() => precedente && apri(precedente)}>
-          {precedente ? `← G${precedente.giornataNumero}` : 'Prima edizione'}
-        </button>
-        <button type="button" className="bottone-contorno" disabled={!successiva} onClick={() => successiva && apri(successiva)}>
-          {successiva ? `G${successiva.giornataNumero} →` : `G${mostrata.giornataNumero + 1} · in stampa`}
-        </button>
-      </div>
     </div>
   );
 }
