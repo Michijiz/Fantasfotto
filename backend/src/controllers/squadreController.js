@@ -114,7 +114,7 @@ const culoInvertiti = async (req, res) => {
 // un incolla troppo lungo non fa perdere tutto il resto del modulo.
 const testo = (v, max) => String(v ?? '').trim().slice(0, max);
 
-// Stemma, maglia e copertina: vuoto (= torna a quella di redazione), invariato
+// Stemma e copertina: vuoto (= torna a quella di redazione), invariato
 // (i record vecchi possono avere emoji o indirizzi d'altri tempi, e non si
 // toccano), oppure un'immagine caricata sul nostro Cloudinary.
 function immagine(nuova, attuale, cosa) {
@@ -180,7 +180,7 @@ async function squadraDellUtente(req) {
 // nessun salvataggio parziale cancella quello che c'era già.
 const aggiornaMiaSquadra = async (req, res) => {
   const {
-    nome, stemma, maglia, foto, bio, rosa, fondataNel, rosaRuoli,
+    nome, stemma, foto, bio, rosa, rosaRuoli,
     occhiello, slogan, colori, pagina, formazione
   } = req.body;
   const utente = await squadraDellUtente(req);
@@ -200,7 +200,6 @@ const aggiornaMiaSquadra = async (req, res) => {
   }
 
   if (stemma !== undefined) aggiornamenti.stemma = immagine(stemma, attuale.stemma, 'Stemma');
-  if (maglia !== undefined) aggiornamenti.maglia = immagine(maglia, attuale.maglia, 'Maglia');
   if (foto !== undefined) aggiornamenti.foto = immagine(foto, attuale.foto, 'Copertina');
   if (bio !== undefined) aggiornamenti.bio = String(bio ?? '');
   if (occhiello !== undefined) aggiornamenti.occhiello = testo(occhiello, 40);
@@ -226,14 +225,6 @@ const aggiornaMiaSquadra = async (req, res) => {
     aggiornamenti.rosa = Array.isArray(rosa)
       ? rosa
       : String(rosa).split(',').map((n) => n.trim()).filter(Boolean);
-  }
-
-  if (fondataNel !== undefined) {
-    const anno = String(fondataNel ?? '').trim();
-    if (anno && !/^\d{4}$/.test(anno)) {
-      return res.status(400).json({ errore: "L'anno di fondazione va scritto con quattro cifre" });
-    }
-    aggiornamenti.fondataNel = anno ? Number(anno) : null;
   }
 
   if (rosaRuoli !== undefined && rosaRuoli && typeof rosaRuoli === 'object') {

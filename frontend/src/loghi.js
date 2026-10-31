@@ -6,23 +6,23 @@
 // squadre che non hanno ancora caricato niente, così l'app non parte più piena di
 // scudetti grigi. Nessuna migrazione da fare: è tutto lato frontend.
 //
-// I loghi sono le versioni a 256px dei PNG in `public/icons/` (quelli *senza*
-// `-kit`, che sono invece le maglie): gli originali pesano fino a 900 KB l'uno e
-// a 28px di lato erano quasi 4 MB scaricati per niente ad ogni apertura.
+// I loghi sono le versioni a 256px dei PNG in `public/icons/`: gli originali
+// pesano fino a 900 KB l'uno e a 28px di lato erano quasi 4 MB scaricati per
+// niente ad ogni apertura.
 //
-// Dunder Mifflin non ha un logo, solo la maglia: nell'elenco e nelle classifiche
-// resta il monogramma di riserva (vedi `Stemma.jsx`).
+// Dunder Mifflin non ha un logo: nell'elenco e nelle classifiche resta il
+// monogramma di riserva (vedi `Stemma.jsx`).
 
 // Un elemento per squadra. `nomi` sono le grafie che si possono incontrare nel
 // database: la prima è quella "ufficiale", le altre servono solo a farsi trovare.
 const SQUADRE = [
-  { nomi: ['ASs Gotiche-Gotiche', 'Gotiche'], logo: '/loghi/asgotiche.png', maglia: '/icons/asgotiche-kit.png' },
-  { nomi: ['Chiavo Veronica FC'], logo: '/loghi/chiavoveronica.png', maglia: '/icons/chiavoveronica-kit.png' },
-  { nomi: ['Mieccio & Annintra'], logo: '/loghi/mieccioeannitra.png', maglia: '/icons/mieccioeannitra-kit.png' },
-  { nomi: ['FFC Noi United', 'Noi United'], logo: '/loghi/noiunited.png', maglia: '/icons/noiunited-kit.png' },
-  { nomi: ['Real Cumbia'], logo: '/loghi/realcumbia.png', maglia: '/icons/realcumbia-kit.png' },
-  { nomi: ['US Ticchio'], logo: '/loghi/usticchio.png', maglia: '/icons/usticchio-kit.png' },
-  { nomi: ['Dunder Mifflin'], logo: '', maglia: '/icons/dundermiffilin-kit.png' }
+  { nomi: ['ASs Gotiche-Gotiche', 'Gotiche'], logo: '/loghi/asgotiche.png' },
+  { nomi: ['Chiavo Veronica FC'], logo: '/loghi/chiavoveronica.png' },
+  { nomi: ['Mieccio & Annintra'], logo: '/loghi/mieccioeannitra.png' },
+  { nomi: ['FFC Noi United', 'Noi United'], logo: '/loghi/noiunited.png' },
+  { nomi: ['Real Cumbia'], logo: '/loghi/realcumbia.png' },
+  { nomi: ['US Ticchio'], logo: '/loghi/usticchio.png' },
+  { nomi: ['Dunder Mifflin'], logo: '' }
 ];
 
 // Il nome della squadra lo scrive l'allenatore dal Profilo, quindi non coincide
@@ -107,10 +107,6 @@ function trova(nome) {
 
 export function logoSquadra(nome) {
   return trova(nome)?.logo || '';
-}
-
-export function magliaSquadra(nome) {
-  return trova(nome)?.maglia || '';
 }
 
 // Iniziali per il monogramma di riserva: "Dunder Mifflin" → "DM", "US Ticchio" → "TI".

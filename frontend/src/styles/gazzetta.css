@@ -5,8 +5,6 @@
 .edicola-testa{ display:flex; align-items:baseline; justify-content:flex-end; padding:0 4px; }
 .edicola-testa .titolo{ font-family:'Anton',sans-serif; font-size:26px; text-transform:uppercase; }
 .edicola-testa .bottone-link{ align-self:auto; }
-.edicola-fila{ display:flex; gap:12px; overflow-x:auto; margin:0 -16px; padding:4px 16px 14px; scrollbar-width:none; }
-.edicola-fila::-webkit-scrollbar{ display:none; }
 .copertina{
   flex:0 0 124px; height:168px; padding:12px; border-radius:20px; cursor:pointer; text-align:left;
   display:flex; flex-direction:column; gap:6px; color:var(--ink); font:inherit;
@@ -73,8 +71,6 @@
 
 .azioni-redazione{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
 .azioni-redazione button{ min-height:56px; }
-.sfoglia{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
-.sfoglia .bottone-contorno:disabled{ border-color:var(--filo-lieve); color:var(--ink-soft); cursor:default; }
 
 /* Testata delle pagine interne (archivio, interno squadra): ritorno e titolo. */
 .testa-sotto{ display:flex; align-items:center; gap:14px; padding:2px 0; }

@@ -31,11 +31,9 @@ export function bozzaSquadra(squadra) {
     nome: squadra?.nome || '',
     occhiello: squadra?.occhiello || '',
     slogan: squadra?.slogan || '',
-    fondataNel: squadra?.fondataNel ? String(squadra.fondataNel) : '',
     bio: squadra?.bio || '',
     foto: squadra?.foto || '',
     stemma: squadra?.stemma || '',
-    maglia: squadra?.maglia || '',
     colori: Array.isArray(squadra?.colori) ? squadra.colori.slice(0, 2) : [],
     rosaRuoli: { P: r.P || [], D: r.D || [], C: r.C || [], A: r.A || [] },
     rosa: squadra?.rosa || [],
@@ -74,7 +72,7 @@ export function miniatura(url, larghezza = 600) {
 
 // --- Formazione ideale --------------------------------------------------------
 
-export const RUOLI_CAMPO = ['P', 'D', 'C', 'A'];
+const RUOLI_CAMPO = ['P', 'D', 'C', 'A'];
 
 // La formazione com'è salvata (o vuota). Sempre con tutti e quattro i reparti,
 // così l'editor e il campo non devono controllare ogni campo mancante.

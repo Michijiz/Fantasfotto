@@ -187,30 +187,6 @@ body{
 /* ===== selettore tema =====
    Griglia delle squadre di Serie A (iscrizione e foglio "Colori della Gazzetta"):
    ogni tessera ha il bollino con i colori sociali divisi a metà, come una maglia. */
-.tema-griglia{
-  display:grid;grid-template-columns:repeat(auto-fill, minmax(92px, 1fr));gap:10px;
-  padding-top:4px;
-}
-.tema-carta{
-  display:flex;flex-direction:column;align-items:center;gap:7px;
-  padding:11px 6px;cursor:pointer;border-radius:var(--r-md);
-  background:var(--superficie);border:1px solid var(--filo-luce);box-shadow:var(--ombra-bassa);
-  font:inherit;color:var(--ink);
-  transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);
-}
-.tema-carta:active{transform:scale(.97);}
-.tema-carta .dischetto{
-  width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);
-  box-shadow:var(--ombra-bassa);
-}
-.tema-carta .nome{
-  font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
-  text-align:center;line-height:1.15;
-}
-.tema-carta.scelto{
-  border-color:var(--stamp-red);
-  box-shadow: 0 0 0 2px var(--stamp-red), var(--ombra-media);
-}
 .tema-nota{
   font-family:'Oswald',sans-serif;font-size:12.5px;line-height:1.5;color:var(--ink-soft);
   margin:0 0 10px;
@@ -300,15 +276,6 @@ body{
   to{ opacity:1; transform:none; }
 }
 
-.card{
-  position:relative;
-  background: var(--superficie);
-  border: 1px solid var(--filo-luce);
-  border-radius: var(--r-lg);
-  padding:18px;
-  margin-bottom:18px;
-  box-shadow: var(--ombra-media);
-}
 h2.section-title{
   font-family:'Anton',sans-serif;
   font-size:21px;
@@ -318,11 +285,6 @@ h2.section-title{
   padding-bottom:8px;
   display:flex;justify-content:space-between;align-items:baseline;gap:8px;
   color:var(--ink);
-}
-h2.section-title .vedi-tutto{
-  font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:none;letter-spacing:0;
-  color:var(--ink);text-decoration:underline;cursor:pointer;white-space:nowrap;
-  background:none;border:none;padding:0;
 }
 
 label{display:block;font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:10px 0 4px;}
@@ -406,33 +368,8 @@ button.link.pericolo.armato{
 button.link.pericolo:disabled{opacity:.6;cursor:not-allowed;}
 
 /* Barra di correzione sotto un contenuto pubblicato (edizione in Gazzetta). */
-.azioni-admin{
-  display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;
-  margin-top:16px;padding-top:12px;border-top:1px solid var(--filo-lieve);
-}
 
-button.primary{
-  margin-top:16px;width:100%;padding:13px;font-family:'Oswald',sans-serif;font-weight:600;
-  letter-spacing:.06em;text-transform:uppercase;background:var(--stamp-red);color:#fff;border:none;cursor:pointer;
-  border-radius:var(--r-pill);
-  box-shadow: var(--ombra-media);
-  transition: transform .08s var(--ease-tap), box-shadow .08s var(--ease-tap), opacity .15s;
-}
-button.primary:hover{opacity:.94;}
-button.primary:active{
-  transform: scale(.97);
-  box-shadow: var(--ombra-bassa);
-}
-button.primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none;}
 
-button.ghost{
-  padding:8px 14px;font-family:'Oswald',sans-serif;font-size:12.5px;text-transform:uppercase;
-  background:var(--superficie);border:1px solid color-mix(in srgb, var(--ink) 18%, transparent);color:var(--ink);cursor:pointer;
-  border-radius:var(--r-pill);
-  transition: background .15s, color .15s, transform .1s var(--ease-tap);
-}
-button.ghost:hover{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
-button.ghost:active{ transform: scale(.97); }
 
 button.link{background:none;border:none;color:var(--ink);font-family:'Oswald',sans-serif;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:0;}
 button.link:hover{ color: var(--ink); }
@@ -448,19 +385,6 @@ button.link:hover{ color: var(--ink); }
   display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
   border-bottom:1px solid var(--filo-lieve);padding-bottom:9px;margin-bottom:11px;
 }
-.article .timbro-giornata{
-  flex:0 0 auto;
-  border:2px solid var(--stamp-red);color:var(--stamp-red);background:var(--superficie-piena);
-  border-radius:var(--r-xs);
-  font-family:'Anton',sans-serif;font-size:13.5px;letter-spacing:.1em;
-  padding:4px 10px;transform:rotate(-2deg);
-  box-shadow:var(--ombra-bassa);
-  animation: timbra .4s var(--ease-tap);
-}
-.article .data-edizione{
-  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--ink-soft);text-align:right;
-}
 
 .article .occhiello{font-family:'Oswald',sans-serif;font-size:13.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin-bottom:4px;}
 .article h3{
@@ -469,17 +393,6 @@ button.link:hover{ color: var(--ink); }
   /* Il titolo dell'articolo si legge, non si guarda: pieno di inchiostro. */
   color:var(--ink);
 }
-.article .byline{
-  font-family:'Oswald',sans-serif;
-  font-size:13.5px;
-  font-variant:small-caps;
-  letter-spacing:.04em;
-  color:var(--ink-soft);
-  border-bottom:1px solid var(--filo-lieve);
-  padding-bottom:10px;
-  margin-bottom:13px;
-}
-.article .byline b{font-weight:600;color:var(--ink);}
 .article .corpo{margin-top:2px;}
 .article p{font-size:16.5px;line-height:1.7;margin:0 0 12px; max-width:68ch;}
 .article .corpo p:last-child{margin-bottom:0;}
@@ -494,21 +407,10 @@ button.link:hover{ color: var(--ink); }
   text-shadow: 0 2px 6px color-mix(in srgb, var(--ink) 25%, transparent);
 }
 /* Nel teaser il capolettera su un solo paragrafo corto sballava l'altezza riga. */
-.teaser .corpo p:first-child::first-letter{
-  font-family:inherit;font-size:inherit;float:none;margin:0;line-height:inherit;
-  color:inherit;text-shadow:none;
-}
 
 /* ---------- Tabellino finale dell'edizione ---------- */
 .article .tabellino{
   margin-top:16px;border-top:1px solid var(--filo-lieve);padding-top:12px;
-}
-.article .tabellino-titolo{
-  font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--gold);margin-bottom:9px;
-}
-.article .tabellino-griglia{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
 }
 .article .tabellino .voce{
   min-width:0;border:1px solid var(--filo-luce);background:var(--superficie);padding:8px 10px;border-radius:var(--r-sm);
@@ -531,13 +433,9 @@ button.link:hover{ color: var(--ink); }
   font-variant-numeric:tabular-nums;color:var(--stamp-red);margin-left:auto;
 }
 @media (max-width:340px){
-  .article .tabellino-griglia{grid-template-columns:1fr;}
-}
+  }
 
-.article-img{margin:14px 0 0;}
-.article-img img, .article-img svg{display:block;width:100%;height:auto;object-fit:cover;border-radius:var(--r-md);box-shadow:var(--ombra-bassa);}
 
-.stat-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
 .stat{
   border:1px solid var(--filo-luce);
   border-radius:var(--r-sm);
@@ -558,13 +456,8 @@ button.link:hover{ color: var(--ink); }
   to{ opacity:1; transform: rotate(-2deg) scale(1); }
 }
 
-.teaser h3{font-size:23px;}
-.teaser p{font-size:15px;line-height:1.6;margin-bottom:4px;}
-.teaser .continua{display:inline-block;margin-top:4px;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
 
 /* ===== card squadra in Dashboard: stemma + nome + stat-strip + prossimo scontro ===== */
-.squadra-card-riga{display:flex;align-items:center;gap:12px;cursor:pointer;}
-.squadra-card-riga .stemma{width:46px;height:46px;flex:0 0 auto;font-size:36px;line-height:1;}
 .squadra-nome{
   font-family:'Anton',sans-serif;font-size:19px;
   color:var(--ink);
@@ -572,77 +465,17 @@ button.link:hover{ color: var(--ink); }
 }
 
 /* Richiamo alla schedina in Dashboard: è una card, ma tappabile per intero. */
-button.card.schedina-invito{
-  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
-  font:inherit;color:inherit;cursor:pointer;
-  transition: transform .1s var(--ease-tap), box-shadow .1s var(--ease-tap);
-}
-button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombra-bassa); }
-.schedina-invito .invito-testo{flex:1 1 auto;min-width:0;}
-.schedina-invito .invito-occhiello{
-  font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--gold);margin-bottom:2px;
-}
-.schedina-invito b{
-  display:block;font-family:'Anton',sans-serif;font-size:17.5px;line-height:1.15;
-  color:var(--ink);
-}
-.schedina-invito span:not(.invito-occhiello):not(.freccia){
-  display:block;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink-soft);margin-top:2px;
-}
-.schedina-invito .freccia{
-  flex:0 0 auto;font-family:'Anton',sans-serif;font-size:22px;color:var(--stamp-red);
-}
-.squadra-owner{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
 
-.match-preview{display:flex;align-items:center;justify-content:space-between;margin-top:14px;border-top:1px solid var(--filo-lieve);padding-top:12px;}
-.match-preview .sq{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;}
-.match-preview .sq span{font-family:'Oswald',sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
-.match-preview .stemma{font-size:32px;line-height:1;}
-.match-mid{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;padding:0 6px;}
-.countdown{
-  background:var(--ink);color:var(--paper);font-family:'Oswald',sans-serif;font-size:11.5px;
-  padding:3px 10px;border-radius:var(--r-pill);letter-spacing:.04em;
-}
 
 /* La classifica non è più una tabella: le regole stanno in styles/regolamento.css
    (.classifica-lista), dove ogni squadra è una riga a due piani. */
 
-.verdetti-ticker{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
 .flash{flex:0 0 auto;min-width:135px;border:1px solid var(--filo-luce);background:var(--superficie);padding:9px 12px;border-radius:var(--r-md);box-shadow:var(--ombra-bassa);}
-.flash .flash-cat{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;color:var(--gold);letter-spacing:.04em;margin-bottom:2px;}
-.flash .flash-nome{
-  font-family:'Anton',sans-serif;font-size:15.5px;
-  color:var(--ink);
-}
 
 .verdetto{margin-bottom:20px;}
 .verdetto h4{font-family:'Oswald',sans-serif;font-size:14.5px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;color:var(--gold);}
-.voti-list{display:flex;flex-wrap:wrap;gap:8px;}
-.voto-btn{
-  font-family:'Oswald',sans-serif;font-size:13.5px;padding:7px 13px;border:1px solid color-mix(in srgb, var(--ink) 18%, transparent);background:var(--superficie-piena);cursor:pointer;
-  border-radius:var(--r-pill);
-  display:flex;align-items:center;gap:7px;
-  transition: transform .08s var(--ease-tap), background .12s, box-shadow .12s;
-  box-shadow: var(--ombra-bassa);
-}
-.voto-btn:hover{background:var(--paper-dark);}
-.voto-btn:active{ transform: scale(.96); }
-.voto-btn .count{
-  background:var(--ink);color:var(--paper);min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-pill);
-  display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-variant-numeric:tabular-nums;
-}
-.voto-btn.mio-voto{background:var(--stamp-red);color:#fff;border-color:var(--stamp-red);}
-.voto-btn.mio-voto .count{background:#fff;color:var(--stamp-red);}
 
-.squadra-riga{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--filo-lieve);cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;}
-.squadra-riga:last-child{border-bottom:none;}
-.squadra-riga .stemma{font-size:30px;}
-.squadra-riga .info{flex:1;}
-.squadra-riga .info b{font-family:'Anton',sans-serif;font-size:16.5px;display:block;}
-.squadra-riga .info span{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);}
 
-.players{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 .chip{
   font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--ink);color:var(--paper);padding:5px 12px;border-radius:var(--r-pill);
   display:flex;align-items:center;gap:6px;
@@ -650,26 +483,8 @@ button.card.schedina-invito:active{ transform: scale(.98); box-shadow:var(--ombr
 }
 .chip.admin{background:var(--gold);}
 .chip button{background:none;border:none;color:var(--paper);cursor:pointer;font-weight:bold;}
-.profilo-nome{font-family:'Anton',sans-serif;font-size:24px;margin:4px 0 2px;}
-.profilo-badge{
-  display:inline-block;font-family:'Oswald',sans-serif;font-size:12.5px;background:var(--gold);color:var(--paper);
-  padding:3px 10px;letter-spacing:.05em;text-transform:uppercase;border-radius:var(--r-pill);
-  box-shadow: var(--ombra-bassa);
-}
 
-.archivio-item{
-  border-bottom:1px solid var(--filo-lieve);
-  padding:13px 8px;
-  cursor:pointer;border-radius:var(--r-sm);
-  transition: background .15s, padding-left .15s;
-  background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font:inherit;color:inherit;
-}
-.archivio-item:hover{ background: color-mix(in srgb, var(--ink) 4%, transparent); }
-.archivio-item.corrente{ background: color-mix(in srgb, var(--stamp-red) 11%, transparent); border-bottom-color:transparent; }
-.archivio-item .g{font-family:'Oswald',sans-serif;font-size:11.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;}
-.archivio-item h4{font-family:'Anton',sans-serif;font-size:18.5px;margin:2px 0;}
 
-.empty{font-family:'Oswald',sans-serif;font-size:14.5px;color:var(--ink-soft);text-align:center;padding:30px 10px;}
 .errore-msg{font-family:'Oswald',sans-serif;font-size:13.5px;color:var(--stamp-red);margin-top:8px;}
 
 .skeleton-line{

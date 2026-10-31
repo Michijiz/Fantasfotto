@@ -207,4 +207,4 @@ function calcolaInvertiti(squadre, giornate, idA, idB) {
   };
 }
 
-module.exports = { calcolaCulo, calcolaInvertiti, SOGLIE_INDICE, GIORNATE_MINIME_INDICE };
+module.exports = { calcolaCulo, calcolaInvertiti };

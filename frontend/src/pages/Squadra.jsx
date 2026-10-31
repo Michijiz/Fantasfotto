@@ -44,11 +44,7 @@ function classeNome(testo) {
 // pubblicata con sopra la bozza, così si vede cambiare a ogni tocco.
 function conBozza(squadra, bozza) {
   if (!bozza) return squadra;
-  return {
-    ...squadra,
-    ...bozza,
-    fondataNel: /^\d{4}$/.test(bozza.fondataNel.trim()) ? Number(bozza.fondataNel) : null
-  };
+  return { ...squadra, ...bozza };
 }
 
 // L'interno di una squadra: copertina (foto o colori, stemma, nome, allenatori,

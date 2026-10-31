@@ -7,13 +7,7 @@
    largo una quarantina di pixel e sbordava. Qui ogni squadra è una riga a due
    piani — nome sopra a tutta larghezza, numeri sotto in piccolo — e i punti-lega
    stanno a destra, l'unico dato che si guarda davvero a colpo d'occhio. */
-.classifica-lista{font-family:'Oswald',sans-serif;}
 
-.classifica-intestazione{
-  display:flex;justify-content:space-between;align-items:baseline;
-  font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
-  border-bottom:1px solid var(--filo-lieve);padding:0 2px 5px;
-}
 
 .riga-classifica{
   display:flex;align-items:center;gap:9px;
@@ -29,7 +23,6 @@
   flex:0 0 auto;width:17px;text-align:center;
   font-family:'Anton',sans-serif;font-size:16.5px;font-variant-numeric:tabular-nums;
 }
-.riga-classifica .stemma-riga{flex:0 0 auto;font-size:24px;line-height:1;}
 
 /* min-width:0 è ciò che permette davvero al nome di accorciarsi invece di
    spingere fuori la riga: senza, un flex item non scende sotto la sua larghezza
@@ -47,29 +40,21 @@
 .riga-classifica .meta .gol::before,
 .riga-classifica .meta .fp::before{content:'·';margin-right:8px;opacity:.5;}
 
-.riga-classifica .punti-lega{
-  flex:0 0 auto;min-width:26px;text-align:right;
-  font-family:'Anton',sans-serif;font-size:21px;line-height:1;font-variant-numeric:tabular-nums;
-}
 
 /* Schermi molto stretti: il nome resta comunque prioritario, si asciugano i numeri. */
 @media (max-width:340px){
   .riga-classifica{gap:7px;}
-  .riga-classifica .stemma-riga{font-size:21px;}
-  .riga-classifica .meta{font-size:11.5px;gap:0 6px;}
+    .riga-classifica .meta{font-size:11.5px;gap:0 6px;}
 }
 
 /* ---------- Albo d'oro ---------- */
-.albo-lista{font-family:'Oswald',sans-serif;}
 
 .riga-albo{
   display:flex;align-items:center;gap:9px;
   padding:11px 2px;border-bottom:1px solid var(--filo-lieve);
 }
 .riga-albo:last-child{border-bottom:none;}
-.riga-albo.cliccabile{cursor:pointer;}
 .riga-albo .trofeo{flex:0 0 auto;font-size:20px;line-height:1;}
-.riga-albo .stemma-riga{flex:0 0 auto;font-size:24px;line-height:1;}
 .riga-albo .dati{flex:1 1 auto;min-width:0;}
 .riga-albo .nome{
   font-size:16px;font-weight:600;line-height:1.2;
@@ -103,17 +88,12 @@
   display:flex;align-items:center;padding:6px 2px;
 }
 
-button.ghost.blocco{display:block;width:100%;margin:10px 0 4px;}
 
 .nota-form{
   font-family:'Oswald',sans-serif;font-size:12px;line-height:1.5;color:var(--ink-soft);
   margin:6px 0 0;
 }
 
-.legenda-classifica{
-  font-family:'Oswald',sans-serif;font-size:12px;line-height:1.5;color:var(--ink-soft);
-  margin:12px 0 0;letter-spacing:.02em;
-}
 
 /* ---------- Regolamento ---------- */
 .faq-voce{border-bottom:1px solid var(--filo-lieve);scroll-margin-top:12px;}

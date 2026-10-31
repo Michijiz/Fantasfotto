@@ -5,7 +5,7 @@
 // Le prime ventuno sono le squadre (Palermo in testa, come il tema di casa), poi
 // gli animali "fuori campionato" per chi non vuole farsi riconoscere dal tifo.
 
-export const AVATAR_SQUADRE = [
+const AVATAR_SQUADRE = [
   { id: 'palermo', nome: 'Palermo' },
   { id: 'atalanta', nome: 'Atalanta' },
   { id: 'bologna', nome: 'Bologna' },
@@ -29,7 +29,7 @@ export const AVATAR_SQUADRE = [
   { id: 'venezia', nome: 'Venezia' }
 ];
 
-export const AVATAR_FUORI_CAMPIONATO = [
+const AVATAR_FUORI_CAMPIONATO = [
   { id: 'cammello', nome: 'Il Tranquillone' },
   { id: 'panda', nome: 'Il Piangina' },
   { id: 'rinoceronte', nome: 'Il Dubbioso' },

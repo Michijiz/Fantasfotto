@@ -7,10 +7,6 @@
 .squadra-voce:first-child{ border-top:none; }
 .squadra-voce .testi{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
 .squadra-voce .nome{ font-family:'Anton',sans-serif; font-size:19px; line-height:1.1; text-transform:uppercase; overflow-wrap:anywhere; }
-.squadra-voce .la-tua{
-  flex:0 0 auto; white-space:nowrap; padding:4px 10px; border-radius:var(--r-pill); background:var(--ink); color:var(--paper-input);
-  font-family:'Oswald',sans-serif; font-size:12.5px; letter-spacing:.08em; text-transform:uppercase;
-}
 .squadra-voce svg{ flex:0 0 auto; }
 
 /* Copertina della squadra: fascia d'inchiostro, stemma a cavallo, allenatori, numeri. */
@@ -18,19 +14,12 @@
 .squadra-copertina .fascia{ position:relative; align-self:stretch; height:110px; background:var(--ink); }
 .squadra-copertina .fascia > *{ z-index:2; }
 /* "Fondata nel" è una pillola d'inchiostro: si legge su foto e su qualunque colore. */
-.squadra-copertina .fondata{
-  position:absolute; top:14px; left:14px; padding:6px 12px; border-radius:var(--r-pill);
-  background:color-mix(in srgb, var(--ink) 72%, transparent); color:var(--paper-input);
-  font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.16em; text-transform:uppercase;
-}
 .squadra-copertina .stemma-grande{ position:relative; margin-top:-60px; padding:6px; border-radius:50%; background:var(--superficie-piena); }
 .squadra-copertina .nome{ margin:12px 20px 0; font-family:'Anton',sans-serif; font-weight:400; font-size:44px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere; }
 .allenatori{
   display:flex; align-items:center; gap:10px; margin-top:12px; padding:6px 16px 6px 6px;
   border-radius:var(--r-pill); background:var(--paper-dark);
 }
-.allenatori .volti{ display:flex; }
-.allenatori .volti > * + *{ margin-left:-12px; }
 .allenatori .chi{ font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
 .allenatori .chi b{ font-weight:600; }
 .numeri-tre{
@@ -69,10 +58,6 @@
   background:var(--superficie-piena); border:1px solid var(--filo-lieve); font-family:'Oswald',sans-serif; font-size:15px;
 }
 
-.scheda-form label{ display:flex; justify-content:space-between; gap:10px; font-size:14px; }
-.scheda-form .facoltativo{ text-transform:none; letter-spacing:.02em; font-size:13px; }
-.scheda-form .bottone-grande{ margin-top:18px; }
-.scheda-form .nota-form{ font-size:14px; }
 
 /* ===== Pagina squadra personalizzata (pages/Squadra.jsx, ComponiSquadra.jsx) ===== */
 

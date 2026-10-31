@@ -106,25 +106,6 @@ export function giornataDaStampare(giornate, edizioni) {
   return candidate.length ? Math.max(...candidate.map((g) => g.numero)) : null;
 }
 
-// Le menzioni di una squadra: titoli dall'albo d'oro, premi automatici dalle
-// giornate (miglior e peggior punteggio) e il Re dei Gufi dalle edizioni.
-export function menzioni(albo, edizioni, giornate, squadraId) {
-  const voci = [];
-  for (const a of albo) {
-    if (idDi(a.squadra) === squadraId) voci.push({ chiave: `albo-${a._id}`, testo: `Campione · ${a.stagione}`, oro: true, coppa: 'oro' });
-    if (idDi(a.secondo) === squadraId) voci.push({ chiave: `albo2-${a._id}`, testo: `2ª · ${a.stagione}`, coppa: 'argento' });
-    if (idDi(a.terzo) === squadraId) voci.push({ chiave: `albo3-${a._id}`, testo: `3ª · ${a.stagione}`, coppa: 'bronzo' });
-  }
-  for (const e of edizioni) {
-    const g = `G${e.giornataNumero}`;
-    const { migliore, peggiore } = estremiGiornata(giornate, e.giornataNumero);
-    if (migliore && idDi(migliore.squadra) === squadraId) voci.push({ chiave: `m-${e._id}`, testo: `Miglior punteggio · ${g}` });
-    if (peggiore && idDi(peggiore.squadra) === squadraId) voci.push({ chiave: `p-${e._id}`, testo: `Peggior punteggio · ${g}` });
-    if ((e.stats?.reDeiGufi || []).some((s) => idDi(s) === squadraId)) voci.push({ chiave: `r-${e._id}`, testo: `Re dei Gufi · ${g}` });
-  }
-  return voci;
-}
-
 // "di Totò", "di Totò e Peppe", "di Totò e altri 2".
 export function nomiAllenatori(allenatori = []) {
   const nomi = allenatori.map((a) => a.nomeVisualizzato);
@@ -168,33 +149,4 @@ export function bacheca(albo, squadre) {
     y.titoli - x.titoli || y.secondi - x.secondi || y.terzi - x.terzi
     || String(x.squadra.nome).localeCompare(String(y.squadra.nome), 'it')
   ));
-}
-
-// Chi ha il conteggio più alto (con i pari merito). Null se nessuno ha niente.
-function inTesta(conteggi) {
-  const massimo = Math.max(0, ...conteggi.values());
-  if (massimo === 0) return null;
-  return { ids: [...conteggi.entries()].filter(([, n]) => n === massimo).map(([id]) => id), volte: massimo };
-}
-
-const aggiungi = (mappa, id) => { if (id) mappa.set(id, (mappa.get(id) || 0) + 1); };
-
-// I record di lega calcolati da soli dalle giornate e dalle edizioni: Re dei gufi,
-// miglior punteggio di giornata e maglia nera (peggior punteggio).
-export function recordLega(giornate, edizioni) {
-  const gufi = new Map();
-  const top = new Map();
-  const nera = new Map();
-  for (const e of edizioni) for (const s of e.stats?.reDeiGufi || []) aggiungi(gufi, idDi(s));
-  for (const g of giornate) {
-    if (!g.conclusa) continue;
-    const { migliore, peggiore } = estremiGiornata(giornate, g.numero);
-    aggiungi(top, idDi(migliore?.squadra));
-    aggiungi(nera, idDi(peggiore?.squadra));
-  }
-  return [
-    { id: 'gufi', nome: 'Re dei gufi', ...inTesta(gufi) },
-    { id: 'top', nome: 'Più volte top di giornata', ...inTesta(top) },
-    { id: 'nera', nome: 'Più volte maglia nera', ...inTesta(nera) }
-  ].filter((r) => r.ids);
 }

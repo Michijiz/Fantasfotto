@@ -8,7 +8,7 @@ import { estremiGiornata, idDi } from './lega';
 // giornate in cui è stato vinto, in ordine cronologico.
 
 export const TROFEI_CAMPIONATO = ['campione', 'argento', 'bronzo'];
-export const TROFEI_AUTOMATICI = ['gufi', 'top', 'nera'];
+const TROFEI_AUTOMATICI = ['gufi', 'top', 'nera'];
 
 // Etichette fisse per i trofei che non sono categorie di voto. Le categorie di voto
 // portano la loro etichetta dal backend (vedi `categorieVoto` nel contesto).

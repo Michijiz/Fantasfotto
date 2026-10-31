@@ -139,14 +139,6 @@
 .forma-voce .g{ font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.08em; color:var(--ink-soft); }
 
 /* --- Nell'albo --- */
-.albo-chips{ display:flex; flex-wrap:wrap; gap:10px; }
-.albo-chip{
-  display:inline-flex; align-items:center; min-height:44px; padding:0 18px;
-  border-radius:var(--r-pill); background:var(--paper-dark);
-  font-family:'Oswald',sans-serif; font-size:15.5px; font-weight:500;
-  letter-spacing:.04em; text-transform:uppercase;
-}
-.albo-chip.oro{ background:var(--gold); color:var(--paper-input); }
 
 
 /* Linguette a pillola (Lega, Gioca). */

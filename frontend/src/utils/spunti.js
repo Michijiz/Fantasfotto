@@ -20,7 +20,7 @@ const puntiTesto = (n) => `${formattaFantapunti(n)} ${Number(n) === 1 ? 'fantapu
 // Scala fissa, uguale ogni giornata: sotto i 60 fantapunti è 4, poi mezzo voto ogni
 // 4 punti, fino al 10. Un 7 vale sempre lo stesso, indipendentemente da come sono
 // andati gli altri.
-export function votoDa(fantapunti) {
+function votoDa(fantapunti) {
   const grezzo = 4 + (Number(fantapunti) - 60) / 8;
   return Math.min(10, Math.max(4, Math.round(grezzo * 2) / 2));
 }
@@ -61,7 +61,7 @@ const FASCE = [
   ] }
 ];
 
-export function battutaPer(voto, seme) {
+function battutaPer(voto, seme) {
   const fascia = FASCE.find((f) => voto <= f.fino) || FASCE[FASCE.length - 1];
   return scegli(fascia.righe, seme);
 }

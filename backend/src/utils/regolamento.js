@@ -348,22 +348,14 @@ function esitoSchedina(pronostici, giornataArricchita) {
 }
 
 module.exports = {
-  REGOLE,
-  MODULI,
   repartiModulo,
-  QUOTE,
   chiaveCoppia,
   fantapuntiInGol,
   puntiPerGol,
-  risolviAccoppiamento,
   arricchisciGiornata,
   calcolaClassifica,
-  quotePerScontro,
-  classificaFormata,
   calcolaQuoteGiornata,
-  quoteInForma,
   quoteDaForma,
   arricchisciConQuote,
-  esitoAccoppiamento,
   esitoSchedina
 };

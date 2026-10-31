@@ -22,7 +22,7 @@ export const RITAGLI = [
   { id: 'archivio', nome: "Dall'archivio", soloRedazione: true }
 ];
 
-export const PROFILO_VUOTO = {
+const PROFILO_VUOTO = {
   occhiello: '',
   sottotitolo: '',
   motto: '',

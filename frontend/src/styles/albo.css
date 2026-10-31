@@ -85,9 +85,4 @@
 .premio-riga b{ font-family:'Anton',sans-serif; font-weight:400; font-size:18px; text-align:right; }
 
 /* Etichette "Nell'albo" di squadra e profilo: con la coppa del metallo giusto. */
-.albo-chip svg{ margin-right:6px; flex:0 0 auto; }
-.albo-chip.coppa-argento{ background:color-mix(in srgb, var(--medaglia-argento) 22%, var(--paper-dark)); }
-.albo-chip.coppa-argento svg{ color:var(--medaglia-argento); }
-.albo-chip.coppa-bronzo{ background:color-mix(in srgb, var(--medaglia-bronzo) 20%, var(--paper-dark)); }
-.albo-chip.coppa-bronzo svg{ color:var(--medaglia-bronzo); }
 

@@ -139,8 +139,6 @@
   font-size:13px; font-style:italic; line-height:1.5; text-align:center; color:var(--ink-soft);
 }
 
-.scheda-squadra{ display:flex; flex-direction:column; gap:14px; padding-top:10px; }
-.scheda-bio{ margin:0; font-size:16px; line-height:1.6; }
 
 /* ===== "Componi la tua pagina" (components/ui/ComponiProfilo.jsx) ===== */
 .componi{ padding-top:6px; }

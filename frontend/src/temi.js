@@ -7,7 +7,7 @@
 // stato attivo) e decorativo per le etichette. Font e impaginazione restano
 // quelli della Gazzetta.
 
-export const TEMA_DEFAULT = 'palermo';
+const TEMA_DEFAULT = 'palermo';
 
 export const TEMI = [
   {

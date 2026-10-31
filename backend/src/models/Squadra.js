@@ -15,12 +15,10 @@ const squadraSchema = new mongoose.Schema({
   // esserci un'emoji: il frontend (components/ui/Stemma.jsx) accetta come immagine
   // solo ciò che è davvero un indirizzo e per il resto ripiega sul logo di lega.
   stemma: { type: String, default: '' },
-  maglia: { type: String, default: '' }, // url immagine maglia (vuoto = maglia di redazione)
   foto: { type: String, default: '' },   // url della foto di copertina
   bio: { type: String, default: '' },    // storia/racconto della squadra
   rosa: [{ type: String }],              // elenco calciatori senza ruolo (vecchio formato)
   // Anno di fondazione, facoltativo: compare nella fascia dell'interno squadra.
-  fondataNel: { type: Number, min: 1800, max: 2100 },
   // La rosa divisa per ruolo. I nomi rimasti in `rosa` sono quelli inseriti prima
   // che esistessero i ruoli: l'app li mostra come "Senza ruolo" finché qualcuno
   // non li sposta qui.
