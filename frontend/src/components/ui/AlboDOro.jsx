@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, PencilSimple, Plus, Medal } from '@phosphor-icons/react';
+import { api } from '../../api/client';
 import { useDati } from '../../context/DataContext';
+import { useToast } from '../../context/ToastContext';
+import BottoneElimina from './BottoneElimina';
 import Stemma from './Stemma';
 import { IconaTrofeo } from './Trofei';
 import { formattaFantapunti } from '../../utils/regolamento';
@@ -32,7 +35,8 @@ const DESCRIZIONI = {
 // della lega e il tribunale, cioè chi ha vinto più verdetti e premi di giornata.
 // La redazione tocca una targa per correggerla.
 export default function AlboDOro({ sonoRedazione, onModifica }) {
-  const { albo, squadre, giornate, edizioni, trofeiVerdetti, categorieVoto } = useDati();
+  const { albo, squadre, giornate, edizioni, trofeiVerdetti, categorieVoto, ricaricaTutto } = useDati();
+  const mostraToast = useToast();
   const navigate = useNavigate();
   const [vista, setVista] = useState('stagioni');
 
@@ -47,10 +51,30 @@ export default function AlboDOro({ sonoRedazione, onModifica }) {
   const campioniDiversi = new Set(albo.map((v) => idDi(v.squadra))).size;
   const vaiAllaSquadra = (squadra) => squadra && navigate(`/squadre/${idDi(squadra)}`);
 
+  // Fine stagione: il server prende i primi tre della classifica e scrive la voce.
+  const chiudiStagione = async () => {
+    try {
+      const { voce } = await api.post('/api/albo/chiudi-stagione', {});
+      await ricaricaTutto();
+      mostraToast(`Stagione chiusa: il campione è ${voce.squadra?.nome || 'chi ha vinto'}.`);
+    } catch (err) {
+      mostraToast(err.message);
+    }
+  };
+
   const aggiungi = sonoRedazione && (
-    <button type="button" className="bottone-contorno" onClick={() => onModifica({})}>
-      <Plus size={18} weight="bold" /> Aggiungi un campione
-    </button>
+    <div className="albo-azioni">
+      <button type="button" className="bottone-contorno" onClick={() => onModifica({})}>
+        <Plus size={18} weight="bold" /> Aggiungi un campione
+      </button>
+      <BottoneElimina
+        className="bottone-contorno"
+        etichetta="Chiudi la stagione"
+        conferma="Tocca di nuovo: incorono il primo in classifica"
+        inCorsoTesto="Incorono…"
+        onConferma={chiudiStagione}
+      />
+    </div>
   );
 
   if (!campione) {

@@ -11,6 +11,7 @@ import Sheet from '../components/ui/Sheet';
 import CaroselloTema from '../components/ui/CaroselloTema';
 import CambiaPin from '../components/ui/CambiaPin';
 import NomeLega from '../components/ui/NomeLega';
+import Notifiche from '../components/ui/Notifiche';
 import ComponiProfilo from '../components/ui/ComponiProfilo';
 import { etichettaRuolo, puoRedigere, puoCancellare } from '../ruoli';
 import { avatarUtente } from '../avatar';
@@ -260,6 +261,7 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
           <span>Cambia PIN</span>
           <CaretRight size={20} />
         </button>
+        <Notifiche />
         <button type="button" className="impostazione" onClick={() => navigate('/regolamento')}>
           <BookOpen size={22} />
           <span>Regolamento e FAQ</span>

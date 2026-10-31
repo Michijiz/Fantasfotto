@@ -3,6 +3,8 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { CaretLeft, CaretRight, ChartBar, LockSimple } from '@phosphor-icons/react';
 import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
+import BottoneElimina from '../components/ui/BottoneElimina';
+import { puoRedigere } from '../ruoli';
 import { useToast } from '../context/ToastContext';
 import Stemma from '../components/ui/Stemma';
 import { idDi } from '../utils/lega';
@@ -13,7 +15,7 @@ import '../styles/carosello.css';
 // ogni categoria (o a votazioni chiuse, per tutti).
 export default function Verdetti() {
   const { utente } = useOutletContext();
-  const { ultimaEdizione, squadre, risultatiVoti, categorieVoto, ricaricaRisultatiVoti } = useDati();
+  const { ultimaEdizione, squadre, risultatiVoti, categorieVoto, ricaricaRisultatiVoti, ricaricaTutto } = useDati();
   const mostraToast = useToast();
   const navigate = useNavigate();
   const mioVoto = risultatiVoti.mioVoto || {};
@@ -62,6 +64,18 @@ export default function Verdetti() {
       mostraToast(err.message);
     } finally {
       setInVoto(false);
+    }
+  };
+
+  // La redazione può chiudere i verdetti senza aspettare la giornata dopo: serve
+  // a fine stagione, quando una giornata dopo non c'è.
+  const chiudiVerdetti = async () => {
+    try {
+      await api.post(`/api/voti/${ultimaEdizione._id}/chiusura`, { chiusi: true });
+      await Promise.all([ricaricaRisultatiVoti(ultimaEdizione._id), ricaricaTutto()]);
+      mostraToast('Verdetti chiusi: i trofei sono assegnati.');
+    } catch (err) {
+      mostraToast(err.message);
     }
   };
 
@@ -144,6 +158,16 @@ export default function Verdetti() {
             {mancano === 0 ? 'Tutto votato' : scelta ? 'Avanti alla prossima' : 'Salta per ora'}
           </button>
         </section>
+      )}
+
+      {puoRedigere(utente) && !chiuse && (
+        <BottoneElimina
+          className="bottone-contorno"
+          etichetta="Chiudi i verdetti ora"
+          conferma="Tocca di nuovo: assegno i trofei"
+          inCorsoTesto="Chiudo…"
+          onConferma={chiudiVerdetti}
+        />
       )}
 
       {risultatiVoti.visibili ? (

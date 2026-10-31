@@ -8,7 +8,8 @@ export default function BottoneElimina({
   onConferma,
   etichetta = 'Elimina',
   conferma = 'Tocca di nuovo per eliminare',
-  className = 'link pericolo'
+  className = 'link pericolo',
+  inCorsoTesto = 'Elimino...'
 }) {
   const [armato, setArmato] = useState(false);
   const [inCorso, setInCorso] = useState(false);
@@ -49,7 +50,7 @@ export default function BottoneElimina({
       onClick={click}
       disabled={inCorso}
     >
-      {inCorso ? 'Elimino...' : armato ? conferma : etichetta}
+      {inCorso ? inCorsoTesto : armato ? conferma : etichetta}
     </button>
   );
 }

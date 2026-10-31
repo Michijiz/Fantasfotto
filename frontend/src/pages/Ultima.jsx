@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ShareNetwork } from '@phosphor-icons/react';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
@@ -6,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import Article from '../components/ui/Article';
 import BottoneElimina from '../components/ui/BottoneElimina';
 import { puoRedigere, puoCancellare } from '../ruoli';
+import { condividiEdizione } from '../condividi';
 import '../styles/gazzetta.css';
 
 export default function Ultima() {
@@ -23,6 +25,20 @@ export default function Ultima() {
   // L'edizione mostrata si ricava dalla lista aggiornata, non da uno snapshot:
   // dopo una correzione si vede subito il testo nuovo.
   const mostrata = edizioni.find((e) => e._id === selezionataId) || ultimaEdizione;
+
+  const [condividendo, setCondividendo] = useState(false);
+  const condividi = async () => {
+    if (condividendo) return;
+    setCondividendo(true);
+    try {
+      const esito = await condividiEdizione(mostrata);
+      if (esito === 'scaricata') mostraToast('Immagine scaricata: mandala al gruppo.');
+    } catch (err) {
+      mostraToast(err.message || 'Non sono riuscito a creare l\'immagine');
+    } finally {
+      setCondividendo(false);
+    }
+  };
 
   const elimina = async () => {
     try {
@@ -55,6 +71,10 @@ export default function Ultima() {
       </div>
 
       <Article edizione={mostrata} />
+
+      <button type="button" className="bottone-contorno" onClick={condividi} disabled={condividendo}>
+        <ShareNetwork size={18} weight="bold" /> {condividendo ? 'Preparo l\'immagine…' : 'Condividi'}
+      </button>
 
       {sonoRedazione && (
         <div className="azioni-redazione">

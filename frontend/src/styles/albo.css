@@ -11,6 +11,9 @@
 .albo-vuoto{ align-items:center; text-align:center; color:var(--gold); padding:32px 20px; }
 .albo-vuoto .ritaglio-titolo{ color:var(--ink); }
 
+/* Azioni della redazione in cima all'albo: due bottoni affiancati. */
+.albo-azioni{ display:flex; flex-direction:column; gap:8px; }
+
 /* ----- Testata dell'albo e scelta della vista ----- */
 .albo-testa{ gap:8px; }
 .albo-trono{ margin:0; font-family:'Anton',sans-serif; font-weight:400; font-size:30px; line-height:1.1; text-transform:uppercase; }

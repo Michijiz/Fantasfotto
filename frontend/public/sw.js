@@ -12,7 +12,7 @@
 // vivono in una cache a parte con un tetto di voci, così le build vecchie non si
 // accumulano all'infinito nel dispositivo.
 
-const VERSIONE = 'v14';
+const VERSIONE = 'v15';
 const CACHE_SHELL = `gazzetta-shell-${VERSIONE}`;
 const CACHE_ASSET = `gazzetta-asset-${VERSIONE}`;
 const CACHE_RUNTIME = `gazzetta-runtime-${VERSIONE}`;
@@ -181,4 +181,33 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(gestisciStaleWhileRevalidate(richiesta));
+});
+
+// Notifiche push: il server manda { titolo, corpo, url }. Toccare la notifica porta
+// nell'app, riusando una finestra già aperta se c'è.
+self.addEventListener('push', (event) => {
+  let dati = {};
+  try { dati = event.data ? event.data.json() : {}; } catch { dati = { titolo: 'La Gazzetta dello Sfottò', corpo: event.data?.text() || '' }; }
+  event.waitUntil(self.registration.showNotification(dati.titolo || 'La Gazzetta dello Sfottò', {
+    body: dati.corpo || '',
+    icon: '/icons/gs-192.png',
+    badge: '/icons/gs-192.png',
+    data: { url: dati.url || '/' }
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil((async () => {
+    const finestre = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const f of finestre) {
+      if ('focus' in f) {
+        await f.focus();
+        if ('navigate' in f) { try { await f.navigate(url); } catch { /* altra origine: si resta dov'è */ } }
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });
