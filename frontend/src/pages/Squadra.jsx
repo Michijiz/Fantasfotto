@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { CaretLeft, CaretRight, PencilSimple, Trophy } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, PencilSimple } from '@phosphor-icons/react';
 import { useDati } from '../context/DataContext';
 import Stemma from '../components/ui/Stemma';
 import Avatar from '../components/ui/Avatar';
@@ -8,7 +8,7 @@ import Sheet from '../components/ui/Sheet';
 import ComponiSquadra from '../components/ui/ComponiSquadra';
 import AlbumSquadra from '../components/ui/AlbumSquadra';
 import FormazioneIdeale from '../components/ui/FormazioneIdeale';
-import BachecaTrofei from '../components/ui/Trofei';
+import MiniTrofei from '../components/ui/Trofei';
 import { avatarUtente } from '../avatar';
 import { magliaSquadra } from '../loghi';
 import { puoCancellare } from '../ruoli';
@@ -72,7 +72,6 @@ export default function Squadra() {
     () => trofeiSquadra(id, { albo, edizioni, giornate, trofeiVerdetti, categorie: categorieVoto }),
     [albo, edizioni, giornate, trofeiVerdetti, categorieVoto, id]
   );
-  const inCarica = albo[0] && idDi(albo[0].squadra) === id ? albo[0] : null;
 
   if (!pubblicata) {
     return (
@@ -203,17 +202,6 @@ export default function Squadra() {
           onAggiornato={ricaricaSquadre}
         />
       </section>
-    ),
-
-    albo: (
-      <section className="ritaglio" key="albo">
-        <Occhiello>{trofei.length ? `La bacheca · ${trofei.reduce((t, g) => t + g.quanti, 0)}` : 'La bacheca'}</Occhiello>
-        {trofei.length === 0 ? (
-          <p className="ritaglio-vuoto">Bacheca vuota. C&apos;è tempo.</p>
-        ) : (
-          <BachecaTrofei gruppi={trofei} categorie={categorieVoto} />
-        )}
-      </section>
     )
   };
 
@@ -230,17 +218,11 @@ export default function Squadra() {
       </header>
 
       <section className="ritaglio squadra-copertina">
-        {inCarica && (
-          <div className="banner-campione">
-            <Trophy size={16} weight="fill" aria-hidden="true" /> Campione in carica · {inCarica.stagione}
-          </div>
-        )}
         <div
           className={`fascia${squadra.foto ? ' con-foto' : ''}`}
           style={squadra.foto ? undefined : { background: sfondoColori(colori) }}
         >
           {squadra.foto && <img className="copertina-foto" src={miniatura(squadra.foto, 1200)} alt="" decoding="async" />}
-          {squadra.fondataNel && <span className="fondata">Fondata nel {squadra.fondataNel}</span>}
           {maglia && <img className="maglia" src={maglia} alt="Maglia" />}
           {eMia && (
             <button type="button" className="copertina-matita" onClick={apriComponi} aria-label="Componi la squadra">
@@ -277,6 +259,11 @@ export default function Squadra() {
           <div><b>{riga ? riga.punti ?? 0 : '—'}</b><span className="dettaglio">punti</span></div>
           <div><b>{riga ? formattaFantapunti(riga.puntiTotali ?? 0) : '—'}</b><span className="dettaglio">fantapunti</span></div>
         </div>
+        {trofei.length > 0 && (
+          <div className="squadra-trofei">
+            <MiniTrofei gruppi={trofei} categorie={categorieVoto} />
+          </div>
+        )}
       </section>
 
       {ordine.map((r) => ritagli[r] || null)}

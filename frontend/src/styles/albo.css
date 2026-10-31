@@ -24,41 +24,31 @@
 }
 .albo-vista.attiva{ background:var(--ink); color:var(--paper-input); }
 
-/* ----- Stagioni: targhe di ottone ----- */
+/* ----- Stagioni: un ritaglio per stagione, nello stile della Gazzetta ----- */
 .targhe{ display:flex; flex-direction:column; gap:14px; }
 .targa{
-  position:relative; display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;
-  padding:22px 22px 20px; text-align:center; cursor:pointer; font:inherit;
-  background:var(--ink); color:var(--paper-input); border-radius:var(--r-md);
-  border:2px solid color-mix(in srgb, var(--gold) 70%, var(--ink));
-  box-shadow:inset 0 0 0 5px var(--ink), inset 0 0 0 6px color-mix(in srgb, var(--gold) 45%, transparent), var(--ombra-media);
+  position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%;
+  padding:18px 18px 16px; text-align:left; cursor:pointer; font:inherit; color:var(--ink);
+  background:var(--superficie); border:1px solid var(--filo-luce); border-radius:var(--r-lg); box-shadow:var(--ombra-media);
 }
-/* Le quattro viti agli angoli. */
-.targa::before, .targa::after{
-  content:''; position:absolute; top:12px; width:7px; height:7px; border-radius:50%;
-  background:color-mix(in srgb, var(--gold) 80%, var(--ink)); box-shadow:inset -1px -1px 0 rgba(0,0,0,.35);
-}
-.targa::before{ left:12px; }
-.targa::after{ right:12px; }
-.targa.prima{ padding-top:26px; box-shadow:inset 0 0 0 5px var(--ink), inset 0 0 0 6px var(--gold), 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent), var(--ombra-media); }
+.targa.prima{ border-color:var(--gold); box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 40%, transparent), var(--ombra-media); }
 .targa-stagione{
-  display:inline-flex; align-items:center; gap:6px; color:var(--gold);
-  font-family:'Oswald',sans-serif; font-size:13px; font-weight:500; letter-spacing:.16em; text-transform:uppercase;
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--r-pill); border:1.5px solid var(--gold);
+  font-family:'Oswald',sans-serif; font-size:14px; font-weight:500; color:var(--gold);
 }
-.targa-foto{ width:100%; aspect-ratio:4 / 3; object-fit:cover; border-radius:12px; border:2px solid color-mix(in srgb, var(--gold) 60%, transparent); }
-.targa-squadra{ display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; max-width:100%; }
-.targa-squadra .nome{ font-family:'Anton',sans-serif; font-size:30px; line-height:1.05; text-transform:uppercase; overflow-wrap:anywhere; }
-.targa.prima .targa-squadra .nome{ font-size:38px; }
-.targa-riga{ display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:color-mix(in srgb, var(--paper-input) 72%, transparent); }
+.targa.prima .targa-stagione{ background:var(--gold); color:var(--paper-input); }
+.targa-foto{ width:100%; aspect-ratio:4 / 3; object-fit:cover; border-radius:14px; }
+.targa-squadra{ display:flex; align-items:center; gap:12px; min-width:0; max-width:100%; }
+.targa-squadra .nome{ font-family:'Anton',sans-serif; font-size:26px; line-height:1.05; text-transform:uppercase; overflow-wrap:anywhere; }
+.targa.prima .targa-squadra .nome{ font-size:32px; }
+.targa-riga{ display:flex; flex-wrap:wrap; gap:4px 14px; font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); }
 .targa-riga b{ font-family:'Anton',sans-serif; font-weight:400; font-size:18px; color:var(--gold); }
-.targa-podio{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.05em; text-transform:uppercase; }
+.targa-podio{ display:flex; flex-wrap:wrap; gap:6px 14px; font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:.05em; text-transform:uppercase; }
 .targa-podio span{ display:inline-flex; align-items:center; gap:5px; }
-.targa-podio .argento svg{ color:#c3c8cd; }
-.targa-podio .bronzo svg{ color:#cf8f58; }
-.targa-nota{ font-family:'Libre Baskerville',serif; font-style:italic; font-size:16px; line-height:1.45; color:color-mix(in srgb, var(--paper-input) 85%, transparent); }
-.targa-nota::before{ content:'«'; color:var(--gold); }
-.targa-nota::after{ content:'»'; color:var(--gold); }
-.targa-matita{ position:absolute; right:14px; bottom:12px; opacity:.55; }
+.targa-podio .argento svg{ color:var(--medaglia-argento); }
+.targa-podio .bronzo svg{ color:var(--medaglia-bronzo); }
+.targa-nota{ font-family:'Libre Baskerville',serif; font-style:italic; font-size:16px; line-height:1.45; color:var(--ink-soft); }
+.targa-matita{ position:absolute; right:14px; top:16px; opacity:.45; }
 
 /* ----- Medagliere ----- */
 .medagliere-intesta, .medagliere-riga{ display:grid; grid-template-columns:22px 36px minmax(0, 1fr) 38px 38px 38px; align-items:center; gap:10px; }

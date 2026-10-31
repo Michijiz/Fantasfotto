@@ -34,29 +34,25 @@ export function IconaTrofeo({ id, size = 26 }) {
   );
 }
 
-const DETTAGLI_VISIBILI = 4;
-
-// La bacheca di una squadra: una targhetta per tipo di trofeo, con quante volte e
-// quando. `gruppi` arriva da trofeiSquadra().
-export default function BachecaTrofei({ gruppi, categorie = [] }) {
+// I trofei di una squadra in piccolo, come quelli della PlayStation: un disco con
+// l'icona, il "×3" appeso all'angolo e il nome sotto. `gruppi` arriva da
+// trofeiSquadra(); toccando (o tenendo) un trofeo escono le giornate in cui è stato vinto.
+export default function MiniTrofei({ gruppi, categorie = [] }) {
   return (
-    <div className="trofei-griglia">
+    <ul className="minitrofei">
       {gruppi.map((g) => {
-        const { etichetta } = etichettaTrofeo(g.id, categorie);
-        const { tono } = aspettoTrofeo(g.id);
-        const visibili = g.dettagli.slice(-DETTAGLI_VISIBILI);
-        const resto = g.dettagli.length - visibili.length;
+        const { breve, etichetta } = etichettaTrofeo(g.id, categorie);
         return (
-          <div className={`trofeo ${tono}`} key={g.id}>
-            <IconaTrofeo id={g.id} />
-            <span className="trofeo-quanti">{g.quanti > 1 ? `×${g.quanti}` : '1'}</span>
-            <span className="trofeo-nome">{etichetta}</span>
-            <span className="trofeo-quando dettaglio">
-              {resto > 0 && `+${resto} · `}{visibili.join(' · ')}
+          <li className="minitrofeo" key={g.id} title={`${etichetta}: ${g.dettagli.join(' · ')}`}>
+            <span className="minitrofeo-icona">
+              <IconaTrofeo id={g.id} size={24} />
+              {g.quanti > 1 && <b className="minitrofeo-conto">×{g.quanti}</b>}
             </span>
-          </div>
+            <span className="minitrofeo-nome">{breve}</span>
+            <span className="visually-hidden">{`${etichetta}, ${g.quanti} ${g.quanti === 1 ? 'volta' : 'volte'}`}</span>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

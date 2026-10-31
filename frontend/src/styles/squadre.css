@@ -239,3 +239,6 @@
 .allenatore-link{ margin-top:0; border:none; cursor:pointer; color:var(--ink); font:inherit; transition:transform .1s var(--ease-tap); }
 .allenatore-link:active{ transform:scale(.96); }
 .allenatore-link svg{ opacity:.55; }
+
+/* I mini trofei in fondo alla copertina. */
+.squadra-trofei{ align-self:stretch; padding:16px 16px 20px; border-top:1px solid var(--filo-lieve); margin-top:4px; }
