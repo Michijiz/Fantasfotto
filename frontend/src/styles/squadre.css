@@ -24,8 +24,9 @@
   font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.16em; text-transform:uppercase;
 }
 .squadra-copertina .maglia{
-  position:absolute; top:12px; right:14px; width:56px; height:56px; object-fit:contain;
-  filter:drop-shadow(0 2px 6px color-mix(in srgb, var(--ink) 35%, transparent));
+  position:absolute; top:12px; right:14px; box-sizing:content-box; width:64px; height:64px; padding:6px; object-fit:contain;
+  border-radius:50%; background:color-mix(in srgb, var(--paper-input) 26%, transparent); backdrop-filter:blur(2px);
+  filter:drop-shadow(0 3px 8px color-mix(in srgb, var(--ink) 45%, transparent));
 }
 .squadra-copertina .stemma-grande{ position:relative; margin-top:-60px; padding:6px; border-radius:50%; background:var(--superficie-piena); }
 .squadra-copertina .nome{ margin:12px 20px 0; font-family:'Anton',sans-serif; font-weight:400; font-size:44px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere; }
@@ -90,9 +91,9 @@
   content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
   background:linear-gradient(to bottom, color-mix(in srgb, var(--ink) 30%, transparent) 0%, transparent 38%, transparent 70%, color-mix(in srgb, var(--ink) 25%, transparent) 100%);
 }
-/* Con la maglia in alto a destra, la matita scende in basso a destra. */
+/* Con la maglia in alto a destra, la matita sta in alto a sinistra. */
 .copertina-matita{
-  position:absolute; right:14px; bottom:14px;
+  position:absolute; left:14px; top:14px;
   width:46px; height:46px; border-radius:50%;
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   background:color-mix(in srgb, var(--paper-input) 72%, transparent);
