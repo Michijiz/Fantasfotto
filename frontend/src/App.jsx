@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -7,17 +8,17 @@ import Splash from './components/ui/Splash';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Ultima from './pages/Ultima';
-import Scrivi from './pages/Scrivi';
-import Lega from './pages/Lega';
-import Gioca from './pages/Gioca';
-import Squadre from './pages/Squadre';
-import Squadra from './pages/Squadra';
-import Archivio from './pages/Archivio';
-import Risultati from './pages/Risultati';
+const Scrivi = lazy(() => import('./pages/Scrivi'));
+const Lega = lazy(() => import('./pages/Lega'));
+const Gioca = lazy(() => import('./pages/Gioca'));
+const Squadre = lazy(() => import('./pages/Squadre'));
+const Squadra = lazy(() => import('./pages/Squadra'));
+const Archivio = lazy(() => import('./pages/Archivio'));
+const Risultati = lazy(() => import('./pages/Risultati'));
 import NonTrovata from './pages/NonTrovata';
-import Profilo from './pages/Profilo';
-import Allenatori from './pages/Allenatori';
-import Regolamento from './pages/Regolamento';
+const Profilo = lazy(() => import('./pages/Profilo'));
+const Allenatori = lazy(() => import('./pages/Allenatori'));
+const Regolamento = lazy(() => import('./pages/Regolamento'));
 
 // Mostra lo splash finché AuthContext non ha finito di capire se c'è una
 // sessione valida — a prescindere da dove l'utente stia per atterrare

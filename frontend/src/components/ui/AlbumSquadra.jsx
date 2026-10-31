@@ -88,9 +88,6 @@ export default function AlbumSquadra({ squadra, puoModificare, puoTogliere, onAg
         </div>
       )}
 
-      {puoModificare && (
-        <p className="dettaglio album-conto">{foto.length} di {MAX_ALBUM} foto</p>
-      )}
 
       {indiceAperto != null && indiceAperto >= 0 && (
         <Visore

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Plus } from '@phosphor-icons/react';
 import { useAuth } from '../../context/AuthContext';
@@ -53,7 +53,9 @@ function ShellInterno({ utente }) {
         <AppHeader scrollRef={scrollRef} onApriMenu={() => setDrawerAperto(true)} />
         <div className={`contenuto${scrivendo ? ' scrivendo' : ''}`} ref={scrollRef}>
           <div className="tab-content attiva">
-            <Outlet context={{ utente }} />
+            <Suspense fallback={null}>
+              <Outlet context={{ utente }} />
+            </Suspense>
           </div>
         </div>
       </div>

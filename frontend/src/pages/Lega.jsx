@@ -54,7 +54,6 @@ function Classifica({ miaSquadraId }) {
             ))}
           </div>
           {giocati === 0 && <p className="ritaglio-vuoto">Classifica immacolata: nessuno ha ancora perso la faccia.</p>}
-          <p className="dettaglio">Vittoria 3, pareggio 1, sconfitta 0. A parità contano i fantapunti.</p>
           <button type="button" className="bottone-link" onClick={() => navigate('/regolamento', { state: { sezione: 'classifica' } })}>
             Come si calcola →
           </button>

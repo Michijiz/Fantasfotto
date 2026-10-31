@@ -1,0 +1,11 @@
+/* Reazioni sotto l'edizione: quattro timbri a pillola. */
+.reazioni{ display:flex; gap:8px; }
+.reazione{
+  flex:1 1 0; display:flex; align-items:center; justify-content:center; gap:6px; min-height:48px;
+  border-radius:var(--r-pill); border:1.5px solid var(--filo-lieve); background:var(--superficie-piena);
+  color:var(--ink); font:inherit; cursor:pointer; transition:transform .1s var(--ease-tap);
+}
+.reazione:active{ transform:scale(.95); }
+.reazione .emoji{ font-size:20px; line-height:1; }
+.reazione b{ font-family:'Anton',sans-serif; font-weight:400; font-size:16px; }
+.reazione.mia{ border-color:var(--stamp-red); background:var(--stamp-red); color:#fff; }

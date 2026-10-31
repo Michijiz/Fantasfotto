@@ -275,6 +275,15 @@ function Editor({ edizione }) {
 
   // --- spunti ----------------------------------------------------------------
   const spunti = useMemo(() => (numeroValido ? spuntiGiornata(giornate, numero) : []), [giornate, numero, numeroValido]);
+  // Uno scheletro dai fatti veri della giornata: titolo e pezzo coi primi spunti,
+  // da riscrivere a modo proprio. Non tocca niente se c'è già del testo.
+  const bozzaDaiDati = () => {
+    setCampi((c) => ({
+      ...c,
+      titolo: c.titolo.trim() ? c.titolo : titoli[0] || '',
+      corpo: c.corpo.trim() ? c.corpo : spunti.slice(0, 5).map((x) => x.testo).join('\n\n')
+    }));
+  };
   const titoli = useMemo(() => (numeroValido ? titoliSuggeriti(giornate, numero) : []), [giornate, numero, numeroValido]);
 
   // Inserisce la frase nel punto in cui eri nel pezzo (o in fondo), tra due righe vuote.
@@ -468,6 +477,10 @@ function Editor({ edizione }) {
 
           {haAutomatiche && (
             <button type="button" className="bottone-contorno" onClick={aggiornaDaiDati}>Aggiorna dai dati</button>
+          )}
+
+          {spunti.length > 0 && !campi.corpo.trim() && !campi.titolo.trim() && (
+            <button type="button" className="bottone-contorno" onClick={bozzaDaiDati}>Parti da una bozza</button>
           )}
 
           <label htmlFor="s-occhiello">Occhiello</label>

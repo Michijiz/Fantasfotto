@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { useDati } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import Article from '../components/ui/Article';
+import Reazioni from '../components/ui/Reazioni';
 import BottoneElimina from '../components/ui/BottoneElimina';
 import { puoRedigere, puoCancellare } from '../ruoli';
 import { condividiEdizione } from '../condividi';
@@ -71,6 +72,8 @@ export default function Ultima() {
       </div>
 
       <Article edizione={mostrata} />
+
+      <Reazioni edizioneId={mostrata._id} />
 
       <button type="button" className="bottone-contorno" onClick={condividi} disabled={condividendo}>
         <ShareNetwork size={18} weight="bold" /> {condividendo ? 'Preparo l\'immagine…' : 'Condividi'}

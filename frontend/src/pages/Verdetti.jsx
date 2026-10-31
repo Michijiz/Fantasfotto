@@ -90,7 +90,6 @@ export default function Verdetti() {
           <span className="binario"><span className="riempito" style={{ width: `${Math.round((100 * votate) / n)}%` }} /></span>
           <b>{votate}/{n}</b>
         </span>
-        <p className="dettaglio">Si vota fino al fischio d&apos;inizio della giornata dopo. Un voto per categoria, anche per la tua squadra.</p>
       </section>
 
       {chiuse ? (
@@ -175,7 +174,6 @@ export default function Verdetti() {
           <span className="freccia rossa"><ChartBar size={26} weight="bold" /></span>
           <span className="testi">
             <span className="ritaglio-titolo medio">Risultati</span>
-            <span className="dettaglio">{chiuse ? 'Votazioni chiuse: i grafici sono per tutti' : 'Hai votato tutto: guarda i grafici'}</span>
           </span>
           <CaretRight size={22} weight="bold" />
         </button>

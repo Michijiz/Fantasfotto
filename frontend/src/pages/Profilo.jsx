@@ -285,7 +285,6 @@ function PaginaProfilo({ persona, mio = false, schedineOspite = null }) {
       </Sheet>
 
       <Sheet aperto={temaAperto} onChiudi={() => setTemaAperto(false)} titolo="Il cuore" sottotitolo={`Ora: ${tema.nome}`}>
-        <p className="tema-nota">La squadra che tifi ridipinge tutta la Gazzetta.</p>
         <CaroselloTema valore={temaId} onSceglie={cambiaTema} />
       </Sheet>
 
